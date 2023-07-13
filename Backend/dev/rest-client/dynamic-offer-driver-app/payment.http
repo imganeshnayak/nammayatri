@@ -104,3 +104,25 @@ content-type: application/json
    }
  }
 }
+
+###
+
+# POST https://api.juspay.in/session
+
+
+curl --location --request POST 'https://api.juspay.in/session?x-merchantid=yatrisathi1' \
+--header 'Authorization: Basic NTgzMkY5QURFRkI0NTYxODg1QzI5RTgyQjE0MDYyOg==' \
+--header 'Content-Type: application/json' \
+--data-raw '{
+    "order_id": "testing-order-one",
+    "amount": "1.0",
+    "customer_id": "testing-customer-one",
+    "customer_email": "test@mail.com",
+    "customer_phone": "9876543210",
+    "payment_page_client_id": "yatrisathi1",
+    "action": "paymentPage",
+    "return_url": "https://shop.merchant.com",
+    "description": "Complete your payment",
+    "first_name": "John",
+    "last_name": "wick"
+}'

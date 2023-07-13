@@ -12,8 +12,8 @@
  the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
 
-module Beckn.Types.Core.Taxi.Update.UpdateEvent.PaymentCompletedEvent.Payment
-  ( module Beckn.Types.Core.Taxi.Update.UpdateEvent.PaymentCompletedEvent.Payment,
+module Beckn.Types.Core.Taxi.Common.RideCompletedPayment
+  ( module Beckn.Types.Core.Taxi.Common.RideCompletedPayment,
     module Reexport,
   )
 where
@@ -28,11 +28,12 @@ import Kernel.Prelude
 import Kernel.Utils.JSON as JSON
 import Kernel.Utils.Schema
 
-data Payment = Payment
-  { collected_by :: PaymentCollector,
-    _type :: PaymentType,
-    instrument :: PaymentInstrument, -- FIXME find proper fields
-    status :: PaymentStatus
+data RideCompletedPayment = RideCompletedPayment
+  { collected_by :: Maybe PaymentCollector,
+    _type :: Maybe PaymentType,
+    instrument :: Maybe PaymentInstrument, -- FIXME find proper fields
+    time :: TimeDuration, -- FIXME: what is this?
+    uri :: Maybe Text
   }
   deriving (Generic, Show)
 
@@ -44,15 +45,3 @@ instance ToJSON RideCompletedPayment where
 
 instance ToSchema RideCompletedPayment where
   declareNamedSchema = genericDeclareUnNamedSchema $ fromAesonOptions JSON.stripPrefixUnderscoreIfAny
-
-data PaymentStatus = PAID | NOT_PAID
-  deriving (Generic, Show)
-
-instance FromJSON PaymentStatus where
-  parseJSON = genericParseJSON constructorsWithHyphens
-
-instance ToJSON PaymentStatus where
-  toJSON = genericToJSON constructorsWithHyphens
-
-instance ToSchema PaymentStatus where
-  declareNamedSchema = genericDeclareUnNamedSchema $ fromAesonOptions constructorsWithHyphens

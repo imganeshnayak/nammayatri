@@ -53,3 +53,10 @@ instance ToTType' BeamFB.FareBreakup FareBreakup where
         BeamFB.description = description,
         BeamFB.amount = amount
       }
+
+-- FIXME
+-- deleteAllByBookingId :: Id Booking -> SqlDB ()
+-- deleteAllByBookingId bookingId =
+--   delete $ do
+--     fareBreakup <- from $ table @FareBreakupT
+--     where_ $ fareBreakup ^. FareBreakupBookingId ==. val (toKey bookingId)

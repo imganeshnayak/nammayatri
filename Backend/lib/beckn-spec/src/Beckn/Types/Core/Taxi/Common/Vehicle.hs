@@ -34,3 +34,20 @@ data VehicleVariant = SEDAN | SUV | HATCHBACK | AUTO_RICKSHAW | TAXI | TAXI_PLUS
       Enum,
       Bounded
     )
+
+-- FIXME
+-- import Data.Aeson as A
+-- import Data.OpenApi hiding (Example, example, name, tags)
+-- import Kernel.Prelude
+-- import Kernel.Utils.Schema (genericDeclareUnNamedSchema)
+
+-- data Vehicle = Vehicle
+--   { model :: Text,
+--     variant :: Text,
+--     color :: Text,
+--     registration :: Text
+--   }
+--   deriving (Generic, FromJSON, ToJSON, Show)
+
+-- instance ToSchema Vehicle where
+--   declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions

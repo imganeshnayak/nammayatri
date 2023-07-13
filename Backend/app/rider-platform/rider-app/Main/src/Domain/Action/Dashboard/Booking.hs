@@ -148,3 +148,7 @@ bookingSync merchant reqBookingId = do
       let cancellationReason = mkBookingCancellationReason merchant.id Common.syncBookingCodeWithNoRide Nothing bookingId
       QBooking.updateStatus bookingId DBooking.CANCELLED
       QBCR.upsert cancellationReason
+      let updBooking = booking{status = DBooking.CANCELLED}
+      let dStatusReq = DStatusReq {booking = updBooking, merchant}
+      becknStatusReq <- buildStatusReq dStatusReq
+      void $ withShortRetry $ CallBPP.callStatus booking.providerUrl becknStatusReq

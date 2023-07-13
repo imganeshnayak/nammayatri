@@ -30,7 +30,7 @@ import qualified Domain.Types.RideDetails as SRD
 import Domain.Types.RideRoute
 import qualified Domain.Types.RiderDetails as DRD
 import qualified Domain.Types.SearchRequestForDriver as SReqD
-import qualified Domain.Types.Vehicle.Variant as VehVar
+import qualified Domain.Types.Vehicle as DVeh
 import Kernel.External.Encryption
 import qualified Kernel.External.Notification.FCM.Types as FCM
 import Kernel.Prelude
@@ -78,7 +78,7 @@ data DConfirmReq = DConfirmReq
 
 data DConfirmRes = DConfirmRes
   { booking :: DRB.Booking,
-    ride :: Maybe DRide.Ride,
+    normalBookingInfo :: Maybe NormalBookingInfo,
     fromLocation :: DL.Location,
     toLocation :: DL.Location,
     riderDetails :: DRD.RiderDetails,
@@ -89,6 +89,11 @@ data DConfirmRes = DConfirmRes
     transporter :: DM.Merchant,
     driverId :: Maybe Text,
     driverName :: Maybe Text
+  }
+
+data NormalBookingInfo = NormalBookingInfo
+  { ride :: DRide.Ride,
+    vehicle :: DVeh.Vehicle
   }
 
 handler ::
@@ -129,7 +134,11 @@ handler transporter req quote = do
 
           ride <- buildRide driver.id booking ghrId req.customerPhoneNumber otpCode
           triggerRideCreatedEvent RideEventData {ride = ride, personId = cast driver.id, merchantId = transporter.id}
-          rideDetails <- buildRideDetails ride driver
+          vehicle <-
+            QVeh.findById ride.driverId
+              >>= fromMaybeM (VehicleNotFound ride.driverId.getId)
+          vehicleRegCert <- QVRC.findLastVehicleRCWrapper vehicle.registrationNo
+          let rideDetails = mkRideDetails ride driver vehicle vehicleRegCert
           driverSearchReqs <- QSRD.findAllActiveBySTId driverQuote.searchTryId
           routeInfo :: Maybe RouteInfo <- safeGet (searchRequestKey $ getId driverQuote.requestId)
           case routeInfo of
@@ -170,7 +179,7 @@ handler transporter req quote = do
           pure
             DConfirmRes
               { booking = uBooking,
-                ride = Just ride,
+                normalBookingInfo = Just NormalBookingInfo {ride, vehicle},
                 riderDetails,
                 riderMobileCountryCode = req.customerMobileCountryCode,
                 riderPhoneNumber = req.customerPhoneNumber,
@@ -201,7 +210,7 @@ handler transporter req quote = do
           pure
             DConfirmRes
               { booking = uBooking,
-                ride = Nothing,
+                normalBookingInfo = Nothing,
                 riderDetails,
                 riderMobileCountryCode = req.customerMobileCountryCode,
                 riderPhoneNumber = req.customerPhoneNumber,
@@ -298,7 +307,7 @@ getRiderDetails merchantId customerMobileCountryCode customerPhoneNumber now =
             otpCode = Just otp
           }
 
-buildRideDetails ::
+mkRideDetails ::
   ( CacheFlow m r,
     EsqDBFlow m r,
     HasPrettyLogger m r,
@@ -308,13 +317,10 @@ buildRideDetails ::
   ) =>
   DRide.Ride ->
   DPerson.Person ->
+  DVeh.Vehicle ->
+  VehicleRegistrationCertificate ->
   m SRD.RideDetails
-buildRideDetails ride driver = do
-  vehicle <-
-    QVeh.findById ride.driverId
-      >>= fromMaybeM (VehicleNotFound ride.driverId.getId)
-  vehicleRegCert <- QVRC.findLastVehicleRCWrapper vehicle.registrationNo
-  return
+mkRideDetails ride driver vehicleRegCert = do
     SRD.RideDetails
       { id = ride.id,
         driverName = driver.firstName,

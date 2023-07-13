@@ -12,24 +12,24 @@
  the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
 
-module Beckn.Types.Core.Taxi.OnStatus.Fulfillment where
+module Beckn.Types.Core.Taxi.Common.RideStartedStartInfo
+  ( module Beckn.Types.Core.Taxi.Common.RideStartedStartInfo,
+    module Reexport,
+  )
+where
 
-import Data.OpenApi (ToSchema (..), defaultSchemaOptions)
-import EulerHS.Prelude hiding (id)
-import Kernel.Utils.Schema (genericDeclareUnNamedSchema)
+import Beckn.Types.Core.Taxi.Common.Authorization as Reexport
+import Beckn.Types.Core.Taxi.Common.TimeTimestamp as Reexport
+import Data.Aeson as A
+import Data.OpenApi hiding (Example, example)
+import EulerHS.Prelude hiding (id, (.=))
+import Kernel.Utils.Schema
 
-data FulfillmentInfo = FulfillmentInfo
-  { id :: Text, -- BPP ride id
-    status :: RideStatus
+data RideStartedStartInfo = RideStartedStartInfo
+  { authorization :: Authorization,
+    time :: TimeTimestamp
   }
-  deriving (Generic, FromJSON, ToJSON, Show)
+  deriving (Generic, Show, FromJSON, ToJSON)
 
-instance ToSchema FulfillmentInfo where
+instance ToSchema RideStartedStartInfo where
   declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions
-
-data RideStatus
-  = NEW
-  | INPROGRESS
-  | COMPLETED
-  | CANCELLED
-  deriving (Generic, FromJSON, ToJSON, Show, ToSchema)

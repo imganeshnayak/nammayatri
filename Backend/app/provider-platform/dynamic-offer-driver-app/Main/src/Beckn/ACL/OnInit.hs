@@ -33,7 +33,7 @@ mkOnInitMessage res = do
       currency = "INR"
       breakup_ =
         mkBreakupList (OnInit.BreakupItemPrice currency . fromIntegral) OnInit.BreakupItem rb.fareParams
-          & filter (filterRequiredBreakups $ DFParams.getFareParametersType rb.fareParams) -- TODO: Remove after roll out
+          & filter (Common.filterRequiredBreakups $ DFParams.getFareParametersType rb.fareParams) -- TODO: Remove after roll out
   OnInit.OnInitMessage
     { order =
         OnInit.Order
@@ -132,37 +132,7 @@ mkOnInitMessage res = do
     }
   where
     castAddress DL.LocationAddress {..} = OnInit.Address {area_code = areaCode, locality = area, ward = Nothing, ..}
-    castVehicleVariant = \case
-      VehVar.SEDAN -> OnInit.SEDAN
-      VehVar.SUV -> OnInit.SUV
-      VehVar.HATCHBACK -> OnInit.HATCHBACK
-      VehVar.AUTO_RICKSHAW -> OnInit.AUTO_RICKSHAW
-      VehVar.TAXI -> OnInit.TAXI
-      VehVar.TAXI_PLUS -> OnInit.TAXI_PLUS
     buildFulfillmentType = \case
       DRB.NormalBooking -> OnInit.RIDE
       DRB.SpecialZoneBooking -> OnInit.RIDE_OTP
-    filterRequiredBreakups fParamsType breakup = do
-      case fParamsType of
-        DFParams.Progressive ->
-          breakup.title == "BASE_FARE"
-            || breakup.title == "SERVICE_CHARGE"
-            || breakup.title == "DEAD_KILOMETER_FARE"
-            || breakup.title == "EXTRA_DISTANCE_FARE"
-            || breakup.title == "DRIVER_SELECTED_FARE"
-            || breakup.title == "CUSTOMER_SELECTED_FARE"
-            || breakup.title == "TOTAL_FARE"
-            || breakup.title == "WAITING_OR_PICKUP_CHARGES"
-            || breakup.title == "EXTRA_TIME_FARE"
-        DFParams.Slab ->
-          breakup.title == "BASE_FARE"
-            || breakup.title == "SERVICE_CHARGE"
-            || breakup.title == "WAITING_OR_PICKUP_CHARGES"
-            || breakup.title == "PLATFORM_FEE"
-            || breakup.title == "SGST"
-            || breakup.title == "CGST"
-            || breakup.title == "FIXED_GOVERNMENT_RATE"
-            || breakup.title == "CUSTOMER_SELECTED_FARE"
-            || breakup.title == "TOTAL_FARE"
-            || breakup.title == "NIGHT_SHIFT_CHARGE"
-            || breakup.title == "EXTRA_TIME_FARE"
+
