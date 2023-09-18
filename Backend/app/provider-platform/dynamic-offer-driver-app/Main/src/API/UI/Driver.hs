@@ -190,6 +190,11 @@ type API =
                :> "entity"
                :> TokenAuth
                :> Get '[JSON] DDriver.HistoryEntryDetailsEntityV2
+             :<|> "invoice"
+               :> TokenAuth
+               :> MandatoryQueryParam "from" Day
+               :> QueryParam "to" Day
+               :> Get '[JSON] [DDriver.DriverFeeResp]
          )
 
 handler :: FlowServer API
@@ -226,6 +231,7 @@ handler =
              :<|> clearDriverDues
              :<|> getDriverPaymentsHistoryV2
              :<|> getDriverPaymentsHistoryEntityDetailsV2
+             :<|> getDownloadInvoiceData
          )
 
 createDriver :: SP.Person -> DDriver.OnboardDriverReq -> FlowHandler DDriver.OnboardDriverRes
@@ -319,3 +325,6 @@ getDriverPaymentsHistoryV2 pMode mbLimit mbOffset = withFlowHandlerAPI . DDriver
 
 getDriverPaymentsHistoryEntityDetailsV2 :: Text -> (Id SP.Person, Id Merchant.Merchant) -> FlowHandler DDriver.HistoryEntryDetailsEntityV2
 getDriverPaymentsHistoryEntityDetailsV2 invoiceId (driverId, merchantId) = withFlowHandlerAPI $ DDriver.getHistoryEntryDetailsEntityV2 (driverId, merchantId) invoiceId
+
+getDownloadInvoiceData :: (Id SP.Person, Id Merchant.Merchant) -> Day -> Maybe Day -> FlowHandler [DDriver.DriverFeeResp]
+getDownloadInvoiceData (personId, merchantId) fromDate = withFlowHandlerAPI . DDriver.getDownloadInvoiceData (personId, merchantId) fromDate
