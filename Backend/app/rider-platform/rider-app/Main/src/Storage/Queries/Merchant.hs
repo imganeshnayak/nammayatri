@@ -93,7 +93,9 @@ instance FromTType' BeamM.Merchant Merchant where
             aadhaarVerificationTryLimit = aadhaarVerificationTryLimit,
             aadhaarKeyExpiryTime = aadhaarKeyExpiryTime,
             mediaFileSizeUpperLimit = mediaFileSizeUpperLimit,
-            mediaFileUrlPattern = mediaFileUrlPattern
+            mediaFileUrlPattern = mediaFileUrlPattern,
+            editPickupDistanceThreshold = editPickupDistanceThreshold,
+            driverDistanceThresholdFromPickup = driverDistanceThresholdFromPickup
           }
 
 instance ToTType' BeamM.Merchant Merchant where
@@ -128,5 +130,7 @@ instance ToTType' BeamM.Merchant Merchant where
         BeamM.aadhaarVerificationTryLimit = aadhaarVerificationTryLimit,
         BeamM.aadhaarKeyExpiryTime = aadhaarKeyExpiryTime,
         BeamM.mediaFileSizeUpperLimit = mediaFileSizeUpperLimit,
-        BeamM.mediaFileUrlPattern = mediaFileUrlPattern
+        BeamM.mediaFileUrlPattern = mediaFileUrlPattern,
+        BeamM.editPickupDistanceThreshold = editPickupDistanceThreshold,
+        BeamM.driverDistanceThresholdFromPickup = driverDistanceThresholdFromPickup
       }

@@ -33,7 +33,6 @@ import qualified Domain.Types.BookingCancellationReason as SBCR
 import qualified Domain.Types.Estimate as DEstimate
 import qualified Domain.Types.FarePolicy.FareBreakup as DFareBreakup
 import Domain.Types.HotSpot
-import qualified Domain.Types.LocationMapping as DLM
 import qualified Domain.Types.Merchant as DMerchant
 import qualified Domain.Types.Person as DP
 import qualified Domain.Types.Person.PersonFlowStatus as DPFS
@@ -50,7 +49,6 @@ import Kernel.Types.Id
 import Kernel.Utils.Common
 import Lib.SessionizerMetrics.Types.Event
 import qualified SharedLogic.CallBPP as CallBPP
-import qualified SharedLogic.LocationMapping as SLM
 import qualified SharedLogic.MerchantConfig as SMC
 import qualified Storage.CachedQueries.MerchantConfig as CMC
 import qualified Storage.CachedQueries.Person.PersonFlowStatus as QPFS
@@ -58,7 +56,6 @@ import qualified Storage.Queries.Booking as QRB
 import qualified Storage.Queries.BookingCancellationReason as QBCR
 import qualified Storage.Queries.Estimate as QEstimate
 import qualified Storage.Queries.FareBreakup as QFareBreakup
-import Storage.Queries.LocationMapping as QLM
 import qualified Storage.Queries.Person as QP
 import qualified Storage.Queries.Ride as QRide
 import qualified Storage.Queries.SearchRequest as QSR
@@ -294,6 +291,7 @@ onUpdate ValidatedRideAssignedReq {..} = do
             rideStartTime = Nothing,
             rideEndTime = Nothing,
             rideRating = Nothing,
+            allowedEditLocationAttempts = Nothing,
             ..
           }
 onUpdate ValidatedRideStartedReq {..} = do
