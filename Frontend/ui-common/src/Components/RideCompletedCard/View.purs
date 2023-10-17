@@ -16,7 +16,7 @@ import Data.Array (mapWithIndex, length, (!!), null)
 import Engineering.Helpers.Commons (flowRunner, os, safeMarginBottom, screenWidth, getExpiryTime, safeMarginTop, screenHeight, getNewIDWithTag)
 import Components.PrimaryButton as PrimaryButton
 import PrestoDOM.Types.DomAttributes (Corners(..))
-import PrestoDOM.Properties (cornerRadii)
+import PrestoDOM.Properties (cornerRadii, fontSize)
 import Language.Types (STR(..))
 import Common.Types.App (LazyCheck(..))
 import Font.Style as FontStyle
@@ -58,6 +58,12 @@ view config push =
         else linearLayout [visibility GONE][]
     , if config.customerIssueCard.reportIssueView then reportIssueView config push else dummyTextView
     , if config.showContactSupportPopUp then contactSupportPopUpView config push else dummyTextView
+    , linearLayout
+      [ alignParentBottom "true, -1"
+      , height WRAP_CONTENT
+      , width MATCH_PARENT
+      ] 
+      [ PrimaryButton.view (push <<< SkipButtonActionController) (config.primaryButtonConfig)]
   ]
   
 topCardView :: forall w. Config -> (Action -> Effect Unit) ->  PrestoDOM (Effect Unit) w
@@ -194,24 +200,25 @@ bottomCardView config push =
   , background Color.grey700
   , gravity CENTER
   , weight 1.0
-  ][  if config.customerIssueCard.issueFaced then customerIssueView config push
-        else if config.customerBottomCard.visible then customerBottomCardView config push
-          else dummyTextView
+  ][  rentalTripDetailsView config push
+      -- if config.customerIssueCard.issueFaced then customerIssueView config push
+      --   else if config.customerBottomCard.visible then customerBottomCardView config push
+      --     else dummyTextView
     , linearLayout
       [ width MATCH_PARENT
       , height WRAP_CONTENT
       , orientation VERTICAL
       ](map (\item -> getViewsByOrder config item push) config.viewsByOrder)
-    , if not config.isPrimaryButtonSticky then 
-      linearLayout
-      [ width MATCH_PARENT
-      , height WRAP_CONTENT
-      , weight 1.0
-      , gravity BOTTOM
-      , padding $ PaddingBottom safeMarginBottom
-      ][ PrimaryButton.view (push <<< SkipButtonActionController) (config.primaryButtonConfig)]
-      else linearLayout [] []
-  ]
+    -- , if not config.isPrimaryButtonSticky then 
+    --   linearLayout
+    --   [ width MATCH_PARENT
+    --   , height WRAP_CONTENT
+    --   , weight 1.0
+    --   , gravity BOTTOM
+    --   , padding $ PaddingBottom safeMarginBottom
+    --   ][ PrimaryButton.view (push <<< SkipButtonActionController) (config.primaryButtonConfig)]
+    --   else linearLayout [] []
+    ]
   ]
 
 getViewsByOrder :: forall w. Config -> RideCompletedElements -> (Action -> Effect Unit) -> PrestoDOM (Effect Unit) w
@@ -359,6 +366,97 @@ customerBottomCardView config push =
               ]
           ]) [1,2,3,4,5])
   ]
+
+rentalTripDetailsView :: forall w . Config -> (Action -> Effect Unit) -> PrestoDOM (Effect Unit) w
+rentalTripDetailsView config push =
+  linearLayout
+  [ 
+    height WRAP_CONTENT
+  , width MATCH_PARENT
+  , cornerRadius 9.0
+  , background Color.white900
+  , padding $ Padding 16 16 16 16
+  , weight 0.0
+  , stroke $ "1,"<> Color.grey900
+  , orientation VERTICAL
+  ] [ rentalTripRowView config push "RIDETIME"
+    , rentalTripRowView config push "RIDEDISTANCE"
+    , separatorView
+    , rentalTripRowView config push "RIDESTARTEDAT"
+    , rentalTripRowView config push "RIDEENDEDAT"
+    ]
+
+rentalTripRowView :: forall w. Config -> (Action -> Effect Unit) -> String -> PrestoDOM (Effect Unit) w
+rentalTripRowView config push description =
+  linearLayout 
+    [ height WRAP_CONTENT
+    , width MATCH_PARENT
+    , orientation HORIZONTAL
+    , weight 0.1
+    , margin $ MarginTop if(description /= "RIDETIME") then 16 else 0
+    ] 
+    [ textView $ [
+        text $ case description of
+                "RIDETIME" -> "Ride Time"
+                "RIDEDISTANCE" -> "Ride Distance"
+                "RIDESTARTEDAT" -> "Ride Started at"
+                "RIDEENDEDAT" -> "Ride Ended at"
+                _ -> ""
+        , weight 0.1
+        , gravity LEFT
+      ] <> FontStyle.body18 TypoGraphy
+    , linearLayout [
+        height MATCH_PARENT
+      , width WRAP_CONTENT
+      , weight 0.1
+      , gravity RIGHT
+      ] [ textView $
+          [ height WRAP_CONTENT
+          , width WRAP_CONTENT
+          , text $ case description of
+                    "RIDETIME" -> "1:59hr / "
+                    "RIDEDISTANCE" -> "72km /"
+                    _ -> ""
+          , color Color.black900
+          , ellipsize true
+          , singleLine true
+          ] <> FontStyle.body18 TypoGraphy
+        , textView $
+          [ height WRAP_CONTENT
+          , width WRAP_CONTENT
+          , text $ case description of
+                    "RIDETIME" -> "8hr"
+                    "RIDEDISTANCE" -> "80km"
+                    "RIDESTARTEDAT" -> "21447 km"
+                    "RIDEENDEDAT" -> "21523 km"
+                    _ -> ""
+          , color Color.black800
+          , ellipsize true
+          , singleLine true
+          , fontSize $ if(description == "RIDESTARTEDAT" || description == "RIDEENDEDAT") then FontSize.a_12 else FontSize.a_14
+          ] <> FontStyle.body18 TypoGraphy
+        ]
+    ]
+
+-- primaryButtonConfig :: Config -> PrimaryhButtonConfig.Config
+-- primaryButtonConfig config = let
+--   config' = PrimaryButtonConfig.config
+--   primaryButtonConfig' = config'
+--     { texConfig
+--       { text = config.buttoneConfig.text
+--       , color = config.buttonConfig.color
+      
+--       }
+--     }
+
+separatorView :: forall w. PrestoDOM (Effect Unit) w
+separatorView =
+  linearLayout
+    [ height $ V 1
+    , width MATCH_PARENT
+    , margin $ MarginTop 16
+    , background Color.grey900
+    ][]
 
 reportIssueView :: forall w. Config -> (Action -> Effect Unit) -> PrestoDOM (Effect Unit) w
 reportIssueView  config push =

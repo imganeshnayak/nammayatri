@@ -127,7 +127,7 @@ initData = {
           , basePrice: 582
           , capacity: "Spacious · 6 people"
           , id: "39ea627a-a7e2-41f9-976a-545d34833c08"
-          , index: 1
+          , index: 2
           , isBookingOption: false
           , isCheckBox: false
           , isEnabled: true
@@ -283,6 +283,10 @@ initData = {
     , showRentalPackagePopup : false
     , rentalData :
         { dateAndTime : ""
+        , baseDuration : "3"
+        , baseDistance : "30"
+        , startOdometer : "21447"
+        , endOdometer : "21529"
         }
     }
 }

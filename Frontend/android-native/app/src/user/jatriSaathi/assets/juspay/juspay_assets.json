@@ -343,6 +343,10 @@
       "widget_close_gradient" : true,
       "ny_ic_timer_clock" : true,
       "ys_ic_calendar" : true,
-      "ys_edit_pencil" : true
+      "ys_edit_pencil" : true,
+      "ys_ic_minus" : true,
+      "ys_ic_plus" : true,
+      "ys_ic_elipse" : true,
+      "ys_ic_divider" : true
    }
 }

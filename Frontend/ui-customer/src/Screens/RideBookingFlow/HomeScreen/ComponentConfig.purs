@@ -37,7 +37,7 @@ import Components.PrimaryButton as PrimaryButton
 import Components.QuoteListModel as QuoteListModel
 import Components.RateCard as RateCard
 import Components.RatingCard as RatingCard
-import Components.RentalFareBreakupScreen as RentalFareBreakupScreen
+import Components.FareBreakupScreen as FareBreakupScreen
 import Components.RequestInfoCard as RequestInfoCard
 import Components.RideCompletedCard as RideCompletedCard
 import Components.SearchLocationModel as SearchLocationModel
@@ -189,12 +189,14 @@ skipButtonConfig state =
           , color = state.data.config.primaryTextColor
           }
         , background = Color.black900
-        , margin = MarginTop 22
+        -- , margin = MarginTop 22
+        , margin = Margin 16 16 16 16
         , id = "SkipButton"
         , enableLoader = (JB.getBtnLoader "SkipButton")
         , visibility = if not issueFaced || state.data.ratingViewState.doneButtonVisibility then VISIBLE else GONE
-        , isClickable = issueFaced || state.data.ratingViewState.selectedRating > 0
-        , alpha = if issueFaced || (state.data.ratingViewState.selectedRating >= 1) then 1.0 else 0.4
+        -- , isClickable = issueFaced || state.data.ratingViewState.selectedRating > 0
+        , isClickable = true
+        -- , alpha = if issueFaced || (state.data.ratingViewState.selectedRating >= 1) then 1.0 else 0.4
         }
   in
     primaryButtonConfig'
@@ -676,7 +678,16 @@ rateCardConfig state =
   in
     rateCardConfig'
 
-
+-- rentlalRateCardConfig :: ST.HomeScreenState -> RateCard.Config
+-- rentlalRateCardConfig state =
+--   let
+--     config' = RateCard.config
+--     rentalRateCardConfig' =
+--       config'
+--         { 
+--         }
+--   in
+--     rentalRateCardConfig'
 
 yatriRateCardList :: String -> ST.HomeScreenState -> Array FareList
 yatriRateCardList vehicleVariant state = do
@@ -764,7 +775,8 @@ driverInfoCardViewState state = { props:
                                   , currentSearchResultType : state.data.currentSearchResultType
                                   , isChatOpened : state.props.isChatOpened
                                   , chatcallbackInitiated : state.props.chatcallbackInitiated
-                                  , rentalStage : state.props.rentalStage
+                                  , bookingStage : state.props.bookingStage
+                                  , rentalData : state.props.rentalData
                                   }
                               , data: driverInfoTransformer state
                             }
@@ -913,11 +925,14 @@ searchLocationModelViewState state = { isSearchLocation: state.props.isSearchLoc
                                     , rentalData : state.props.rentalData
                                     }
                               
-rentalFareBreakupScreenViewState :: ST.HomeScreenState -> RentalFareBreakupScreen.RentalFareBreakupScreenState
+rentalFareBreakupScreenViewState :: ST.HomeScreenState -> FareBreakupScreen.FareBreakupScreenState
 rentalFareBreakupScreenViewState state = { rentalStage: state.props.rentalStage
-                                         , specialZoneQuoteList: state.data.specialZoneQuoteList
+                                         , selectedQuote: state.data.specialZoneQuoteList
                                          , homeScreenConfig: state.data.config
-}
+                                         , dateAndTime: state.props.rentalData.dateAndTime
+                                         , baseDuration: state.props.rentalData.baseDuration
+                                         , baseDistance: state.props.rentalData.baseDistance
+                                         }
 
 quoteListModelViewState :: ST.HomeScreenState -> QuoteListModel.QuoteListModelState
 quoteListModelViewState state = { source: state.data.source
@@ -932,6 +947,8 @@ quoteListModelViewState state = { source: state.data.source
                             , progress : state.props.findingQuotesProgress
                             , appConfig : state.data.config
                             , vehicleVariant : state.data.selectedEstimatesObject.vehicleVariant
+                            , bookingStage : state.props.bookingStage
+                            , rentalData : state.props.rentalData
                             }
 
 rideRequestAnimConfig :: AnimConfig.AnimConfig
@@ -1345,3 +1362,48 @@ rentalPackageConfig state = let
   , cornerRadius = (Corners 15.0 true true true true)
   }
   in popUpConfig'
+
+rentalRateCardConfig state =
+  let
+    config' = RateCard.config
+    rentalRateCardConfig' =
+      config'
+        { nightCharges = state.data.rateCard.nightCharges
+        , nightShiftMultiplier = HU.toString (state.data.rateCard.nightShiftMultiplier)
+        , currentRateCardType = state.data.rateCard.currentRateCardType
+        , onFirstPage = state.data.rateCard.onFirstPage
+        , showDetails = state.data.config.searchLocationConfig.showRateCardDetails
+        , alertDialogPrimaryColor = state.data.config.alertDialogPrimaryColor
+        , description = if state.data.rateCard.nightCharges then (getString NIGHT_TIME_CHARGES) else (getString DAY_TIME_CHARGES)
+        , buttonText = Just if state.data.rateCard.currentRateCardType == DefaultRateCard then (getString GOT_IT) else (getString GO_BACK_)
+        , driverAdditionsImage = if (state.data.config.autoVariantEnabled && state.data.rateCard.vehicleVariant == "AUTO_RICKSHAW") then "ny_ic_driver_addition_table2,https://assets.juspay.in/beckn/nammayatri/user/images/ny_ic_driver_addition_table2.png" 
+                                   else "ny_ic_driver_additions_yatri,https://assets.juspay.in/beckn/yatri/user/images/ny_ic_driver_additions_yatri.png" 
+        , applicableCharges = if state.data.rateCard.nightCharges && state.data.rateCard.vehicleVariant == "AUTO_RICKSHAW" then (getString NIGHT_TIMES_OF) <> (HU.toString (state.data.rateCard.nightShiftMultiplier)) <> (getString DAYTIME_CHARGES_APPLIED_AT_NIGHT)
+                                 else (getString DAY_TIMES_OF) <> (HU.toString (state.data.rateCard.nightShiftMultiplier)) <> (getString DAYTIME_CHARGES_APPLICABLE_AT_NIGHT)
+        , title = case MU.getMerchant FunctionCall of
+                      MU.NAMMAYATRI -> getString RATE_CARD
+                      MU.YATRI -> getVehicleTitle state.data.rateCard.vehicleVariant
+                      _ -> ""
+        , fareList = case MU.getMerchant FunctionCall of
+                      MU.NAMMAYATRI -> nyRateCardList state
+                      MU.YATRI -> yatriRateCardList state.data.rateCard.vehicleVariant state
+                      _ -> []
+
+        , otherOptions  = [
+          {key : "DRIVER_ADDITIONS", val : (getString DRIVER_ADDITIONS)},
+          {key : "FARE_UPDATE_POLICY", val : (getString FARE_UPDATE_POLICY)}]
+
+        , additionalStrings = [
+          {key : "DRIVER_ADDITIONS_OPTIONAL", val : (getString DRIVER_ADDITIONS_OPTIONAL)},
+          {key : "THE_DRIVER_MAY_QUOTE_EXTRA_TO_COVER_FOR_TRAFFIC", val : (getString THE_DRIVER_MAY_QUOTE_EXTRA_TO_COVER_FOR_TRAFFIC)},
+          {key : "DRIVER_ADDITIONS_ARE_CALCULATED_AT_RATE", val : (if (state.data.rateCard.vehicleVariant /= "AUTO_RICKSHAW") 
+                                                                    then getString DRIVER_ADDITION_LIMITS_ARE_IN_INCREMENTS
+                                                                   else getString DRIVER_ADDITIONS_ARE_CALCULATED_AT_RATE)},
+          {key : "DRIVER_MAY_NOT_CHARGE_THIS_ADDITIONAL_FARE", val : (getString DRIVER_MAY_NOT_CHARGE_THIS_ADDITIONAL_FARE)},
+          {key : "FARE_UPDATE_POLICY", val : (getString FARE_UPDATE_POLICY)},
+          {key : "YOU_MAY_SEE_AN_UPDATED_FINAL_FARE_DUE_TO_ANY_OF_THE_BELOW_REASONS", val : (getString YOU_MAY_SEE_AN_UPDATED_FINAL_FARE_DUE_TO_ANY_OF_THE_BELOW_REASONS)},
+          {key : "REASON_CHANGE_IN_ROUTE", val : ("<span style=\"color:black;\">" <> (getString REASON_CHANGE_IN_ROUTE_A) <> "</span>" <> (getString REASON_CHANGE_IN_ROUTE_B))}]
+          <> if state.data.rateCard.vehicleVariant == "AUTO_RICKSHAW" && (MU.getValueFromConfig "showChargeDesc") then [{key : "CHARGE_DESCRIPTION", val : (getString ERNAKULAM_LIMIT_CHARGE)}] else []
+        }
+  in
+    rentalRateCardConfig'

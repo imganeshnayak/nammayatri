@@ -13,7 +13,7 @@
   the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
 
-module Components.RentalFareBreakupScreen (module Reexport) where
+module Components.FareBreakupScreen (module Reexport) where
 
-import Components.RentalFareBreakupScreen.View as Reexport
-import Components.RentalFareBreakupScreen.Controller as Reexport
+import Components.FareBreakupScreen.View as Reexport
+import Components.FareBreakupScreen.Controller as Reexport

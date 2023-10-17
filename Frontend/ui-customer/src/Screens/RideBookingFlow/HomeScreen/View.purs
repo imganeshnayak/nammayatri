@@ -39,7 +39,7 @@ import Components.PrimaryButton as PrimaryButton
 import Components.QuoteListModel.View as QuoteListModel
 import Components.RateCard as RateCard
 import Components.RatingCard as RatingCard
-import Components.RentalFareBreakupScreen.View as RentalFareBreakupScreen
+import Components.FareBreakupScreen.View as FareBreakupScreen
 import Components.RentalScheduleRide.View as RentalScheduleRideScreen
 import Components.RequestInfoCard as RequestInfoCard
 import Components.SaveFavouriteCard as SaveFavouriteCard
@@ -74,7 +74,7 @@ import MerchantConfig.Utils (Merchant(..), getMerchant, getValueFromConfig)
 import Prelude (Unit, bind, const, discard, map, negate, not, pure, show, unit, void, when, ($), (&&), (*), (+), (-), (/), (/=), (<), (<<<), (<=), (<>), (==), (>), (||))
 import Presto.Core.Types.API (ErrorResponse)
 import Presto.Core.Types.Language.Flow (Flow, doAff, delay)
-import PrestoDOM (BottomSheetState(..), Gradient(..), Gravity(..), Length(..), Accessiblity(..), Margin(..), Accessiblity(..), Orientation(..), Padding(..), PrestoDOM, Screen, Visibility(..), adjustViewWithKeyboard, afterRender, alignParentBottom, background, clickable, color, cornerRadius, disableClickFeedback, ellipsize, fontStyle, frameLayout, gradient, gravity, halfExpandedRatio, height, id, imageView, imageWithFallback, lineHeight, linearLayout, lottieAnimationView, margin, maxLines, onBackPressed, onClick, orientation, padding, peakHeight, relativeLayout, singleLine, stroke, text, textFromHtml, textSize, textView, url, visibility, webView, weight, width, layoutGravity, accessibilityHint, accessibility, accessibilityFocusable, focusable, scrollView)
+import PrestoDOM (BottomSheetState(..), Gradient(..), Gravity(..), Length(..), Accessiblity(..), Margin(..), Accessiblity(..), Orientation(..), Padding(..), PrestoDOM, Screen, Visibility(..), adjustViewWithKeyboard, afterRender, alignParentBottom, background, clickable, color, cornerRadius, disableClickFeedback, ellipsize, fontStyle, frameLayout, gradient, gravity, halfExpandedRatio, height, id, imageView, imageWithFallback, lineHeight, linearLayout, lottieAnimationView, margin, maxLines, onBackPressed, onClick, orientation, padding, peakHeight, relativeLayout, singleLine, stroke, text, textFromHtml, textSize, textView, url, visibility, webView, weight, width, layoutGravity, accessibilityHint, accessibility, accessibilityFocusable, focusable, scrollView, fontSize)
 import PrestoDOM.Animation as PrestoAnim
 import PrestoDOM.Elements.Elements (bottomSheetLayout, coordinatorLayout)
 import PrestoDOM.Properties (cornerRadii, sheetState)
@@ -404,7 +404,7 @@ rentalFareBreakupView push state =
   linearLayout [
     height MATCH_PARENT,
     width MATCH_PARENT
-  ] [RentalFareBreakupScreen.view (push <<< RentalFareBreakupActionController) $ rentalFareBreakupScreenViewState state]
+  ] [FareBreakupScreen.view (push <<< RentalFareBreakupActionController) $ rentalFareBreakupScreenViewState state]
 
 -- rentalScheduleRideView :: forall w . (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM (Effect Unit) w
 -- rentalScheduleRideView push state =
@@ -1746,7 +1746,7 @@ rentalConfirmAndBookView push state =
     ] [ linearLayout [ 
         height WRAP_CONTENT
       , width MATCH_PARENT
-      , margin (Margin 16 32 16 26)
+      , margin (Margin 16 32 16 0)
       ] [ textView 
           ([
               text ("Select Package")
@@ -1759,11 +1759,7 @@ rentalConfirmAndBookView push state =
           , onClick push $ const RentalPackageAC
           ]
       ]
-      -- , linearLayout[
-      --   height WRAP_CONTENT
-      -- , margin (Margin 16 12 16 0)
-      -- , cornerRadius 
-      -- ]
+      , selectPackageView push state
       , linearLayout [ 
           height WRAP_CONTENT
         , width MATCH_PARENT
@@ -1773,7 +1769,7 @@ rentalConfirmAndBookView push state =
                 text ("Choose your rental ride")
               , color Color.black800
             ] <> FontStyle.h2 TypoGraphy)
-          ]
+        ]
       , linearLayout
           [ height WRAP_CONTENT
           , width MATCH_PARENT
@@ -1783,25 +1779,77 @@ rentalConfirmAndBookView push state =
                   ChooseVehicle.view (push <<< RentalChooseVehicleAC) (item)
               ) state.data.specialZoneQuoteList
           )
-      -- , ChooseVehicle.view (push <<< RentalChooseVehicleAC) ({
-      --     activeIndex: 0
-      --   , basePrice: 254
-      --   , capacity: "Economical, 4 people"
-      --   , id: "d1b6e3e0-6075-49f1-abb9-28bfb1a4b353"
-      --   , index: 0
-      --   , isBookingOption: false
-      --   , isCheckBox: false
-      --   , isEnabled: true
-      --   , isSelected: false
-      --   , maxPrice: 123
-      --   , price: "₹254"
-      --   , searchResultType: ChooseVehicleController.QUOTES
-      --   , showInfo: false
-      --   , vehicleImage: "ny_ic_taxi_side,https://assets.juspay.in/beckn/jatrisaathi/jatrisaathicommon/images/ny_ic_taxi_side.png"
-      --   , vehicleType: ""
-      --   , vehicleVariant: "TAXI"})
       , PrimaryButton.view (push <<< RentalConfirmAndBookAction) (primaryButtonConfirmAndBookConfig state)
-      -- , ChooseYourRide.view (push <<< ChooseYourRideAction) (chooseYourRideConfig state)
+    ]
+
+selectPackageView :: forall w. (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM (Effect Unit) w
+selectPackageView push state = 
+  linearLayout
+    [ width MATCH_PARENT
+    , height WRAP_CONTENT
+    , orientation HORIZONTAL
+    , margin $ Margin 16 12 16 90
+    , padding $ Padding 16 16 16 16
+    , stroke $ "1," <> Color.grey900
+    , gravity CENTER_VERTICAL
+    , accessibility DISABLE
+    , cornerRadius 5.0
+    , weight 0.0
+    ]
+    [ imageView
+        [ imageWithFallback $ "ys_ic_minus," <> (getCommonAssetStoreLink FunctionCall) <> "ys_ic_minus.png"
+        , height $ V 20
+        , width $ V 20
+        , gravity LEFT
+        , accessibility ENABLE
+        , onClick push (const DecreaseRentalPackage)
+        ]
+    , linearLayout [
+        width MATCH_PARENT
+      , height WRAP_CONTENT
+      , gravity CENTER
+      , weight 1.0
+      ] [ textView
+          $
+            [ text $ state.props.rentalData.baseDuration <> "hr"
+            , fontSize FontSize.a_18
+            , ellipsize true
+            , singleLine true
+            , accessibility DISABLE
+            , accessibilityHint $ "Duration : " <> state.props.rentalData.baseDuration
+            , color Color.black800
+            , gravity CENTER_VERTICAL
+            ]
+          <> FontStyle.subHeading1 TypoGraphy
+      , imageView
+          [ imageWithFallback $ "ys_ic_elipse," <> (getCommonAssetStoreLink FunctionCall) <> "ys_ic_elipse.png"
+          , height $ V 4
+          , width $ V 4
+          , accessibility DISABLE
+          , margin $ MarginHorizontal 10 10
+          , gravity CENTER_VERTICAL
+          ]
+      , textView
+          $
+            [ text $ state.props.rentalData.baseDistance <> "km"
+            , fontSize FontSize.a_18
+            , ellipsize true
+            , singleLine true
+            , accessibility DISABLE
+            , accessibilityHint $ "Distance : " <> state.props.rentalData.baseDuration
+            , color Color.black600
+            , gravity CENTER_VERTICAL
+            ]
+          <> FontStyle.subHeading1 TypoGraphy
+    ]
+    , imageView
+      [ imageWithFallback $ "ys_ic_plus," <> (getCommonAssetStoreLink FunctionCall) <> "ys_ic_plus.png"
+        , height $ V 20
+        , width $ V 20
+        , gravity RIGHT
+        , accessibility ENABLE
+        , onClick push (const IncreaseRentalPackage)
+      ]
     ]
 
 ------------------------ quoteListModelView ---------------------------
@@ -2399,4 +2447,4 @@ rentalPackageView push state =
   [ height MATCH_PARENT
   , width MATCH_PARENT
   , orientation VERTICAL
-  ] [ PopUpModal.view (push <<< ShortDistanceActionController) (rentalPackageConfig state)]
+  ] [ RateCard.view (push <<< RateCardAction) (rentalRateCardConfig state) ]

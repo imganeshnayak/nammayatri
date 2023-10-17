@@ -729,6 +729,10 @@ type HomeScreenStateProps =
 
 type RentalConfig = {
     dateAndTime :: String
+  , baseDuration :: String
+  , baseDistance :: String
+  , startOdometer :: String
+  , endOdometer :: String
 }
 
 type SearchLocationModelProps = {

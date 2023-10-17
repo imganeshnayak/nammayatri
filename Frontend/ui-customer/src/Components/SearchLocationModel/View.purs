@@ -126,7 +126,7 @@ searchResultsParentView state push =
   , height MATCH_PARENT
   , margin $ MarginHorizontal 16 16
   , orientation VERTICAL
-  , visibility if state.isSearchLocation == SearchLocation && state.isRideServiceable && not state.showLoader && state.rentalStage /= RentalSlab then VISIBLE else GONE
+  , visibility if state.isSearchLocation == SearchLocation && state.isRideServiceable && not state.showLoader && state.bookingStage == NormalBooking then VISIBLE else GONE
     ][  savedLocationBar state push
       , searchResultsView state push ]
 
@@ -675,7 +675,7 @@ dateTimerView state push =
     , hintColor Color.black600
     , singleLine true
     , ellipsize true
-    , accessibilityHint "Destination Location Editable field"
+    , accessibilityHint "Pickup Timer Editable View"
     , accessibility ENABLE
     , cursorColor state.homeScreenConfig.primaryTextColor 
     ] <> FontStyle.subHeading1 LanguageStyle 

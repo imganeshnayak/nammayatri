@@ -167,7 +167,7 @@ homeScreen = do
     RentalSlabScreen updatedState -> do
       modifyScreenState $ HomeScreenStateType (\homeScreenState -> updatedState)
       App.BackT $ App.BackPoint <$> (pure $ RENTAL_SLAB_SCREEN updatedState)      
-    RentalFareBreakupScreen updatedState -> do
+    FareBreakupScreen updatedState -> do
       modifyScreenState $ HomeScreenStateType (\homeScreen -> updatedState)
       App.BackT $ App.BackPoint <$> (pure $ RENTAL_FARE_BREAKUP_SCREEN updatedState)
     RentalScheduleRideScreen updatedState -> do

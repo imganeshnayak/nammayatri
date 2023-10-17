@@ -43,7 +43,7 @@ import Components.QuoteListModel.Controller as QuoteListModelController
 import Components.QuoteListModel.View (dummyQuoteList)
 import Components.RateCard as RateCard
 import Components.RatingCard as RatingCard
-import Components.RentalFareBreakupScreen.Controller as RentalFareBreakupController
+import Components.FareBreakupScreen.Controller as RentalFareBreakupController
 import Components.RequestInfoCard as RequestInfoCard
 import Components.RentalScheduleRide.Controller as RentalScheduleRideController
 import Components.SaveFavouriteCard as SaveFavouriteCardController
@@ -519,7 +519,7 @@ data ScreenOutput = LogoutUser
                   | ReportIssue HomeScreenState
                   | RideDetailsScreen HomeScreenState
                   | RentalSlabScreen HomeScreenState
-                  | RentalFareBreakupScreen HomeScreenState
+                  | FareBreakupScreen HomeScreenState
                   | RentalScheduleRideScreen HomeScreenState
 
 data Action = NoAction
@@ -638,6 +638,8 @@ data Action = NoAction
             | RentalScheduleRideAction RentalScheduleRideController.Action
             | RentalPackageAC
             | CalendarAction CalendarAction.Action
+            | DecreaseRentalPackage
+            | IncreaseRentalPackage
 
 eval :: Action -> HomeScreenState -> Eval Action ScreenOutput HomeScreenState
 
@@ -652,7 +654,7 @@ eval (RentalChooseVehicleAC (ChooseVehicleController.OnSelect config)) state = d
 
 eval (RentalConfirmAndBookAction (PrimaryButtonController.OnClick)) state = do
   let updatedState = state{props{rentalStage = RentalFareBreakup}}
-  updateAndExit (updatedState) (RentalFareBreakupScreen updatedState)
+  updateAndExit (updatedState) (FareBreakupScreen updatedState)
 
 eval (SearchLocationModelActionController (SearchLocationModelController.RentalScheduleAction)) state = do 
   let updatedState = state{props{rentalStage = RentalScheduleRide}}
@@ -1975,7 +1977,7 @@ eval (ChooseYourRideAction (ChooseYourRideController.PrimaryButtonActionControll
   else do
     _ <- pure $ updateLocalStage FindingQuotes
     let updatedState = state{props{currentStage = if(state.props.rentalStage /= NotRental) then SearchLocationModel else FindingQuotes, searchExpire = (getSearchExpiryTime "LazyCheck"), rentalStage = if(state.props.rentalStage /= NotRental) then RentalFareBreakup else NotRental}}
-    updateAndExit (updatedState) if(state.props.rentalStage == RentalSlab) then (RentalFareBreakupScreen updatedState) else (GetQuotes updatedState)
+    updateAndExit (updatedState) if(state.props.rentalStage == RentalSlab) then (FareBreakupScreen updatedState) else (GetQuotes updatedState)
 
 eval (ChooseYourRideAction ChooseYourRideController.NoAction) state =
   continue state{ props{ defaultPickUpPoint = "" } }
@@ -2017,6 +2019,20 @@ eval (RentalButtonAction (PrimaryButtonController.OnClick)) state = do
 eval (SearchLocationModelActionController (SearchLocationModelController.TimePicker hour min)) state = do
   let timeFormat = if hour > 12 then "PM" else "AM"
   continue state{props{rentalData{dateAndTime = (show $ hour `mod` 12) <> ":" <> (show min) <> " " <> timeFormat }}}
+
+eval (DecreaseRentalPackage) state = do
+  let baseDuration = fromMaybe (1) (fromString state.props.rentalData.baseDuration)
+      baseDistance = fromMaybe (1) (fromString state.props.rentalData.baseDistance)
+  continue if(baseDuration > 1) then 
+    state{
+      props{rentalData{baseDuration = show (baseDuration - 1), baseDistance = show (baseDistance - 10)}}
+    } 
+    else state
+
+eval (IncreaseRentalPackage) state = do
+  let baseDuration = fromMaybe (1) (fromString state.props.rentalData.baseDuration)
+      baseDistance = fromMaybe (1) (fromString state.props.rentalData.baseDistance)
+  continue state{props{rentalData{baseDuration = show (baseDuration + 1), baseDistance = show (baseDistance + 10)}}}
 
 eval _ state = continue state
 

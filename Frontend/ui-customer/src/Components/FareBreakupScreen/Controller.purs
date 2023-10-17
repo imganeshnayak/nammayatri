@@ -13,7 +13,7 @@
   the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
 
-module Components.RentalFareBreakupScreen.Controller where
+module Components.FareBreakupScreen.Controller where
 
 import Components.ChooseVehicle.Controller as ChooseVehicle
 import Components.LocationListItem as LocationListItem
@@ -34,13 +34,16 @@ import Foreign (Foreign)
 data Action = GoBack
             | PrimaryButtonActionController PrimaryButtonController.Action
 
-type RentalFareBreakupScreenState = {
+type FareBreakupScreenState = {
     rentalStage :: RentalStage
-  , specialZoneQuoteList :: Array ChooseVehicle.Config
   , homeScreenConfig :: AppConfig
+  , selectedQuote :: Array ChooseVehicle.Config
+  , dateAndTime :: String
+  , baseDuration :: String
+  , baseDistance :: String
 }
 
--- dummy_data :: RentalFareBreakupScreenState
+-- dummy_data :: FareBreakupScreenState
 -- dummy_data = {
 --     rentalStage : NotRental
 --   , specialZoneQuoteList : [
