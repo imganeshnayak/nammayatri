@@ -2447,4 +2447,4 @@ rentalPackageView push state =
   [ height MATCH_PARENT
   , width MATCH_PARENT
   , orientation VERTICAL
-  ] [ RateCard.view (push <<< RateCardAction) (rentalRateCardConfig state) ]
+  ] [ RateCard.view (push <<< RentalRateCardAction) (rentalRateCardConfig state) ]

@@ -622,5 +622,6 @@ const englishStrings = {
   "AC_SUV" : "AC SUV",
   "RIDE_TYPE" : "Ride Type",
   "ERNAKULAM_LIMIT_CHARGE": "Fare will be 1.5x if the pickup or destination lies outside Ernakulam corporation limits",
-  "SELECT_LOCATION_ON_MAP" : "Select location on map"
+  "SELECT_LOCATION_ON_MAP" : "Select location on map",
+  "BOOK_A_RENTAL" : "Book a Rental"
 }

@@ -640,8 +640,11 @@ data Action = NoAction
             | CalendarAction CalendarAction.Action
             | DecreaseRentalPackage
             | IncreaseRentalPackage
+            | RentalRateCardAction RateCard.Action
 
 eval :: Action -> HomeScreenState -> Eval Action ScreenOutput HomeScreenState
+
+eval (RentalRateCardAction RateCard.Close) state = continue state { props {showRentalPackagePopup = false}}
 
 eval (RentalScheduleRideAction (RentalScheduleRideController.GoBack)) state = do
   updateAndExit (state) (RentalScheduleRideScreen state)

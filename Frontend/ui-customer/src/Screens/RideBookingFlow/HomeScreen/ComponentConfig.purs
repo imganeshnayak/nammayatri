@@ -67,7 +67,7 @@ import Helpers.Utils as HU
 import JBridge as JB
 import Language.Types (STR(..))
 import MerchantConfig.Utils as MU
-import PrestoDOM (Accessiblity(..))
+import PrestoDOM (Accessiblity(..), imageWithFallback )
 import PrestoDOM.Types.DomAttributes (Corners(..))
 import PrestoDOM.Types.DomAttributes (Corners(..))
 import Resources.Constants (getKmMeter)
@@ -236,7 +236,7 @@ bookARentalButtonConfig state =
     config = PrimaryButton.config
     primaryButtonConfig' = config
       { textConfig
-        { text = ("Book a Rental")
+        { text = (getString BOOK_A_RENTAL)
         , width = MATCH_PARENT
         , gravity = LEFT
         , color = Color.black800
@@ -677,17 +677,6 @@ rateCardConfig state =
         }
   in
     rateCardConfig'
-
--- rentlalRateCardConfig :: ST.HomeScreenState -> RateCard.Config
--- rentlalRateCardConfig state =
---   let
---     config' = RateCard.config
---     rentalRateCardConfig' =
---       config'
---         { 
---         }
---   in
---     rentalRateCardConfig'
 
 yatriRateCardList :: String -> ST.HomeScreenState -> Array FareList
 yatriRateCardList vehicleVariant state = do
@@ -1368,22 +1357,18 @@ rentalRateCardConfig state =
     config' = RateCard.config
     rentalRateCardConfig' =
       config'
-        { nightCharges = state.data.rateCard.nightCharges
+        { rentalPackage = true
+        , rentalDetails {
+            title = "Rental Package"
+          }
         , nightShiftMultiplier = HU.toString (state.data.rateCard.nightShiftMultiplier)
-        , currentRateCardType = state.data.rateCard.currentRateCardType
-        , onFirstPage = state.data.rateCard.onFirstPage
-        , showDetails = state.data.config.searchLocationConfig.showRateCardDetails
+        , currentRateCardType = RentalPackage
         , alertDialogPrimaryColor = state.data.config.alertDialogPrimaryColor
-        , description = if state.data.rateCard.nightCharges then (getString NIGHT_TIME_CHARGES) else (getString DAY_TIME_CHARGES)
-        , buttonText = Just if state.data.rateCard.currentRateCardType == DefaultRateCard then (getString GOT_IT) else (getString GO_BACK_)
-        , driverAdditionsImage = if (state.data.config.autoVariantEnabled && state.data.rateCard.vehicleVariant == "AUTO_RICKSHAW") then "ny_ic_driver_addition_table2,https://assets.juspay.in/beckn/nammayatri/user/images/ny_ic_driver_addition_table2.png" 
-                                   else "ny_ic_driver_additions_yatri,https://assets.juspay.in/beckn/yatri/user/images/ny_ic_driver_additions_yatri.png" 
+        , buttonText = Just (getString GOT_IT)
+        , driverAdditionsImage = "ys_ic_ratecard," <> (getCommonAssetStoreLink FunctionCall) <> "ys_ic_ratecard.png"
         , applicableCharges = if state.data.rateCard.nightCharges && state.data.rateCard.vehicleVariant == "AUTO_RICKSHAW" then (getString NIGHT_TIMES_OF) <> (HU.toString (state.data.rateCard.nightShiftMultiplier)) <> (getString DAYTIME_CHARGES_APPLIED_AT_NIGHT)
                                  else (getString DAY_TIMES_OF) <> (HU.toString (state.data.rateCard.nightShiftMultiplier)) <> (getString DAYTIME_CHARGES_APPLICABLE_AT_NIGHT)
-        , title = case MU.getMerchant FunctionCall of
-                      MU.NAMMAYATRI -> getString RATE_CARD
-                      MU.YATRI -> getVehicleTitle state.data.rateCard.vehicleVariant
-                      _ -> ""
+        , title = "Rental Package"
         , fareList = case MU.getMerchant FunctionCall of
                       MU.NAMMAYATRI -> nyRateCardList state
                       MU.YATRI -> yatriRateCardList state.data.rateCard.vehicleVariant state
@@ -1393,16 +1378,7 @@ rentalRateCardConfig state =
           {key : "DRIVER_ADDITIONS", val : (getString DRIVER_ADDITIONS)},
           {key : "FARE_UPDATE_POLICY", val : (getString FARE_UPDATE_POLICY)}]
 
-        , additionalStrings = [
-          {key : "DRIVER_ADDITIONS_OPTIONAL", val : (getString DRIVER_ADDITIONS_OPTIONAL)},
-          {key : "THE_DRIVER_MAY_QUOTE_EXTRA_TO_COVER_FOR_TRAFFIC", val : (getString THE_DRIVER_MAY_QUOTE_EXTRA_TO_COVER_FOR_TRAFFIC)},
-          {key : "DRIVER_ADDITIONS_ARE_CALCULATED_AT_RATE", val : (if (state.data.rateCard.vehicleVariant /= "AUTO_RICKSHAW") 
-                                                                    then getString DRIVER_ADDITION_LIMITS_ARE_IN_INCREMENTS
-                                                                   else getString DRIVER_ADDITIONS_ARE_CALCULATED_AT_RATE)},
-          {key : "DRIVER_MAY_NOT_CHARGE_THIS_ADDITIONAL_FARE", val : (getString DRIVER_MAY_NOT_CHARGE_THIS_ADDITIONAL_FARE)},
-          {key : "FARE_UPDATE_POLICY", val : (getString FARE_UPDATE_POLICY)},
-          {key : "YOU_MAY_SEE_AN_UPDATED_FINAL_FARE_DUE_TO_ANY_OF_THE_BELOW_REASONS", val : (getString YOU_MAY_SEE_AN_UPDATED_FINAL_FARE_DUE_TO_ANY_OF_THE_BELOW_REASONS)},
-          {key : "REASON_CHANGE_IN_ROUTE", val : ("<span style=\"color:black;\">" <> (getString REASON_CHANGE_IN_ROUTE_A) <> "</span>" <> (getString REASON_CHANGE_IN_ROUTE_B))}]
+        , additionalStrings = []
           <> if state.data.rateCard.vehicleVariant == "AUTO_RICKSHAW" && (MU.getValueFromConfig "showChargeDesc") then [{key : "CHARGE_DESCRIPTION", val : (getString ERNAKULAM_LIMIT_CHARGE)}] else []
         }
   in

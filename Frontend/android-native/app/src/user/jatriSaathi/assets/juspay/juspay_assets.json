@@ -347,6 +347,8 @@
       "ys_ic_minus" : true,
       "ys_ic_plus" : true,
       "ys_ic_elipse" : true,
-      "ys_ic_divider" : true
+      "ys_ic_divider" : true,
+      "ys_ic_ratecard" : true,
+      "ys_ic_suv_right" : true     
    }
 }

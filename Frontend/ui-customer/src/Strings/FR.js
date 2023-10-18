@@ -510,5 +510,6 @@ export function getStringValue(key) {
    "RIDE_TYPE" : "Type de trajet",
     "PLEASE_ENABLE_LOCATION_PERMISSION" : "Veuillez activer les autorisations de localisation pour Namma Yatri depuis l'application des paramètres pour commencer à rechercher des trajets.",
     "ERNAKULAM_LIMIT_CHARGE" : "Le tarif sera de 1.5 x si la prise en charge ou la destination se situe en dehors des limites de la société Ernakulam",
-    "SELECT_LOCATION_ON_MAP" : "sélectionner l'emplacement sur la carte"
+    "SELECT_LOCATION_ON_MAP" : "sélectionner l'emplacement sur la carte",
+    "BOOK_A_RENTAL" : "Réserver une location"
   }

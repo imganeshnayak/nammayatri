@@ -619,5 +619,6 @@ const kannadaStrings = {
   "RIDE_TYPE" : "ರೈಡ್ ಪ್ರಕಾರ",
   "ERNAKULAM_LIMIT_CHARGE": "ಪಿಕಪ್ ಅಥವಾ ಗಮ್ಯಸ್ಥಾನವು ಎರ್ನಾಕುಲಂ ಕಾರ್ಪೊರೇಷನ್ ಮಿತಿಯಿಂದ ಹೊರಗಿದ್ದರೆ ದರವು 1.5x ಆಗಿರುತ್ತದೆ",
   "SELECT_LOCATION_ON_MAP" : "ನಕ್ಷೆಯಲ್ಲಿ ಸ್ಥಳವನ್ನು ಆಯ್ಕೆಮಾಡಿ",
-  "SPACIOUS" : "ವಿಶಾಲವಾದ"
+  "SPACIOUS" : "ವಿಶಾಲವಾದ",
+  "BOOK_A_RENTAL" : "ಬಾಡಿಗೆಯನ್ನು ಕಾಯ್ದಿರಿಸಿ"
 }
