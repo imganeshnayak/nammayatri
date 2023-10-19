@@ -542,6 +542,8 @@ data RentalStage = NotRental
                  | RentalFareBreakup
                  | RentalScheduleRide
                  | RentalSearchRides
+                 | RentalSchedule
+                 | RentalCancel
 
 derive instance rentalGenericStage :: Generic RentalStage _
 instance rentalEqStage :: Eq RentalStage where eq = genericEq

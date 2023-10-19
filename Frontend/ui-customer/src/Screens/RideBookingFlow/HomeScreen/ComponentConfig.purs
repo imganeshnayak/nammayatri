@@ -40,6 +40,7 @@ import Components.RatingCard as RatingCard
 import Components.FareBreakupScreen as FareBreakupScreen
 import Components.RequestInfoCard as RequestInfoCard
 import Components.RideCompletedCard as RideCompletedCard
+import Components.RentalScheduleRide as RentalScheduleRide
 import Components.SearchLocationModel as SearchLocationModel
 import Components.SearchLocationModel as SearchLocationModel
 import Components.SelectListModal as CancelRidePopUpConfig
@@ -50,10 +51,7 @@ import Data.Array as DA
 import Data.Either (Either(..))
 import Data.Int (toNumber)
 import Data.Int as INT
-import Data.Int as INT
 import Data.Maybe (Maybe(..), fromMaybe)
-import Data.String as DS
-import Data.String as DS
 import Data.String as DS
 import Effect (Effect)
 import Engineering.Helpers.Commons as EHC
@@ -72,7 +70,7 @@ import PrestoDOM.Types.DomAttributes (Corners(..))
 import PrestoDOM.Types.DomAttributes (Corners(..))
 import Resources.Constants (getKmMeter)
 import Resources.Constants (getKmMeter)
-import Screens.Types (DriverInfoCard, Stage(..), ZoneType(..), TipViewData, TipViewStage(..), TipViewProps)
+import Screens.Types (DriverInfoCard, Stage(..), ZoneType(..), TipViewData, TipViewStage(..), TipViewProps, RentalStage(..))
 import Screens.Types as ST
 import Storage (KeyStore(..), getValueToLocalStore, isLocalStageOn, setValueToLocalStore)
 import Styles.Colors as Color
@@ -1383,3 +1381,21 @@ rentalRateCardConfig state =
         }
   in
     rentalRateCardConfig'
+
+rentalScheduleRideConfig :: ST.HomeScreenState -> RentalScheduleRide.RentalScheduleState
+rentalScheduleRideConfig state =
+  let
+    config' = RentalScheduleRide.config
+    rentalScheduleRideConfig' = config'{
+      baseDuration = state.props.rentalData.baseDuration
+    , baseDistance = state.props.rentalData.baseDistance
+    , isCancelled = if (state.props.rentalStage == RentalCancel) then true else false
+    , primaryButton = {
+        text : if(state.props.rentalStage == RentalCancel) then "Try Again" else "Okay"
+      , cornerRadius : state.data.config.primaryButtonCornerRadius
+      , background : state.data.config.primaryBackground
+      , height : state.data.config.searchLocationConfig.primaryButtonHeight 
+      }
+    }
+  in
+    rentalScheduleRideConfig'

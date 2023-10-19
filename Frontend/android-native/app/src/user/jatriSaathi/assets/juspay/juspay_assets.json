@@ -349,6 +349,9 @@
       "ys_ic_elipse" : true,
       "ys_ic_divider" : true,
       "ys_ic_ratecard" : true,
-      "ys_ic_suv_right" : true     
+      "ys_ic_suv_right" : true,
+      "ys_ic_ride_scheduled" : true,
+      "ys_ic_alarm" : true,
+      "ys_ic_ride_cancelled" : true
    }
 }

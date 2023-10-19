@@ -42,7 +42,7 @@ import Language.Types (STR(..))
 import MerchantConfig.Utils (Merchant(..), getMerchant)
 import Prelude ((<>))
 import Prelude (Unit, bind, const, map, pure, unit, ($), (&&), (+), (-), (/), (/=), (<<<), (<>), (==), (||), not, discard)
-import PrestoDOM (Gravity(..), Length(..), Margin(..), Orientation(..), Accessiblity(..), Padding(..), PrestoDOM, Visibility(..), Accessiblity(..), accessibilityHint ,adjustViewWithKeyboard, afterRender, alignParentBottom, alpha, autoCorrectionType, background, clickable, color, cornerRadius, cursorColor, disableClickFeedback, editText, ellipsize, fontStyle, frameLayout, gravity, height, hint, hintColor, id, imageUrl, imageView, imageWithFallback, inputTypeI, lineHeight, linearLayout, margin, onBackPressed, onChange, onClick, onFocus, orientation, padding, relativeLayout, scrollBarY, scrollView, singleLine, stroke, text, textSize, textView, visibility, weight, width, accessibility, fontSize)
+import PrestoDOM (Gravity(..), Length(..), Margin(..), Orientation(..), Accessiblity(..), Padding(..), PrestoDOM, Visibility(..), Accessiblity(..), FontWeight(..), accessibilityHint ,adjustViewWithKeyboard, afterRender, alignParentBottom, alpha, autoCorrectionType, background, clickable, color, cornerRadius, cursorColor, disableClickFeedback, editText, ellipsize, fontStyle, frameLayout, gravity, height, hint, hintColor, id, imageUrl, imageView, imageWithFallback, inputTypeI, lineHeight, linearLayout, margin, onBackPressed, onChange, onClick, onFocus, orientation, padding, relativeLayout, scrollBarY, scrollView, singleLine, stroke, text, textSize, textView, visibility, weight, width, accessibility, fontSize, fontWeight)
 import PrestoDOM.Animation as PrestoAnim
 import Resources.Constants (getDelayForAutoComplete)
 import Screens.Types (RentalStage(..), SearchLocationModelType(..), LocationListItemState)
@@ -74,12 +74,7 @@ view push state =
             , accessibility ENABLE
             , imageWithFallback $ "ny_ic_chevron_left" 
             ]
-          -- , textView $
-          --   [
-
-          --   ]
         ]
-      -- , mapWithIndex (\index item) state.data.specialZone
       , linearLayout
           [ height WRAP_CONTENT
           , width MATCH_PARENT
@@ -97,7 +92,7 @@ view push state =
       , descriptionView push state "BaseFare"
       , descriptionHeadingView push state "TollFee"
       , descriptionView push state "TollFee"
-      , primaryButtonView push state
+      , noteAndPrimaryButtonView push state
     ]
 
 primaryButtonConfig :: FareBreakupScreenState -> PrimaryButton.Config
@@ -115,7 +110,7 @@ primaryButtonConfig state =
       , cornerRadius = state.homeScreenConfig.primaryButtonCornerRadius
       , background = state.homeScreenConfig.primaryBackground
       , margin = (MarginHorizontal 16 16)
-      , isClickable = if (state.rentalStage == RentalSearchLocation) then true else false
+      , isClickable = true
       , id = "RentalConfirmBooking"
       }
   in primaryButtonConfig'
@@ -126,7 +121,7 @@ descriptionHeadingView push state heading =
     [ width MATCH_PARENT
     , height WRAP_CONTENT
     , text case heading of
-              "BookingTime" -> "BookingTime from" <> state.dateAndTime <> "(" <> state.baseDuration <> "hrs)"
+              "BookingTime" -> "Booking from" <> state.dateAndTime <> "(" <> state.baseDuration <> "hrs)"
               "BookingDistance" -> "Included kms: " <> state.baseDuration
               "BaseFare" -> "Non AC Taxi Rental Base Fare: ₹150"
               "TollFee" -> "Tolls and parking fees"
@@ -134,7 +129,7 @@ descriptionHeadingView push state heading =
     , color Color.black800
     , margin (Margin 24 0 24 0)
     , fontSize FontSize.a_14
-    ]<> FontStyle.subHeading2 TypoGraphy)
+    ]<> FontStyle.body1 TypoGraphy)
  
 descriptionView :: forall w. (Action -> Effect Unit) -> FareBreakupScreenState -> String -> PrestoDOM (Effect Unit) w
 descriptionView push state description =
@@ -148,11 +143,11 @@ descriptionView push state description =
                 "TollFee" -> "Any additional charges will be billed after your trip is completed."
                 _ -> ""
     , color Color.black700
-    , margin (Margin 24 0 24 24)
+    , margin (Margin 24 4 24 24)
     ] <> FontStyle.paragraphText TypoGraphy)
 
-primaryButtonView :: forall w. (Action -> Effect Unit) -> FareBreakupScreenState -> PrestoDOM (Effect Unit) w
-primaryButtonView push state =
+noteAndPrimaryButtonView :: forall w. (Action -> Effect Unit) -> FareBreakupScreenState -> PrestoDOM (Effect Unit) w
+noteAndPrimaryButtonView push state =
   linearLayout
     [ height MATCH_PARENT
     , width MATCH_PARENT
@@ -160,5 +155,20 @@ primaryButtonView push state =
     , weight 0.0
     , gravity BOTTOM
     , margin (MarginBottom 14)
-    ][ PrimaryButton.view (push <<< PrimaryButtonActionController)(primaryButtonConfig state)
+    , onClick push $ const NoAction
+    ][ linearLayout 
+      [ height WRAP_CONTENT
+      , width WRAP_CONTENT
+      , orientation HORIZONTAL
+      , margin $ Margin 16 0 16 32
+      ]
+      [ (textView $ [
+          text "Note: "
+        , color Color.black900
+        ] <> FontStyle.body3 TypoGraphy)
+        , (textView $ [
+            text "A flat night time fee of ₹150 will be charged if your ride starts/ends anytime between 10 PM and 5 AM"
+        ] <> FontStyle.body3 TypoGraphy)
+      ]
+    , PrimaryButton.view (push <<< PrimaryButtonActionController) (primaryButtonConfig state)
     ]

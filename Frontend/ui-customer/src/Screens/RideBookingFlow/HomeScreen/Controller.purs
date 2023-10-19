@@ -641,13 +641,14 @@ data Action = NoAction
             | DecreaseRentalPackage
             | IncreaseRentalPackage
             | RentalRateCardAction RateCard.Action
+            | RentalCancelledRideAction RentalScheduleRideController.Action
 
 eval :: Action -> HomeScreenState -> Eval Action ScreenOutput HomeScreenState
 
 eval (RentalRateCardAction RateCard.Close) state = continue state { props {showRentalPackagePopup = false}}
 
-eval (RentalScheduleRideAction (RentalScheduleRideController.GoBack)) state = do
-  updateAndExit (state) (RentalScheduleRideScreen state)
+eval (RentalScheduleRideAction (RentalScheduleRideController.PrimaryButtonActionController PrimaryButtonController.OnClick)) state =
+  continue state{props{rentalStage = RentalCancel}}
 
 eval (RentalChooseVehicleAC (ChooseVehicleController.OnSelect config)) state = do
   -- let updatedState = state{props{rxtalFareBreakupScreen updatedState)
@@ -670,6 +671,11 @@ eval (RentalFareBreakupActionController (RentalFareBreakupController.GoBack)) st
         _ <- pure $ hideKeyboardOnNavigation true
         pure $ BackPressed
     ]
+
+eval ( RentalFareBreakupActionController (RentalFareBreakupController.PrimaryButtonActionController PrimaryButtonController.OnClick)) state = do 
+  _ <- pure $ performHapticFeedback unit
+  let updatedState = state{props{rentalStage = RentalSchedule}}
+  updateAndExit (updatedState) (RentalScheduleRideScreen updatedState)
 
 eval SearchForSelectedLocation state = do
   let currentStage = if state.props.searchAfterEstimate then TryAgain else FindingEstimate

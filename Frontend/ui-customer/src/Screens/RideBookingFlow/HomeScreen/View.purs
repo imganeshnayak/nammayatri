@@ -379,9 +379,11 @@ view push state =
             , if state.props.showDisabilityPopUp &&  (getValueToLocalStore DISABILITY_UPDATED == "true") then disabilityPopUpView push state else emptyTextView state
             -- , if state.props.rentalStage /= NotRental then rentalScreensView push state else emptyTextView state
             , if state.props.rentalStage == RentalSlab then rentalSlabScreenView push state else emptyTextView state
-            , if state.props.rentalStage == RentalSlab || state.props.bookingStage == Rental then rentalConfirmAndBookView push state else emptyTextView state
+            , if (state.props.rentalStage == RentalSlab || state.props.bookingStage == Rental) && state.props.rentalStage /= RentalFareBreakup && state.props.rentalStage /= RentalSchedule then rentalConfirmAndBookView push state else emptyTextView state
             , if state.props.rentalStage == RentalFareBreakup then rentalFareBreakupView push state else emptyTextView state
             , if state.props.showRentalPackagePopup then rentalPackageView push state else emptyTextView state
+            , if state.props.rentalStage == RentalSchedule then rentalScheduleRideView push state else emptyTextView state
+            , if state.props.rentalStage == RentalCancel then rentalCancelledView push state else emptyTextView state
             -- , CalendarView.view (push <<< CalendarAction) CalendarController.config
             ]
         ]
@@ -406,12 +408,19 @@ rentalFareBreakupView push state =
     width MATCH_PARENT
   ] [FareBreakupScreen.view (push <<< RentalFareBreakupActionController) $ rentalFareBreakupScreenViewState state]
 
--- rentalScheduleRideView :: forall w . (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM (Effect Unit) w
--- rentalScheduleRideView push state =
---   linearLayout[
---     height MATCH_PARENT,
---     width MATCH_PARENT
---   ] [RentalScheduleRideScreen.view push $ searchLocationModelViewState state]
+rentalScheduleRideView :: forall w . (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM (Effect Unit) w
+rentalScheduleRideView push state =
+  linearLayout[
+    height MATCH_PARENT,
+    width MATCH_PARENT
+  ] [RentalScheduleRideScreen.view (push <<< RentalScheduleRideAction) $ rentalScheduleRideConfig state]
+
+rentalCancelledView :: forall w . (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM (Effect Unit) w
+rentalCancelledView push state =
+  linearLayout [
+    height MATCH_PARENT
+  , width MATCH_PARENT
+  ] [ RentalScheduleRideScreen.view (push <<< RentalCancelledRideAction) $ rentalScheduleRideConfig state ]
 
 callSupportPopUpView :: forall w . (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM (Effect Unit) w
 callSupportPopUpView push state =
@@ -2429,17 +2438,17 @@ isAnyOverlayEnabled :: HomeScreenState -> Boolean
 isAnyOverlayEnabled state = ( state.data.settingSideBar.opened /= SettingSideBar.CLOSED || state.props.emergencyHelpModal || state.props.cancelSearchCallDriver || state.props.isCancelRide || state.props.isLocationTracking || state.props.callSupportPopUp || state.props.showCallPopUp || state.props.showRateCard || (state.props.showShareAppPopUp && ((getValueFromConfig "isShareAppEnabled") == "true")))
 
 ------------------------ RentalScreensView ---------------------------
-rentalScreensView :: forall w. (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM(Effect Unit) w
-rentalScreensView push state = 
-  linearLayout
-  [ height MATCH_PARENT
-  , width MATCH_PARENT
-  , orientation VERTICAL 
-  ] [ if state.props.rentalStage == RentalSlab then rentalSlabScreenView push state else emptyTextView state
-    , if state.props.rentalStage == RentalSlab then rentalConfirmAndBookView push state else emptyTextView state
-    , if state.props.rentalStage == RentalFareBreakup then rentalFareBreakupView push state else emptyTextView state
-    -- , if state.props.rentalStage == RentalScheduleRide then rentalScheduleRideView push state else emptyTextView state 
-  ]
+-- rentalScreensView :: forall w. (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM(Effect Unit) w
+-- rentalScreensView push state = 
+--   linearLayout
+--   [ height MATCH_PARENT
+--   , width MATCH_PARENT
+--   , orientation VERTICAL 
+--   ] [ if state.props.rentalStage == RentalSlab then rentalSlabScreenView push state else emptyTextView state
+--     , if state.props.rentalStage == RentalSlab then rentalConfirmAndBookView push state else emptyTextView state
+--     , if state.props.rentalStage == RentalFareBreakup then rentalFareBreakupView push state else emptyTextView state
+--     -- , if state.props.rentalStage == RentalScheduleRide then rentalScheduleRideView push state else emptyTextView state 
+--   ]
 
 rentalPackageView ::  forall w. (Action -> Effect Unit) -> HomeScreenState -> PrestoDOM(Effect Unit) w
 rentalPackageView push state =

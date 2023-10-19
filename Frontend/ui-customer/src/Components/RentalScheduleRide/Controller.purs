@@ -33,96 +33,35 @@ import Foreign (Foreign)
 data Action = GoBack
             | PrimaryButtonActionController PrimaryButtonController.Action
 
-type SearchLocationModelState = {
-    isSearchLocation :: SearchLocationModelType
-  , locationList :: Array LocationListItemState
-  , savedlocationList :: Array LocationListItemState
-  , isSource :: Maybe Boolean
-  , source :: String
-  , destination :: String
-  , isSrcServiceable :: Boolean
-  , isDestServiceable :: Boolean
-  , isRideServiceable :: Boolean
-  , homeScreenConfig :: AppConfig
-  , logField :: Object Foreign
-  , rentalStage :: RentalStage
+type RentalScheduleState = {
+    isCancelled :: Boolean
+  , dateAndTime :: String
+  , price :: String
+  , address :: String
+  , baseDuration :: String
+  , baseDistance :: String
+  , primaryButton :: PrimaryButtonConfig
 }
 
-dummy_data :: Array LocationListItemState
-dummy_data = [
-    { prefixImageUrl : "ny_ic_briefcase," <> (getAssetStoreLink FunctionCall) <> "ny_ic_briefcase.png"
-    , postfixImageUrl : "ny_ic_fav," <> (getAssetStoreLink FunctionCall) <> "ny_ic_fav.png"
-    , postfixImageVisibility : true
-    , title : "Work"
-    , subTitle : "KIAL Rd, Devanahalli, Bengaluru,  Karnataka"
-    , placeId : Nothing
-    , lat : Nothing
-    , lon : Nothing
-    , description : ""
-    , tag : ""
-    , tagType : Just (show LOC_LIST)
-    , cardType : Nothing
-    , address : ""
-    , tagName : ""
-    , isEditEnabled : true
-    , savedLocation : ""
-    , placeName : ""
-    , isClickable : true
-    , alpha : 1.0
-    , fullAddress : LocationListItem.dummyAddress
-    , locationItemType : Nothing
-    , distance : Nothing
-    , showDistance : Just false
-    , actualDistance : 0
+type PrimaryButtonConfig = {
+    text :: String
+  , background :: String
+  , height :: Int
+  , cornerRadius :: Number
+}
+
+config :: RentalScheduleState
+config = { 
+    isCancelled : false
+  , dateAndTime : "6:55"
+  , price : "420"
+  , address : ""
+  , baseDuration : "8"
+  , baseDistance : "80"
+  , primaryButton : {
+        text : "Okay"
+      , background : "#2C2F3A"
+      , height : 60
+      , cornerRadius : 8.0
     }
-  , { prefixImageUrl : "ny_ic_recent_search," <> (getAssetStoreLink FunctionCall) <> "ny_ic_recent_search.png"
-    , postfixImageUrl : "ny_ic_fav," <> (getAssetStoreLink FunctionCall) <> "ny_ic_fav.png"
-    , postfixImageVisibility : true
-    , title : "Work"
-    , subTitle : "KIAL Rd, Devanahalli, Bengaluru,  Karnataka"
-    , placeId : Nothing
-    , lat : Nothing
-    , lon : Nothing
-    , description : ""
-    , tag : ""
-    , tagType : Just (show LOC_LIST)
-    , cardType : Nothing
-    , address : ""
-    , tagName : ""
-    , isEditEnabled : true
-    , savedLocation : ""
-    , placeName : ""
-    , isClickable : true
-    , alpha : 1.0
-    , fullAddress : LocationListItem.dummyAddress
-    , locationItemType : Nothing
-    , distance : Nothing
-    , showDistance : Just false
-    , actualDistance : 0
-    }
-  , { prefixImageUrl : "ny_ic_loc_grey," <> (getAssetStoreLink FunctionCall) <> "ny_ic_loc_grey.png"
-    , postfixImageUrl : "ny_ic_fav," <> (getAssetStoreLink FunctionCall) <> "ny_ic_fav.png"
-    , postfixImageVisibility : true
-    , title : "Work"
-    , subTitle : "KIAL Rd, Devanahalli, Bengaluru,  Karnataka"
-    , placeId : Nothing
-    , lat : Nothing
-    , lon : Nothing
-    , description : ""
-    , tag : ""
-    , tagType : Just (show LOC_LIST)
-    , cardType : Nothing
-    , address : ""
-    , tagName : ""
-    , isEditEnabled : true
-    , savedLocation : ""
-    , placeName : ""
-    , isClickable : true
-    , alpha : 1.0
-    , fullAddress : LocationListItem.dummyAddress
-    , locationItemType : Nothing
-    , distance : Nothing
-    , showDistance : Just false
-    , actualDistance : 0
-    }
-]
+  }

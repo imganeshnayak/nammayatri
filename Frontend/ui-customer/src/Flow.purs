@@ -1446,7 +1446,6 @@ homeScreenFlow = do
       _ <- UI.homeScreen
       homeScreenFlow
     RENTAL_SCHEDULE_RIDE_SCREEN state -> do
-      _  <- UI.homeScreen
       homeScreenFlow
     _ -> homeScreenFlow
 
