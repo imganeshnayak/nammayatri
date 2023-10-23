@@ -804,75 +804,76 @@ primaryButtonConfigCancel state = let
 ---------------------------- selectSlabView ---------------------------------
 selectSlabView :: forall w. (Action -> Effect Unit) -> SearchLocationModelState -> PrestoDOM (Effect Unit) w 
 selectSlabView push state =
+  let slabViewVisible = state.isSource == Nothing && state.bookingStage == Rental
+  in
   linearLayout [ 
-        height WRAP_CONTENT
-      , width MATCH_PARENT
-      , orientation VERTICAL
-      , margin $ Margin 16 32 16 32
-      , visibility if state.isSource == Nothing && state.bookingStage == Rental then VISIBLE else GONE
-      ][  linearLayout
-          [ width MATCH_PARENT
-          , height WRAP_CONTENT
-          , gravity CENTER_VERTICAL
-          ][  textView $
-              [ text "Select Package"
-              , color Color.black800
-              ] <> FontStyle.body1 TypoGraphy
-            , imageView
-              [ imageWithFallback $ "ny_ic_info_blue," <> (getCommonAssetStoreLink FunctionCall) <> "ny_ic_info_blue.png"
-              , width $ V 22
-              , height $ V 22
-              , onClick push $ const RentalPackageAC
-              ]  
-           ]
-        ,  linearLayout
-           [ width MATCH_PARENT
-           , height WRAP_CONTENT
-           , orientation HORIZONTAL
-           , gravity CENTER_VERTICAL
-           , margin $ MarginTop 12
-          --  , margin $ MarginVertical 22 22
-           , stroke $ "1," <> Color.grey900
-           , cornerRadius 8.0
-           ][ textView $
-              [ text "-"
-              , color Color.black800
-              , width WRAP_CONTENT
-              , height WRAP_CONTENT
-              , weight 0.1
-              , gravity LEFT
-              , margin $ MarginBottom 4
-              , padding $ Padding 32 16 16 16
-              , onClick push (const DecreaseRentalPackage)
-              ] <> FontStyle.title1 TypoGraphy
-            , linearLayout
-              [ width WRAP_CONTENT
-              , height WRAP_CONTENT
-              , weight 1.0
-              , gravity CENTER
-              ][ textView $
-                 [ text $ state.rentalData.baseDuration <> "hr" <> " · "
-                 , color Color.black800
-                 , width WRAP_CONTENT
-                 , height WRAP_CONTENT
-                 ] <> FontStyle.h1 TypoGraphy
-               , textView $
-                 [ text $ state.rentalData.baseDistance <> "km"
-                 , color Color.black600
-                 , width WRAP_CONTENT
-                 , height WRAP_CONTENT
-                 ] <> FontStyle.h1 TypoGraphy
-               ]
-            , textView $
-              [ text "+"
-              , color Color.black800
-              , width WRAP_CONTENT
-              , height WRAP_CONTENT
-              , weight 0.1
-              , gravity RIGHT
-              , margin $ MarginBottom 4
-              , padding $ Padding 16 16 32 16
-              , onClick push (const IncreaseRentalPackage)
-              ] <> FontStyle.title1 TypoGraphy
-            ] 
+    height WRAP_CONTENT
+  , width MATCH_PARENT
+  , orientation VERTICAL
+  , margin $ Margin 16 32 16 32
+  , visibility if slabViewVisible then VISIBLE else GONE
+  ][  linearLayout
+      [ width MATCH_PARENT
+      , height WRAP_CONTENT
+      , gravity CENTER_VERTICAL
+      ][  textView $
+          [ text "Select Package"
+          , color Color.black800
+          ] <> FontStyle.body1 TypoGraphy
+        , imageView
+          [ imageWithFallback $ "ny_ic_info_blue," <> (getCommonAssetStoreLink FunctionCall) <> "ny_ic_info_blue.png"
+          , width $ V 22
+          , height $ V 22
+          , onClick push $ const RentalPackageAC
+          ]  
        ]
+    ,  linearLayout
+       [ width MATCH_PARENT
+       , height WRAP_CONTENT
+       , orientation HORIZONTAL
+       , gravity CENTER_VERTICAL
+       , margin $ MarginTop 12
+       , stroke $ "1," <> Color.grey900
+       , cornerRadius 8.0
+       ][ textView $
+          [ text "-"
+          , color Color.black800
+          , width WRAP_CONTENT
+          , height WRAP_CONTENT
+          , weight 0.1
+          , gravity LEFT
+          , margin $ MarginBottom 4
+          , padding $ Padding 32 16 16 16
+          , onClick push (const DecreaseRentalPackage)
+          ] <> FontStyle.title1 TypoGraphy
+        , linearLayout
+          [ width WRAP_CONTENT
+          , height WRAP_CONTENT
+          , weight 1.0
+          , gravity CENTER
+          ][ textView $
+             [ text $ state.rentalData.baseDuration <> "hr" <> " · "
+             , color Color.black800
+             , width WRAP_CONTENT
+             , height WRAP_CONTENT
+             ] <> FontStyle.h1 TypoGraphy
+           , textView $
+             [ text $ state.rentalData.baseDistance <> "km"
+             , color Color.black600
+             , width WRAP_CONTENT
+             , height WRAP_CONTENT
+             ] <> FontStyle.h1 TypoGraphy
+           ]
+        , textView $
+          [ text "+"
+          , color Color.black800
+          , width WRAP_CONTENT
+          , height WRAP_CONTENT
+          , weight 0.1
+          , gravity RIGHT
+          , margin $ MarginBottom 4
+          , padding $ Padding 16 16 32 16
+          , onClick push (const IncreaseRentalPackage)
+          ] <> FontStyle.title1 TypoGraphy
+        ] 
+   ]

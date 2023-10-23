@@ -136,7 +136,7 @@ screen initialState =
                     Just index -> do
                       _ <- pure $ requestKeyboardShow (if index then (getNewIDWithTag "SourceEditText") else (getNewIDWithTag "DestinationEditText"))
                       pure unit
-                    Nothing -> pure unit --push $ ClearEditTextFocus "SourceEditText"
+                    Nothing -> push $ ClearEditTextFocus "SourceEditText"
                       -- _ <- pure $ hideKeyboardOnNavigation true
                       -- _ <- pure $ clearFocus (getNewIDWithTag "SourceEditText")
                       -- pure unit

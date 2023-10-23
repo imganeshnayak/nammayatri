@@ -860,34 +860,32 @@ homeScreenFlow = do
                                                 lng : (item.point)^._lon,
                                                 address : item.address
                                               }) srcSpecialLocation.gates
-        (ServiceabilityResDestination destServiceabilityResp) <- Remote.destServiceabilityBT (Remote.makeServiceabilityReqForDest bothLocationChangedState.props.destinationLat bothLocationChangedState.props.destinationLong)
-        let destServiceable = destServiceabilityResp.serviceable
         let pickUpLoc = if length pickUpPoints > 0 then (if state.props.defaultPickUpPoint == "" then fetchDefaultPickupPoint pickUpPoints state.props.sourceLat state.props.sourceLong else state.props.defaultPickUpPoint) else (fromMaybe HomeScreenData.dummyLocation (state.data.nearByPickUpPoints!!0)).place
         modifyScreenState $ HomeScreenStateType (\homeScreen -> bothLocationChangedState{data{polygonCoordinates = fromMaybe "" sourceServiceabilityResp.geoJson,nearByPickUpPoints=pickUpPoints},props{isSpecialZone =  (sourceServiceabilityResp.geoJson) /= Nothing, confirmLocationCategory = if length pickUpPoints > 0 then state.props.confirmLocationCategory else "", defaultPickUpPoint = pickUpLoc, findingQuotesProgress = 0.0, sourceSelectedOnMap = false }})
-        if (addToRecents) then
-          addLocationToRecents item bothLocationChangedState sourceServiceabilityResp.serviceable destServiceabilityResp.serviceable
-          else pure unit
         (GlobalState globalState) <- getState
         let updateScreenState = globalState.homeScreen
-        if (not srcServiceable && (updateScreenState.props.sourceLat /= -0.1 && updateScreenState.props.sourceLong /= -0.1) && (updateScreenState.props.sourceLat /= 0.0 && updateScreenState.props.sourceLong /= 0.0)) then do
-          let recentList = recentDistance updateScreenState.data.recentSearchs.predictionArray updateScreenState.props.sourceLat updateScreenState.props.sourceLong
-          modifyScreenState $ HomeScreenStateType (\homeScreen -> updateScreenState{props{isSrcServiceable = false, isRideServiceable= false, isSource = Just true}, data {recentSearchs {predictionArray = recentList}}})
-          homeScreenFlow
-        else if state.props.bookingStage == Rental then do
-          -- modifyScreenState $ HomeScreenStateType (\homeScreen -> updateScreenState{props{ isRideServiceable= true, isSrcServiceable = true, isDestServiceable = true, isSource = Nothing} })
-          modifyScreenState $ HomeScreenStateType (\homeScreen -> updateScreenState{props{isSrcServiceable = true, isRideServiceable = true, isDestServiceable = true, isSource = Nothing} })
-          homeScreenFlow
-        else if ((not destServiceable) && (updateScreenState.props.destinationLat /= 0.0 && updateScreenState.props.destinationLat /= -0.1) && (updateScreenState.props.destinationLong /= 0.0 && bothLocationChangedState.props.destinationLong /= -0.1)) then do
-          if (getValueToLocalStore LOCAL_STAGE == "HomeScreen") then do
-            _ <- pure $ toast (getString LOCATION_UNSERVICEABLE)
-            pure unit
+        case state.props.bookingStage of
+          Rental        -> do
+            let rideNotServiceable = not srcServiceable && (updateScreenState.props.sourceLat /= -0.1 && updateScreenState.props.sourceLong /= -0.1) && (updateScreenState.props.sourceLat /= 0.0 && updateScreenState.props.sourceLong /= 0.0)
+                editTextFocus = if srcServiceable then Nothing else updateScreenState.props.isSource
+            modifyScreenState $ HomeScreenStateType (\homeScreen -> updateScreenState{props{isSrcServiceable = srcServiceable, isRideServiceable = not rideNotServiceable, isDestServiceable = true, isSource = editTextFocus} })
+            homeScreenFlow
+          NormalBooking -> do
+            (ServiceabilityResDestination destServiceabilityResp) <- Remote.destServiceabilityBT (Remote.makeServiceabilityReqForDest bothLocationChangedState.props.destinationLat bothLocationChangedState.props.destinationLong)
+            let destServiceable = destServiceabilityResp.serviceable
+                rideNotServiceable = not srcServiceable && (updateScreenState.props.sourceLat /= -0.1 && updateScreenState.props.sourceLong /= -0.1) && (updateScreenState.props.sourceLat /= 0.0 && updateScreenState.props.sourceLong /= 0.0)
+                                    || not destServiceable && (updateScreenState.props.destinationLat /= 0.0 && updateScreenState.props.destinationLat /= -0.1) && (updateScreenState.props.destinationLong /= 0.0 && bothLocationChangedState.props.destinationLong /= -0.1)
+            if addToRecents then addLocationToRecents item bothLocationChangedState sourceServiceabilityResp.serviceable destServiceabilityResp.serviceable
             else pure unit
-          let recentList = (recentDistance updateScreenState.data.recentSearchs.predictionArray updateScreenState.props.sourceLat updateScreenState.props.sourceLong)
-          modifyScreenState $ HomeScreenStateType (\homeScreen -> updateScreenState{props{isDestServiceable = false, isRideServiceable = false,isSource = Just false, isSrcServiceable = true}, data {recentSearchs {predictionArray = recentList}}})
-          homeScreenFlow
-        else modifyScreenState $ HomeScreenStateType (\homeScreen -> updateScreenState{props{ isRideServiceable= true, isSrcServiceable = true, isDestServiceable = true}, data {recentSearchs {predictionArray = (recentDistance updateScreenState.data.recentSearchs.predictionArray updateScreenState.props.sourceLat updateScreenState.props.sourceLong)}}})
-        rideSearchFlow "NORMAL_FLOW"
-
+            case rideNotServiceable of
+              true  -> do
+                let recentList = recentDistance updateScreenState.data.recentSearchs.predictionArray updateScreenState.props.sourceLat updateScreenState.props.sourceLong
+                modifyScreenState $ HomeScreenStateType (\homeScreen -> updateScreenState{props{isSrcServiceable = srcServiceable, isDestServiceable = destServiceable, isRideServiceable = false, isSource = Just $ not srcServiceable}
+                                                                                        , data {recentSearchs {predictionArray = recentList}}})
+                homeScreenFlow
+              false -> do
+                modifyScreenState $ HomeScreenStateType (\homeScreen -> updateScreenState{props{ isRideServiceable = true, isSrcServiceable = true, isDestServiceable = true}, data {recentSearchs {predictionArray = (recentDistance updateScreenState.data.recentSearchs.predictionArray updateScreenState.props.sourceLat updateScreenState.props.sourceLong)}}})
+                rideSearchFlow "NORMAL_FLOW"
     SEARCH_LOCATION input state -> do
       (SearchLocationResp searchLocationResp) <- Remote.searchLocationBT (Remote.makeSearchLocationReq input ( state.props.sourceLat) ( state.props.sourceLong) getSearchRadius (EHC.getMapsLanguageFormat $ getValueToLocalStore LANGUAGE_KEY) "")
       let event =
