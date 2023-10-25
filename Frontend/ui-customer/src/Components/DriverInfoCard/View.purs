@@ -64,10 +64,17 @@ view push state =
   ][ linearLayout[
        height WRAP_CONTENT
       , width MATCH_PARENT
-      , gravity RIGHT
       , padding $ PaddingHorizontal 16 16
       , visibility if state.data.config.driverInfoConfig.showTrackingButton then VISIBLE else GONE
-      ][supportButton push state]
+      ]
+      [ if state.props.bookingStage == Rental && state.props.currentStage == RideStarted then sosView push state else dummyView push
+      , linearLayout
+        [ height WRAP_CONTENT
+        , weight 1.0
+        , clickable false
+        ][]
+      , supportButton push state
+      ]
     , mapOptionsView push state
     , messageNotificationView push state
     , driverInfoViewSpecialZone push state
@@ -307,7 +314,8 @@ mapOptionsView push state =
   , orientation HORIZONTAL
   , gravity CENTER_VERTICAL
   , padding $ PaddingHorizontal 16 16
-  ][  if state.props.currentSearchResultType == QUOTES && state.props.currentStage == RideAccepted then dummyView push else sosView push state
+  ][ if state.props.bookingStage == Rental && state.props.currentStage == RideStarted then endOTPView push state else if state.props.currentSearchResultType == QUOTES && state.props.currentStage == RideAccepted then dummyView push else sosView push state
+    --  if state.props.currentSearchResultType == QUOTES && state.props.currentStage == RideAccepted then dummyView push else sosView push state
     , linearLayout
       [ height WRAP_CONTENT
       , weight 1.0
@@ -320,7 +328,7 @@ mapOptionsView push state =
       , margin $ MarginVertical 5 5
       ][ if state.props.currentSearchResultType == QUOTES && state.props.currentStage == RideAccepted then navigateView push state else (textView[height $ V 0])
         , if state.props.currentSearchResultType == QUOTES && state.props.currentStage == RideAccepted then dummyView push else if state.data.config.driverInfoConfig.showTrackingButton then locationTrackButton push state else supportButton push state
-      ]
+      ] 
     ]
 
 
@@ -691,7 +699,7 @@ driverInfoView push state =
               , otpAndWaitView push state
               , rentalRideView push state
               , rentalTimeAndOdometerView push state
-              , separator (Margin 16 (if(state.props.currentStage == RideStarted && state.data.config.nyBrandingVisibility) then 16 else 0) 16 0) (V 1) Color.grey900 $ (state.props.currentStage == RideAccepted && not state.data.config.showPickUpandDrop)
+              , separator (Margin 16 (if state.props.bookingStage == Rental || (state.props.currentStage == RideStarted && state.data.config.nyBrandingVisibility) then 16 else 0) 16 0) (V 1) Color.grey900 $ state.props.bookingStage == Rental || (state.props.currentStage == RideAccepted && not state.data.config.showPickUpandDrop)
               , driverDetailsView push state
               , separator (MarginHorizontal 16 16) (V 1) Color.grey900 true
               , paymentMethodView push state (getString RIDE_FARE) true
@@ -1093,7 +1101,7 @@ sourceToDestinationConfig state = let
       , width = V 14
       }
     , destinationTextConfig {
-        text = state.data.destination
+        text = if(state.props.bookingStage == Rental) then "" else state.data.destination
       , maxLines = 1
       , textStyle = FontStyle.Body1
       , margin = MarginLeft 10
@@ -1240,61 +1248,33 @@ getVehicleImage variant vehicleDetail = do
 rentalRideView :: forall w. (Action -> Effect Unit) -> DriverInfoCardState -> PrestoDOM (Effect Unit) w
 rentalRideView push state = 
   linearLayout
-    [ height WRAP_CONTENT
-    , width MATCH_PARENT
-    , gravity CENTER_HORIZONTAL
-    , margin $ MarginHorizontal 16 16
-    , visibility if(state.props.bookingStage == Rental && state.props.currentStage /= RideStarted) then VISIBLE else GONE
-    ] [ linearLayout
-        [ height WRAP_CONTENT
-        , width MATCH_PARENT
-        , gravity CENTER
-        ][
-          linearLayout
-          [ width WRAP_CONTENT
-          , height WRAP_CONTENT
-          , cornerRadius 9.0
-          , background Color.white900
-          , margin $ MarginHorizontal 16 16
-          , gravity CENTER
-          , padding $ Padding 10 8 10 8
-          , weight 1.0
-          , stroke $ "1,"<> Color.grey900
-          , orientation HORIZONTAL
-          ] [ textView (
-              [ width WRAP_CONTENT
-              , height WRAP_CONTENT
-              , accessibility ENABLE
-              , textSize FontSize.a_14
-              , text $ "Rental Ride"
-              , color Color.black700
-              , margin $ MarginRight 8
-              ] <> FontStyle.body1 TypoGraphy) 
-            , textView(
-              [ width WRAP_CONTENT
-              , height WRAP_CONTENT
-              , accessibility ENABLE
-              , textSize FontSize.a_14
-              , text $ state.props.rentalData.baseDuration <> "hr"
-              , color Color.black800
-              ] <> FontStyle.subHeading1 TypoGraphy)
-            , imageView 
-                [ imageWithFallback $ "ny_ic_elipse," <> (getAssetStoreLink FunctionCall) <> "ny_ic_elipse.png"
-                , height $ V 3
-                , width $ V 3
-                , margin $ MarginHorizontal 6 6
-                ]
-            , textView(
-              [ width WRAP_CONTENT
-              , height WRAP_CONTENT
-              , accessibility ENABLE
-              , textSize FontSize.a_14
-              , text $ state.props.rentalData.baseDistance <>"km"
-              , color Color.black800
-              ] <> FontStyle.subHeading1 TypoGraphy)
-          ]
-        ]
-    ]
+  [ width MATCH_PARENT
+  , height WRAP_CONTENT
+  , cornerRadius 9.0
+  , background Color.white900
+  , margin $ MarginHorizontal 16 16
+  , gravity CENTER
+  , padding $ Padding 16 8 16 8
+  , weight 1.0
+  , stroke $ "1,"<> Color.grey900
+  , visibility if(state.props.bookingStage == Rental && state.props.currentStage /= RideStarted) then VISIBLE else GONE
+  , orientation HORIZONTAL
+  ] [ textView (
+      [ width WRAP_CONTENT
+      , height WRAP_CONTENT
+      , textSize FontSize.a_14
+      , text $ "Rental Ride"
+      , color Color.black700
+      , margin $ MarginRight 8
+      ] <> FontStyle.body1 TypoGraphy) 
+    , textView $
+      [ width WRAP_CONTENT
+      , height WRAP_CONTENT
+      , textSize FontSize.a_14
+      , text $ state.props.rentalData.baseDuration <> "hr  ·  " <> state.props.rentalData.baseDistance <> "km"
+      , color Color.black800
+      ] <> FontStyle.subHeading1 TypoGraphy
+  ]
 
 rentalTimeAndOdometerView :: forall w. (Action -> Effect Unit) -> DriverInfoCardState -> PrestoDOM (Effect Unit) w
 rentalTimeAndOdometerView push state = 
@@ -1304,11 +1284,12 @@ rentalTimeAndOdometerView push state =
     , cornerRadius 9.0
     , background Color.white900
     , padding $ Padding 16 8 16 8
-    , margin $ Margin 16 8 16 8
+    , margin $ Margin 16 16 16 0
     , stroke $ "1,"<> Color.grey900
     , orientation HORIZONTAL
     , afterRender push $ const NoAction
     , weight 0.0
+    , visibility if(state.props.bookingStage == Rental && state.props.currentStage == RideStarted) then VISIBLE else GONE
     ] [ rideTimeView push state
       , separatorView true
       , startingODOView push state
@@ -1341,7 +1322,7 @@ rideTimeView push state =
           textView $
             [ height WRAP_CONTENT
             , width WRAP_CONTENT
-            , text "1:59hr / "
+            , text "1:59hr"
             , color Color.black900
             , ellipsize true
             , singleLine true
@@ -1350,8 +1331,8 @@ rideTimeView push state =
           , textView $
             [ height WRAP_CONTENT
             , width WRAP_CONTENT
-            , text $ state.props.rentalData.baseDuration <> "hr"
-            , color Color.black800
+            , text $ " / " <> state.props.rentalData.baseDuration <> "hr"
+            , color Color.black600
             , ellipsize true
             , singleLine true
             , fontSize FontSize.a_14
@@ -1401,3 +1382,30 @@ separatorView visibility' =
       , height MATCH_PARENT
       ][]
     ]
+
+endOTPView :: forall w . (Action -> Effect Unit) -> DriverInfoCardState -> PrestoDOM (Effect Unit) w
+endOTPView push state = 
+  linearLayout
+  [ height WRAP_CONTENT
+  , width WRAP_CONTENT
+  , orientation HORIZONTAL
+  , background Color.white900
+  , stroke $ "1,"<> Color.grey900
+  , margin $ MarginTop 10
+  , cornerRadius 32.0
+  , padding $ Padding 12 4 4 4
+  ] 
+  [ textView $
+    [ text "OTP"
+    , color Color.black700
+    ] <> FontStyle.body15 TypoGraphy
+  , textView $
+    [ text "7891"
+    , color Color.black900
+    , background Color.grey700
+    , cornerRadius 16.0
+    , padding $ Padding 12 8 8 8
+    , cornerRadius 10.0
+    , margin $ MarginLeft 4
+    ] <> FontStyle.body15 TypoGraphy
+  ]

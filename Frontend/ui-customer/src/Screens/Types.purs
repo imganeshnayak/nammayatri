@@ -537,19 +537,6 @@ derive instance genericStage :: Generic Stage _
 instance eqStage :: Eq Stage where eq = genericEq
 instance showStage :: Show Stage where show = genericShow
 
-data RentalStage = NotRental
-                 | RentalSearchLocation
-                 | RentalSlab
-                 | RentalFareBreakup
-                 | ScheduleRide
-                 | RentalSearchRides
-                 | RentalSchedule
-                 | RentalCancel
-
-derive instance rentalGenericStage :: Generic RentalStage _
-instance rentalEqStage :: Eq RentalStage where eq = genericEq
-instance rentalShowStage :: Show RentalStage where show = genericShow
-
 data BookingStage = NormalBooking
                   | Rental
                   

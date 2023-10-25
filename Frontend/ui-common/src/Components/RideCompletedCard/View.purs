@@ -230,7 +230,7 @@ customerSideBottomCardsView config push =
   ][
     customerIssueView config push
   , customerRatingDriverView config push
-  , rentalTripDetailsView config push
+  -- , rentalTripDetailsView config push
   ]
 
 
@@ -403,6 +403,7 @@ rentalTripDetailsView config push =
   , weight 0.0
   , stroke $ "1,"<> Color.grey900
   , orientation VERTICAL
+  -- , visibility if(state.props.)
   ] [ rentalTripRowView config push "RIDETIME"
     , rentalTripRowView config push "RIDEDISTANCE"
     , separatorView

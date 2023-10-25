@@ -106,7 +106,7 @@ import Effect.Class (liftEffect)
 import Screens.HomeScreen.ScreenData as HomeScreenData
 import Types.App (defaultGlobalState)
 import Screens.RideBookingFlow.HomeScreen.Config (setTipViewData, reportIssueOptions, metersToKm)
-import Screens.Types (TipViewData(..) , TipViewProps(..), RateCardDetails, PermissionScreenStage(..), RentalStage(..))
+import Screens.Types (TipViewData(..) , TipViewProps(..), RateCardDetails, PermissionScreenStage(..))
 import Engineering.Helpers.Suggestions (getMessageFromKey, getSuggestionsfromKey)
 import PrestoDOM.Properties (sheetState) as PP
 import Screens.RideBookingFlow.HomeScreen.Config(reportIssueOptions)
@@ -661,16 +661,6 @@ eval (RentalCancelledRideAction (ScheduleRideController.SecondaryButtonActionCon
 eval (SearchLocationModelActionController (SearchLocationModelController.RentalPackageAC)) state = do
   _ <- pure $ performHapticFeedback unit
   continue state{props{rentalData{showRentalPackagePopup = true}}}
-
--- eval (RentalChooseVehicleAC (ChooseVehicleController.OnSelect config)) state = do
-  -- let updatedState = state{props{rxtalFareBreakupScreen updatedState)
-  -- let updatedQuotes = map (\item -> item{activeIndex = config.index}) state.data.specialZoneQuoteList
-  --     newState = state{data{specialZoneQuoteList = updatedQuotes}}
-  -- continue newState{data{specialZoneSelectedQuote = Just config.id ,specialZoneSelectedVariant = Just config.vehicleVariant }}
-
--- eval (SearchLocationModelActionController (SearchLocationModelController.RentalScheduleAction)) state = do 
-  -- let updatedState = state{props{rentalStage = ScheduleRide}}
-  -- updateAndExit (updatedState) (RentalScheduleRideScreen updatedState)
 
 eval (RentalFareBreakupActionController (RentalFareBreakupController.GoBack)) state = do
   _ <- pure $ performHapticFeedback unit
@@ -2043,6 +2033,16 @@ eval (ChooseYourRideAction (ChooseYourRideController.ChooseVehicleAC (ChooseVehi
                                     , vehicleVariant = vehicleVariant
                                     , currentRateCardType = DefaultRateCard
                                     }}}
+                                    
+eval (ChooseYourRideAction (ChooseYourRideController.PrimaryButtonActionController (PrimaryButtonController.OnClick))) state = do
+  _ <- pure $ setValueToLocalStore FARE_ESTIMATE_DATA state.data.selectedEstimatesObject.price
+  if state.data.currentSearchResultType == QUOTES then  do
+    _ <- pure $ updateLocalStage ConfirmingRide
+    exit $ ConfirmRide state{props{currentStage = ConfirmingRide}}
+  else do
+    _ <- pure $ updateLocalStage FindingQuotes
+    let updatedState = state{props{currentStage = FindingQuotes, searchExpire = (getSearchExpiryTime "LazyCheck")}}
+    updateAndExit (updatedState) (GetQuotes updatedState)
 
 eval (ChooseYourRideAction ChooseYourRideController.NoAction) state =
   continue state{ props{ defaultPickUpPoint = "" } }

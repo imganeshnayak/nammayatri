@@ -17,7 +17,7 @@ module Components.DriverInfoCard.Controller where
 
 import Components.PrimaryButton as PrimaryButtonController
 import Components.SourceToDestination as SourceToDestinationController
-import Screens.Types(Stage(..), ZoneType(..), SearchResultType, BookingStage(..), RentalConfig(..), RentalStage(..))
+import Screens.Types(Stage(..), ZoneType(..), SearchResultType, BookingStage(..), RentalConfig(..))
 import Data.Maybe(Maybe)
 import Components.ChatView as ChatView
 import MerchantConfig.Types

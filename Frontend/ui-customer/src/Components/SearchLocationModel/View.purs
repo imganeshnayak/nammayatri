@@ -48,7 +48,7 @@ import PrestoDOM.Animation as PrestoAnim
 import PrestoDOM.Properties (cornerRadii, sheetState, focusable, focusableInTouchMode, fontSize)
 import PrestoDOM.Types.DomAttributes (Corners(..))
 import Resources.Constants (getDelayForAutoComplete)
-import Screens.Types (RentalStage(..), SearchLocationModelType(..), LocationListItemState, BookingStage(..))
+import Screens.Types (SearchLocationModelType(..), LocationListItemState, BookingStage(..))
 import Storage (KeyStore(..), getValueToLocalStore)
 import Styles.Colors as Color
 import Data.String as DS

@@ -384,7 +384,6 @@ view push state =
             , if state.props.showRateCard then (rateCardView push state) else emptyTextView state
             , if state.props.callSupportPopUp then callSupportPopUpView push state else emptyTextView state
             , if state.props.showDisabilityPopUp &&  (getValueToLocalStore DISABILITY_UPDATED == "true") then disabilityPopUpView push state else emptyTextView state
-            -- , if state.props.rentalStage == RentalCancel then rentalCancelledView push state else emptyTextView state
             , if state.props.bookingStage == Rental then rentalBookingView push state else emptyTextView state
             ]
         ]

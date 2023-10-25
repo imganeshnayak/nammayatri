@@ -15,7 +15,7 @@
 
 module Components.SourceToDestination.View where
 
-import Prelude (Unit, ($), (<>), (/), (<), (>), (==))
+import Prelude (Unit, ($), (<>), (/), (<), (>), (==), (/=))
 import Effect (Effect)
 import Components.SourceToDestination.Controller (Action,Config)
 import PrestoDOM (Gravity(..), Length(..), Orientation(..), PrestoDOM, Margin(..), Padding(..), Accessiblity(..), Visibility(..), background, color, ellipsize, fontStyle, relativeLayout, frameLayout, gravity, height, imageUrl, imageView, layoutGravity, linearLayout, margin, maxLines, orientation, padding, text, textSize, textView, visibility, width, cornerRadius, stroke, margin, imageWithFallback, id, accessibilityHint, accessibility)
@@ -47,6 +47,7 @@ view push config =
         , orientation VERTICAL
         , width MATCH_PARENT
         , margin $ MarginTop config.separatorMargin
+        , visibility if config.destinationTextConfig.text /= "" then VISIBLE else GONE
         ][SeparatorView.view $ separatorConfig config
       , destinationLayout config]
       , sourceLayout config
@@ -110,6 +111,7 @@ destinationLayout config =
   , height WRAP_CONTENT
   , width MATCH_PARENT
   , margin config.destinationMargin
+  , visibility if config.destinationTextConfig.text /= "" then VISIBLE else GONE
   ][  linearLayout
       [ height MATCH_PARENT
       , width WRAP_CONTENT
@@ -158,6 +160,7 @@ distanceLayout config =
   [ width WRAP_CONTENT
   , height $ getDistanceLayoutHeight config
   , gravity CENTER_VERTICAL
+  , visibility if config.destinationTextConfig.text /= "" then VISIBLE else GONE
   ]
   [linearLayout
   [ width WRAP_CONTENT
