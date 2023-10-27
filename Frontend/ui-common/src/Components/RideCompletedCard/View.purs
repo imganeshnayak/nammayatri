@@ -246,8 +246,8 @@ customerSideBottomCardsView config push =
 ---------------------------------------------------- customerIssueView ------------------------------------------------------------------------------------------------------------------------------------------
 customerIssueView :: forall w. Config -> (Action -> Effect Unit) -> PrestoDOM (Effect Unit) w
 customerIssueView config push =
-  scrollView [
-    width MATCH_PARENT 
+  (if os == "IOS" then linearLayout else scrollView) 
+  [ width MATCH_PARENT 
   , height WRAP_CONTENT
   , visibility $ if config.customerIssueCard.issueFaced then VISIBLE else GONE
   ][
@@ -267,7 +267,7 @@ customerIssueView config push =
         , gravity CENTER
         , margin $ MarginTop 15
         , orientation VERTICAL
-        , visibility if config.customerIssueCard.selectedYesNoButton == 0 then VISIBLE else GONE
+        , visibility if config.customerIssueCard.selectedYesNoButton == if config.customerIssueCard.isNightRide then 1 else 0 then VISIBLE else GONE
         ](mapWithIndex (\ index item ->
             linearLayout
             [ height WRAP_CONTENT
@@ -296,9 +296,9 @@ customerIssueView config push =
                 , height $ V 1
                 , background Color.grey900
                 , margin $ MarginBottom 15
-                , visibility if index == 0 then VISIBLE else GONE
+                , visibility if index == 0 && config.customerIssueCard.showCallSupport then VISIBLE else GONE
                 ][]
-            ]) [config.customerIssueCard.option1Text, config.customerIssueCard.option2Text])
+            ]) ([config.customerIssueCard.option1Text] <> if config.customerIssueCard.showCallSupport then [config.customerIssueCard.option2Text] else []))
     ]
   ]
 
@@ -339,6 +339,7 @@ customerRatingDriverView config push =
   [ width MATCH_PARENT
   , height WRAP_CONTENT
   , orientation VERTICAL
+  , visibility if config.customerBottomCard.visible then VISIBLE else GONE
   , cornerRadius 8.0
   , stroke $ "1,"<>Color.grey800
   , padding $ Padding 10 10 10 10

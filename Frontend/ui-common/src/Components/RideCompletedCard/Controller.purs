@@ -102,7 +102,9 @@ config = {
     option1Text : "",
     option2Text : "",
     yesText : "",
-    noText : ""
+    noText : "",
+    isNightRide : false,
+    showCallSupport : false
   },
   customerBottomCard : {
     visible : false,
@@ -157,9 +159,11 @@ type CustomerIssueCard = {
   title :: String,
   subTitle :: String,
   option1Text :: String,
+  showCallSupport :: Boolean,
   option2Text :: String,
   yesText :: String,
-  noText :: String
+  noText :: String,
+  isNightRide :: Boolean
 }
 
 type TopCard = {

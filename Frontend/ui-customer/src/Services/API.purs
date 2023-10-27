@@ -901,6 +901,7 @@ newtype RideBookingRes = RideBookingRes {
   tripTerms :: Array String,
   id :: String,
   updatedAt :: String,
+  hasNightIssue :: Maybe Boolean,
   bookingDetails :: RideBookingAPIDetails ,
   fromLocation ::  BookingLocationAPIEntity,
   merchantExoPhone :: String,
@@ -1553,6 +1554,7 @@ newtype SendIssueReq = SendIssueReq
     contactEmail :: Maybe String
   , rideBookingId :: Maybe String
   , issue :: Issue
+  , nightSafety :: Maybe Boolean
   }
 
 newtype Issue = Issue

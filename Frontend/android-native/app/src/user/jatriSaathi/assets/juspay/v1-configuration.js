@@ -55,6 +55,7 @@ window.getMerchantConfig = function () {
     "isGradient" : "false",
     "primaryTextColor": "#FCC32C",
     "primaryBackground": "#2C2F3A",
+    "showCallSupport" : true,
     "estimateConfirmText": "Request a NammaYatri Ride",
     "autoConfirmingLoaderColor": "#80B2FF",
     "primaryButtonCornerRadius" : 8.0,

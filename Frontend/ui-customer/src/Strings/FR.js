@@ -497,7 +497,11 @@ const frenchStrings = {
   "RIDE_TYPE" : "Type de trajet",
   "ERNAKULAM_LIMIT_CHARGE" : "Le tarif sera de 1.5 x si la prise en charge ou la destination se situe en dehors des limites de la société Ernakulam",
   "SELECT_LOCATION_ON_MAP" : "sélectionner l'emplacement sur la carte",
-  "PLEASE_ENABLE_LOCATION_PERMISSION" : "Veuillez activer les autorisations de localisation depuis l'application des paramètres pour commencer à rechercher des courses."
+  "PLEASE_ENABLE_LOCATION_PERMISSION" : "Veuillez activer les autorisations de localisation depuis l'application des paramètres pour commencer à rechercher des courses.",
+  "DID_YOU_HAVE_A_SAFE_JOURNEY" : "Avez-vous fait un bon voyage ?",
+  "TRIP_WAS_SAFE_AND_WORRY_FREE" : "Nous aimerions nous assurer que votre voyage se déroule en toute sécurité et sans souci.",
+  "DRIVER_BEHAVED_INAPPROPRIATELY" : "Le conducteur s'est comporté de manière inappropriée",
+  "I_DID_NOT_FEEL_SAFE" : "je ne me sentais pas en sécurité"
 }
 
 export function getStringValue(key) {

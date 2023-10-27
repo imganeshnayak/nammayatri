@@ -82,9 +82,9 @@ import Screens.RideBookingFlow.HomeScreen.Config (getTipViewData, setTipViewData
 import Screens.RideBookingFlow.HomeScreen.Config (specialLocationIcons, specialLocationConfig, updateRouteMarkerConfig)
 import Screens.SavedLocationScreen.Controller (getSavedLocationForAddNewAddressScreen)
 import Screens.SelectLanguageScreen.ScreenData as SelectLanguageScreenData
-import Screens.Types (CardType(..), AddNewAddressScreenState(..), SearchResultType(..), CurrentLocationDetails(..), CurrentLocationDetailsWithDistance(..), DeleteStatus(..), HomeScreenState, LocItemType(..), PopupType(..), SearchLocationModelType(..), Stage(..), LocationListItemState, LocationItemType(..), NewContacts, NotifyFlowEventType(..), FlowStatusData(..), ErrorType(..), ZoneType(..), TipViewData(..),TripDetailsGoBackType(..), Location, DisabilityT(..), UpdatePopupType(..) , PermissionScreenStage(..))
+import Screens.Types (CardType(..), AddNewAddressScreenState(..), SearchResultType(..), CurrentLocationDetails(..), CurrentLocationDetailsWithDistance(..), DeleteStatus(..), HomeScreenState, LocItemType(..), PopupType(..), SearchLocationModelType(..), Stage(..), LocationListItemState, LocationItemType(..), NewContacts, NotifyFlowEventType(..), FlowStatusData(..), ErrorType(..), ZoneType(..), TipViewData(..), TripDetailsGoBackType(..), Location, DisabilityT(..), UpdatePopupType(..) , PermissionScreenStage(..))
 import Screens.Types (Gender(..)) as Gender
-import Services.API (AddressGeometry(..), BookingLocationAPIEntity(..), CancelEstimateRes(..), ConfirmRes(..), ContactDetails(..), DeleteSavedLocationReq(..), FlowStatus(..), FlowStatusRes(..), GatesInfo(..), Geometry(..), GetDriverLocationResp(..), GetEmergContactsReq(..), GetEmergContactsResp(..), GetPlaceNameResp(..), GetProfileRes(..), LatLong(..), LocationS(..), LogOutReq(..), LogOutRes(..), PlaceName(..), ResendOTPResp(..), RideAPIEntity(..), RideBookingAPIDetails(..), RideBookingDetails(..), RideBookingListRes(..), RideBookingRes(..), Route(..), SavedLocationReq(..), SavedLocationsListRes(..), SearchLocationResp(..), SearchRes(..), ServiceabilityRes(..), SpecialLocation(..), TriggerOTPResp(..), UserSosRes(..), VerifyTokenResp(..), ServiceabilityResDestination(..), SelectEstimateRes(..), UpdateProfileReq(..), OnCallRes(..), Snapped(..), AddressComponents(..), FareBreakupAPIEntity(..), GetDisabilityListResp(..), Disability(..), PersonStatsRes(..))
+import Services.API (AddressGeometry(..), BookingLocationAPIEntity(..), CancelEstimateRes(..), ConfirmRes(..), ContactDetails(..), DeleteSavedLocationReq(..), FlowStatus(..), FlowStatusRes(..), GatesInfo(..), Geometry(..), GetDriverLocationResp(..), GetEmergContactsReq(..), GetEmergContactsResp(..), GetPlaceNameResp(..), GetProfileRes(..), LatLong(..), LocationS(..), LogOutReq(..), LogOutRes(..), PlaceName(..), ResendOTPResp(..), RideAPIEntity(..), RideBookingAPIDetails(..), RideBookingDetails(..), RideBookingListRes(..), RideBookingRes(..), Route(..), SavedLocationReq(..), SavedLocationsListRes(..), SearchLocationResp(..), SearchRes(..), ServiceabilityRes(..), SpecialLocation(..), TriggerOTPResp(..), UserSosRes(..), VerifyTokenResp(..), ServiceabilityResDestination(..), SelectEstimateRes(..), UpdateProfileReq(..), OnCallRes(..), Snapped(..), AddressComponents(..), FareBreakupAPIEntity(..), GetDisabilityListResp(..), Disability(..), PersonStatsRes(..), SendIssueRes(..))
 import Services.API (AuthType(..), AddressGeometry(..), BookingLocationAPIEntity(..), CancelEstimateRes(..), ConfirmRes(..), ContactDetails(..), DeleteSavedLocationReq(..), FlowStatus(..), FlowStatusRes(..), GatesInfo(..), Geometry(..), GetDriverLocationResp(..), GetEmergContactsReq(..), GetEmergContactsResp(..), GetPlaceNameResp(..), GetProfileRes(..), LatLong(..), LocationS(..), LogOutReq(..), LogOutRes(..), PlaceName(..), ResendOTPResp(..), RideAPIEntity(..), RideBookingAPIDetails(..), RideBookingDetails(..), RideBookingListRes(..), RideBookingRes(..), Route(..), SavedLocationReq(..), SavedLocationsListRes(..), SearchLocationResp(..), SearchRes(..), ServiceabilityRes(..), SpecialLocation(..), TriggerOTPResp(..), UserSosRes(..), VerifyTokenResp(..), ServiceabilityResDestination(..), TriggerSignatureOTPResp(..), User(..), OnCallRes(..))
 import Services.Backend as Remote
 import Services.Config (getBaseUrl)
@@ -334,10 +334,12 @@ currentRideFlow rideAssigned = do
               else pure unit
             when (isNothing currRideListItem.rideRating) $ do
               when (resp.status /= "CANCELLED" && length listResp.list > 0) $ do
+                let nightSafetyFlow = not (fromMaybe true resp.hasNightIssue) && ((withinTimeRange "21:00:00" "06:00:00" (convertUTCtoISC(fromMaybe "" resp.rideStartTime) "HH:mm:ss")) || (withinTimeRange "21:00:00" "06:00:00" (convertUTCtoISC(fromMaybe "" resp.rideEndTime) "HH:mm:ss")))
                 modifyScreenState $ HomeScreenStateType (\homeScreen → homeScreen{
                     props { currentStage = RideCompleted
                           , estimatedDistance = contents.estimatedDistance
-                          , zoneType = getSpecialTag resp.specialLocationTag}
+                          , zoneType = getSpecialTag resp.specialLocationTag
+                          , nightSafetyFlow = nightSafetyFlow}
                   , data { rideRatingState
                           { driverName = currRideListItem.driverName
                           , rideId = currRideListItem.id
@@ -371,7 +373,7 @@ currentRideFlow rideAssigned = do
                             price = resp.estimatedTotalFare,
                             rideId = currRideListItem.id
                           }
-                          , ratingViewState { rideBookingRes = (RideBookingRes resp)}
+                          , ratingViewState { rideBookingRes = (RideBookingRes resp), issueFacedView = nightSafetyFlow}
                           }
                 })
                 updateLocalStage RideCompleted
@@ -1050,10 +1052,11 @@ homeScreenFlow = do
                                         let (RideAPIEntity ride) = fromMaybe dummyRideAPIEntity (resp.rideList !! 0)
                                         let finalAmount =  getFinalAmount (RideBookingRes resp)
                                         let differenceOfDistance = fromMaybe 0 contents.estimatedDistance - (fromMaybe 0 ride.chargeableRideDistance)
+                                        let nightSafetyFlow = not (fromMaybe true resp.hasNightIssue) && ((withinTimeRange "21:00:00" "06:00:00" (convertUTCtoISC(fromMaybe "" resp.rideStartTime) "HH:mm:ss")) || (withinTimeRange "21:00:00" "06:00:00" (convertUTCtoISC(fromMaybe "" resp.rideEndTime) "HH:mm:ss")))
                                         lift $ lift $ triggerRideStatusEvent notification (Just finalAmount) (Just state.props.bookingId) $ getScreenFromStage state.props.currentStage
                                         setValueToLocalStore PICKUP_DISTANCE "0"
                                         liftFlowBT $ logEventWithMultipleParams logField_ "ny_rider_ride_completed" (rideCompletedDetails (RideBookingRes resp))
-                                        modifyScreenState $ HomeScreenStateType (\homeScreen -> homeScreen{data{startedAt = convertUTCtoISC (fromMaybe "" resp.rideStartTime ) "h:mm A", startedAtUTC = fromMaybe "" resp.rideStartTime ,endedAt = convertUTCtoISC (fromMaybe "" resp.rideEndTime ) "h:mm A", finalAmount = finalAmount, rideRatingState {driverName = ride.driverName, rideId = ride.id , distanceDifference = differenceOfDistance} , ratingViewState { rideBookingRes = (RideBookingRes resp)}, driverInfoCardState {initDistance = Nothing}},props{currentStage = RideCompleted, estimatedDistance = contents.estimatedDistance}})
+                                        modifyScreenState $ HomeScreenStateType (\homeScreen -> homeScreen{data{startedAt = convertUTCtoISC (fromMaybe "" resp.rideStartTime ) "h:mm A", startedAtUTC = fromMaybe "" resp.rideStartTime ,endedAt = convertUTCtoISC (fromMaybe "" resp.rideEndTime ) "h:mm A", finalAmount = finalAmount, rideRatingState {driverName = ride.driverName, rideId = ride.id , distanceDifference = differenceOfDistance} , ratingViewState { rideBookingRes = (RideBookingRes resp), issueFacedView = nightSafetyFlow}, driverInfoCardState {initDistance = Nothing}},props{currentStage = RideCompleted, estimatedDistance = contents.estimatedDistance, nightSafetyFlow = nightSafetyFlow}})
                                         homeScreenFlow
                                         else homeScreenFlow
             "CANCELLED_PRODUCT"   -> do -- REMOVE POLYLINES
@@ -1469,9 +1472,11 @@ homeScreenFlow = do
         modifyScreenState $ HomeScreenStateType (\homeScreen -> state{ data {ratingViewState { issueFacedView = false} }})
         homeScreenFlow
        else do
-        _ <- Remote.sendIssueBT (Remote.makeSendIssueReq  Nothing (Just state.props.bookingId) (fromMaybe "" state.data.ratingViewState.issueReason) state.data.ratingViewState.issueDescription )
+        let bookingId = if state.props.bookingId == "" then state.data.rideRatingState.bookingId else state.props.bookingId
+            isNightSafety = Just $ state.props.nightSafetyFlow
+        _ <- Remote.sendIssueBT (Remote.makeSendIssueReq  Nothing (Just bookingId) (fromMaybe "" state.data.ratingViewState.issueReason) state.data.ratingViewState.issueDescription isNightSafety)
         _ <- pure $ toast $ getString YOUR_ISSUE_HAS_BEEN_REPORTED
-        modifyScreenState $ HomeScreenStateType (\homeScreen -> state{ data {ratingViewState { issueFacedView = false, openReportIssue = false} }})
+        modifyScreenState $ HomeScreenStateType (\homeScreen -> state{ data {ratingViewState { issueFacedView = false, openReportIssue = false} }, props {nightSafetyFlow = false}})
         homeScreenFlow
     RIDE_DETAILS_SCREEN state -> do
       tripDetailsScreenFlow Home
@@ -1582,10 +1587,10 @@ getFinalAmount (RideBookingRes resp) =
 
 tripDetailsScreenFlow :: TripDetailsGoBackType ->  FlowBT String Unit
 tripDetailsScreenFlow fromMyRides = do
-  (GlobalState state) <- getState
+  (GlobalState globalState) <- getState
   config <- getAppConfig Constants.appConfig
   logField_ <- lift $ lift $ getLogFields
-  expiryTime <- pure $ (getExpiryTime state.tripDetailsScreen.data.selectedItem.rideEndTimeUTC isForLostAndFound)
+  expiryTime <- pure $ getExpiryTime globalState.tripDetailsScreen.data.selectedItem.rideEndTimeUTC isForLostAndFound
   modifyScreenState $ TripDetailsScreenStateType (\tripDetailsScreen -> tripDetailsScreen {props{fromMyRides = fromMyRides, canConnectWithDriver = (expiryTime <= 86400)}, data{config = config}}) -- expiryTime < 24hrs or 86400 seconds
   flow <- UI.tripDetailsScreen
   case flow of
@@ -1595,8 +1600,13 @@ tripDetailsScreenFlow fromMyRides = do
       myRidesScreenFlow newState.myRidesScreen.props.fromNavBar
     ON_SUBMIT state -> do
       liftFlowBT $ logEventWithParams logField_ "ny_user_issue_reported" "Description" (state.data.message)
-      _ <- Remote.sendIssueBT (Remote.makeSendIssueReq  Nothing (Just state.data.selectedItem.bookingId) state.data.message state.data.message )
+      let bookingId = if fromMyRides == Home then Just globalState.homeScreen.data.rideRatingState.bookingId else Just state.data.selectedItem.bookingId
+          isNightSafety = Just $ globalState.homeScreen.props.nightSafetyFlow
+      _ <- Remote.sendIssueBT (Remote.makeSendIssueReq  Nothing bookingId state.data.message state.data.message isNightSafety)
       modifyScreenState $ TripDetailsScreenStateType (\tripDetailsScreen -> tripDetailsScreen {props{issueReported = true}})
+      if globalState.homeScreen.props.nightSafetyFlow then do 
+        modifyScreenState $ HomeScreenStateType (\homeScreen -> homeScreen {data {ratingViewState {issueFacedView = false}}, props{nightSafetyFlow = false}}) 
+      else pure unit
       tripDetailsScreenFlow state.props.fromMyRides
     GO_TO_INVOICE updatedState -> do
       liftFlowBT $ logEventWithMultipleParams logField_ "ny_user_invoice_clicked" $ [ { key : "Pickup", value : unsafeToForeign updatedState.data.selectedItem.source},
@@ -1618,7 +1628,7 @@ tripDetailsScreenFlow fromMyRides = do
       resp <- Remote.callDriverBT updatedState.data.selectedItem.rideId
       void $ lift $ lift $ toggleLoader false
       pure $ toast (getString REQUEST_RECEIVED_WE_WILL_CALL_YOU_BACK_SOON)
-      _ <- Remote.sendIssueBT (Remote.makeSendIssueReq  (Just (MU.getValueFromConfig "SUPPORT_EMAIL")) (Just updatedState.data.selectedItem.rideId) "LOSTANDFOUND" "LOST AND FOUND" )
+      _ <- Remote.sendIssueBT (Remote.makeSendIssueReq  (Just (MU.getValueFromConfig "SUPPORT_EMAIL")) (Just updatedState.data.selectedItem.rideId) "LOSTANDFOUND" "LOST AND FOUND" $ Just false)
       tripDetailsScreenFlow updatedState.props.fromMyRides
 
 
@@ -1638,7 +1648,7 @@ contactUsScreenFlow = do
   flow <- UI.contactUsScreen
   case flow of
     GO_TO_HOME_FROM_CONTACT state -> do
-      _ <- Remote.sendIssueBT (Remote.makeSendIssueReq (Just state.data.email) Nothing state.data.description state.data.subject )
+      _ <- Remote.sendIssueBT (Remote.makeSendIssueReq (Just state.data.email) Nothing state.data.description state.data.subject $ Just false)
       modifyScreenState $ HomeScreenStateType (\homeScreen -> homeScreen {  data{settingSideBar{opened = SettingSideBarController.CLOSED}}})
       homeScreenFlow
   pure unit
@@ -1664,7 +1674,7 @@ helpAndSupportScreenFlow = do
       modifyScreenState $ HelpAndSupportScreenStateType (\helpAndSupportScreen -> updatedState)
       helpAndSupportScreenFlow
     DELETE_USER_ACCOUNT updatedState -> do
-      _ <- Remote.sendIssueBT (Remote.makeSendIssueReq (Just updatedState.data.email) Nothing "Request To Delete Account" updatedState.data.description )
+      _ <- Remote.sendIssueBT (Remote.makeSendIssueReq (Just updatedState.data.email) Nothing "Request To Delete Account" updatedState.data.description $ Just false)
       modifyScreenState $ HelpAndSupportScreenStateType (\helpAndSupportScreen -> helpAndSupportScreen { props{showDeleteAccountView = true}, data {accountStatus = DEL_REQUESTED}})
       helpAndSupportScreenFlow
 

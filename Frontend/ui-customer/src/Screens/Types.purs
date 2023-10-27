@@ -699,6 +699,7 @@ type HomeScreenStateProps =
   , canSendSuggestion :: Boolean
   , sheetState :: BottomSheetState
   , showDisabilityPopUp :: Boolean
+  , nightSafetyFlow :: Boolean 
   , isChatNotificationDismissed :: Boolean
   , searchLocationModelProps :: SearchLocationModelProps
   , flowWithoutOffers :: Boolean

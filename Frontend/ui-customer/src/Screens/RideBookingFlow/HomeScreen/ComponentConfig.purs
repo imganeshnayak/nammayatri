@@ -384,7 +384,7 @@ reportIssuePopUpConfig state =
     reportIssueConfig = CancelRidePopUpConfig.config
     reportIssueConfig' =
       reportIssueConfig
-        { selectionOptions = reportIssueOptions state
+        { selectionOptions = if state.props.nightSafetyFlow then safetyIssueOptions "" else reportIssueOptions state
         , primaryButtonTextConfig
           { firstText = getString GO_BACK_
           , secondText = getString SUBMIT
@@ -1173,12 +1173,14 @@ rideCompletedCardConfig state = let
           issueFaced = state.data.ratingViewState.issueFacedView,
           selectedYesNoButton = state.data.ratingViewState.selectedYesNoButton,
           reportIssuePopUpConfig = reportIssuePopUpConfig state,
-          title = (getString DID_YOU_FACE_ANY_ISSUE),
-          subTitle = (getString WE_NOTICED_YOUR_RIDE_ENDED_AWAY),
+          title = if state.props.nightSafetyFlow then getString DID_YOU_HAVE_A_SAFE_JOURNEY else getString DID_YOU_FACE_ANY_ISSUE,
+          subTitle = if state.props.nightSafetyFlow then getString TRIP_WAS_SAFE_AND_WORRY_FREE else getString WE_NOTICED_YOUR_RIDE_ENDED_AWAY,
           option1Text = getString REPORT_ISSUE_,
           option2Text = getString GET_CALLBACK_FROM_US,
+          showCallSupport = state.data.config.showCallSupport,
           yesText = getString YES,
-          noText = getString NO
+          noText = getString NO,
+          isNightRide = state.props.nightSafetyFlow
         },
         topCard {
           title =  getString RIDE_COMPLETED,
@@ -1198,7 +1200,7 @@ rideCompletedCardConfig state = let
           title = (getString RATE_YOUR_RIDE_WITH) <> state.data.rideRatingState.driverName,
           subTitle = (getString YOUR_FEEDBACK_HELPS_US),
           selectedRating = state.data.ratingViewState.selectedRating,
-          visible = true
+          visible = not state.data.ratingViewState.issueFacedView
         },
         primaryButtonConfig = skipButtonConfig state,
         enableContactSupport = state.data.config.enableContactSupport
@@ -1303,3 +1305,22 @@ getCarouselData state =
         {image : "ny_ic_locomotor_arrival" , videoLink : "" , videoHeight :  0, imageHeight :  160, imageBgColor :  Color.blue600, title :   (getString EDUCATIONAL_POP_UP_SLIDE_4_TITLE) , description :  (getString EDUCATIONAL_POP_UP_SLIDE_4_SUBTITLE) , descTextSize : 12, carouselBgColor :  Color.grey700, gravity : 0},
         {image : "ny_ic_disability_illustration" , videoLink : "" , videoHeight :  0, imageHeight :  160, imageBgColor :  Color.white900, title :   (getString EDUCATIONAL_POP_UP_SLIDE_5_TITLE) , description :  (getString EDUCATIONAL_POP_UP_SLIDE_5_SUBTITLE) , descTextSize : 12 ,carouselBgColor :  Color.grey700, gravity : 0}
       ]
+
+safetyIssueOptions :: String -> Array OptionButtonList 
+safetyIssueOptions dummy =
+  [ { reasonCode: "DRIVER_BEHAVED_INAPPROPRIATELY"
+    , description: getString DRIVER_BEHAVED_INAPPROPRIATELY
+    , textBoxRequired : false
+    , subtext : Nothing
+    }
+  , { reasonCode: "I_DID_NOT_FEEL_SAFE"
+    , description: getString I_DID_NOT_FEEL_SAFE
+    , textBoxRequired : false
+    , subtext : Nothing
+    }
+  , { reasonCode: "OTHER"
+    , description: getString OTHER
+    , textBoxRequired : false
+    , subtext : Nothing
+    }
+  ]

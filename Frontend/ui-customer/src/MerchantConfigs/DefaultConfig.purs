@@ -18,6 +18,7 @@ config =
   , cancelSearchTextColor: "#E55454"
   , showHamMenu : true
   , showQuoteFindingText : false
+  , showCallSupport : false
   , quoteListItemConfig: 
     { primaryButtonCorner: 8.0
     , expiresColor: "#E55454"

@@ -55,6 +55,7 @@ commonConfig =
         , driverInfoConfig : {
           showCancelPrevention : true
         }
+        , showCallSupport : false
         , navigationAppConfig : {
             android : {  
               query : "google.navigation:q=%f,%f"
