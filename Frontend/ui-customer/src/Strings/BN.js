@@ -521,6 +521,8 @@ const bengaliStrings = {
   "DONE" : "সম্পন্ন",
   "PLEASE_TELL_US_WHAT_WENT_WRONG" : "কি ভুল হয়েছে আমাদের বলুন",
   "DID_YOU_FACE_ANY_ISSUE" : "আপনি কোন সমস্যা সম্মুখীন?",
+  "DID_THE_DRIVER_OFFER_ASSISTANCE" : "ড্রাইভার কি সাহায্যের প্রস্তাব দিয়েছে?",
+  "WAS_THE_DRIVER_UNDERSTANDING_OF_YOUR_NEEDS" : "আপনার চালক কি আপনার প্রয়োজনগুলি বুঝতে পেরেছিলেন এবং যাত্রায় তাদের জায়গা দিয়েছিলেন?",
   "WE_NOTICED_YOUR_RIDE_ENDED_AWAY" : "আমরা লক্ষ্য করেছি যে আপনার রাইড আপনার আসল গন্তব্য থেকে দূরে শেষ হয়েছে৷",
   "GET_CALLBACK_FROM_US" : "আমাদের কাছ থেকে একটি কলব্যাক পান",
   "DRIVER_WAS_NOT_READY_TO_GO" : "ড্রাইভার যেতে প্রস্তুত ছিল না",

@@ -249,7 +249,7 @@ customerIssueView config push =
   scrollView [
     width MATCH_PARENT 
   , height WRAP_CONTENT
-  , visibility $ if config.customerIssueCard.issueFaced then VISIBLE else GONE
+  , visibility $ if config.customerIssueCard.issueFaced || config.customerIssueCard.wasOfferedAssistanceCardView then VISIBLE else GONE
   ][
     linearLayout
     [ width MATCH_PARENT
@@ -267,7 +267,7 @@ customerIssueView config push =
         , gravity CENTER
         , margin $ MarginTop 15
         , orientation VERTICAL
-        , visibility if config.customerIssueCard.selectedYesNoButton == 0 then VISIBLE else GONE
+        , visibility if config.customerIssueCard.selectedYesNoButton == 0 && not config.customerIssueCard.wasOfferedAssistanceCardView then VISIBLE else GONE
         ](mapWithIndex (\ index item ->
             linearLayout
             [ height WRAP_CONTENT
@@ -344,6 +344,7 @@ customerRatingDriverView config push =
   , padding $ Padding 10 10 10 10
   , margin $ MarginBottom 24
   , gravity CENTER
+  , visibility if config.customerIssueCard.wasOfferedAssistanceCardView then GONE else VISIBLE
   ][ imageView [
       imageWithFallback $ fetchImage FF_COMMON_ASSET  "ny_ic_driver_avatar"
       , height $ V 56

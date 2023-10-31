@@ -523,6 +523,8 @@ const hindiStrings = {
   "DONE" : "पूर्ण",
   "PLEASE_TELL_US_WHAT_WENT_WRONG" : "कृपया हमें बताएं कि क्या गलत हुआ",
   "DID_YOU_FACE_ANY_ISSUE" : "क्या आपको किसी समस्या का सामना करना पड़ा?",
+  "DID_THE_DRIVER_OFFER_ASSISTANCE" : "क्या ड्राइवर ने सहायता की पेशकश की?",
+  "WAS_THE_DRIVER_UNDERSTANDING_OF_YOUR_NEEDS" : "क्या आपका ड्राइवर आपकी ज़रूरतों को समझ रहा था और यात्रा के दौरान उनकी मदद कर रहा था?",
   "WE_NOTICED_YOUR_RIDE_ENDED_AWAY" : "हमने देखा है कि आपकी राइड आपके मूल गंतव्य से दूर जाकर समाप्त हुई",
   "GET_CALLBACK_FROM_US" : "हमसे कॉलबैक प्राप्त करें",
   "DRIVER_WAS_NOT_READY_TO_GO" : "चालक जाने को तैयार नहीं था",

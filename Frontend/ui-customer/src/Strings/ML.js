@@ -520,6 +520,8 @@ const malayalamStrings = {
   "DONE" : "ചെയ്തു",
   "PLEASE_TELL_US_WHAT_WENT_WRONG" : "എന്താണ് തെറ്റ് സംഭവിച്ചതെന്ന് ഞങ്ങളോട് പറയൂ",
   "DID_YOU_FACE_ANY_ISSUE" : "നിങ്ങൾ എന്തെങ്കിലും പ്രശ്നം നേരിട്ടിട്ടുണ്ടോ?",
+  "DID_THE_DRIVER_OFFER_ASSISTANCE" : "ഡ്രൈവർ സഹായം വാഗ്ദാനം ചെയ്തോ?",
+  "WAS_THE_DRIVER_UNDERSTANDING_OF_YOUR_NEEDS" : "നിങ്ങളുടെ ഡ്രൈവർ നിങ്ങളുടെ ആവശ്യങ്ങൾ മനസ്സിലാക്കുകയും യാത്രയിൽ അവരെ ഉൾക്കൊള്ളുകയും ചെയ്തിരുന്നോ?",
   "WE_NOTICED_YOUR_RIDE_ENDED_AWAY" : "നിങ്ങളുടെ റൈഡ് നിങ്ങളുടെ യഥാർത്ഥ ലക്ഷ്യസ്ഥാനത്ത് നിന്ന് അകലെ അവസാനിച്ചതായി ഞങ്ങൾ ശ്രദ്ധിച്ചു",
   "GET_CALLBACK_FROM_US" : "ഞങ്ങളിൽ നിന്ന് ഒരു കോൾബാക്ക് നേടുക",
   "DRIVER_WAS_NOT_READY_TO_GO" : "ഡ്രൈവർ പോകാൻ തയ്യാറായില്ല",

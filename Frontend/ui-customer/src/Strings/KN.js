@@ -519,6 +519,8 @@ const kannadaStrings = {
   "DONE" : "ಮುಗಿದಿದೆ",
   "PLEASE_TELL_US_WHAT_WENT_WRONG" : "ಏನು ತಪ್ಪಾಗಿದೆ ಎಂದು ದಯವಿಟ್ಟು ನಮಗೆ ತಿಳಿಸಿ",
   "DID_YOU_FACE_ANY_ISSUE" : "ನೀವು ಯಾವುದೇ ಸಮಸ್ಯೆಯನ್ನು ಎದುರಿಸಿದ್ದೀರಾ?",
+  "DID_THE_DRIVER_OFFER_ASSISTANCE" : "ಚಾಲಕ ಸಹಾಯವನ್ನು ನೀಡಿದ್ದಾನೆಯೇ?",
+  "WAS_THE_DRIVER_UNDERSTANDING_OF_YOUR_NEEDS" : "ನಿಮ್ಮ ಚಾಲಕನಿಗೆ ನಿಮ್ಮ ಅಗತ್ಯತೆಗಳ ಬಗ್ಗೆ ತಿಳುವಳಿಕೆ ಇದೆಯೇ ಮತ್ತು ಪ್ರಯಾಣದಲ್ಲಿ ಅವರಿಗೆ ಅವಕಾಶ ಕಲ್ಪಿಸಿದೆಯೇ?",
   "WE_NOTICED_YOUR_RIDE_ENDED_AWAY" : "ನಿಮ್ಮ ರೈಡ್ ನಿಮ್ಮ ಮೂಲ ಗಮ್ಯಸ್ಥಾನದಿಂದ ದೂರದಲ್ಲಿದೆ ಎಂದು ನಾವು ಗಮನಿಸಿದ್ದೇವೆ",
   "GET_CALLBACK_FROM_US" : "ನಮ್ಮಿಂದ ಕಾಲ್ಬ್ಯಾಕ್ ಪಡೆಯಿರಿ",
   "DRIVER_WAS_NOT_READY_TO_GO" : "ಚಾಲಕ ಹೋಗಲು ಸಿದ್ಧನಿರಲಿಲ್ಲ",

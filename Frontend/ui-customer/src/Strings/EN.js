@@ -523,6 +523,8 @@ const englishStrings = {
   "DONE" : "Done",
   "PLEASE_TELL_US_WHAT_WENT_WRONG" : "Please tell us what went wrong",
   "DID_YOU_FACE_ANY_ISSUE" : "Did you face any issue?",
+  "DID_THE_DRIVER_OFFER_ASSISTANCE" : "Did the driver offer assistance?",
+  "WAS_THE_DRIVER_UNDERSTANDING_OF_YOUR_NEEDS" :"Was your driver understanding of your needs and accomodate them on the journey?",
   "WE_NOTICED_YOUR_RIDE_ENDED_AWAY" : "We noticed  that your ride ended away from your original destination.",
   "GET_CALLBACK_FROM_US" : "Get a callback from us",
   "DRIVER_WAS_NOT_READY_TO_GO" : "The driver was not to ready to go",

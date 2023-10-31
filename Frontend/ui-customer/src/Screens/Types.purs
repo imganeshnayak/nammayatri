@@ -698,6 +698,7 @@ type HomeScreenStateProps =
   , isChatOpened :: Boolean
   , canSendSuggestion :: Boolean
   , sheetState :: BottomSheetState
+  , showOfferedAssistancePopUp :: Boolean
   , showDisabilityPopUp :: Boolean
   , isChatNotificationDismissed :: Boolean
   , searchLocationModelProps :: SearchLocationModelProps
@@ -755,7 +756,8 @@ type RatingViewState = {
     doneButtonVisibility :: Boolean,
     issueReason :: Maybe String,
     issueDescription :: String,
-    rideBookingRes :: RideBookingRes
+    rideBookingRes :: RideBookingRes,
+    wasOfferedAssistance :: Maybe Boolean
 }
 
 type CustomerTipProps = {

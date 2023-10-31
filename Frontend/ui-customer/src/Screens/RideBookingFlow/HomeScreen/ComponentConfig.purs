@@ -194,12 +194,15 @@ skipButtonConfig state =
         , margin = MarginTop 22
         , id = "SkipButton"
         , enableLoader = (JB.getBtnLoader "SkipButton")
-        , visibility = if not issueFaced || state.data.ratingViewState.doneButtonVisibility then VISIBLE else GONE
-        , isClickable = issueFaced || state.data.ratingViewState.selectedRating > 0
-        , alpha = if issueFaced || (state.data.ratingViewState.selectedRating >= 1) then 1.0 else 0.4
+        , visibility = if state.data.ratingViewState.doneButtonVisibility || not state.props.showOfferedAssistancePopUp then VISIBLE else GONE
+        , isClickable = issueFaced || state.data.ratingViewState.selectedRating > 0 || getSelectedYesNoButton state >= 0
+        , alpha = if issueFaced || (state.data.ratingViewState.selectedRating >= 1) || getSelectedYesNoButton state >= 0 then 1.0 else 0.4
         }
   in
     primaryButtonConfig'
+
+getSelectedYesNoButton :: ST.HomeScreenState -> Int
+getSelectedYesNoButton state = state.data.ratingViewState.selectedYesNoButton
 
 maybeLaterButtonConfig :: ST.HomeScreenState -> PrimaryButton.Config
 maybeLaterButtonConfig state =
@@ -238,8 +241,6 @@ updateProfileConfig state =
         }
   in
     primaryButtonConfig'
-
-
 
 whereToButtonConfig :: ST.HomeScreenState -> PrimaryButton.Config
 whereToButtonConfig state =
@@ -1178,12 +1179,13 @@ rideCompletedCardConfig state = let
           issueFaced = state.data.ratingViewState.issueFacedView,
           selectedYesNoButton = state.data.ratingViewState.selectedYesNoButton,
           reportIssuePopUpConfig = reportIssuePopUpConfig state,
-          title = (getString DID_YOU_FACE_ANY_ISSUE),
-          subTitle = (getString WE_NOTICED_YOUR_RIDE_ENDED_AWAY),
+          title = if state.props.showOfferedAssistancePopUp then (getString DID_THE_DRIVER_OFFER_ASSISTANCE) else (getString DID_YOU_FACE_ANY_ISSUE),
+          subTitle = if state.props.showOfferedAssistancePopUp then (getString WAS_THE_DRIVER_UNDERSTANDING_OF_YOUR_NEEDS) else (getString WE_NOTICED_YOUR_RIDE_ENDED_AWAY),
           option1Text = getString REPORT_ISSUE_,
           option2Text = getString GET_CALLBACK_FROM_US,
           yesText = getString YES,
-          noText = getString NO
+          noText = getString NO,
+          wasOfferedAssistanceCardView = state.props.showOfferedAssistancePopUp
         },
         topCard {
           title =  getString RIDE_COMPLETED,

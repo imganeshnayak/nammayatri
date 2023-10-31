@@ -121,7 +121,8 @@ initData = {
         issueFacedView : false,
         issueReason : Nothing,
         issueDescription : "",
-        rideBookingRes : dummyRideBooking
+        rideBookingRes : dummyRideBooking,
+        wasOfferedAssistance : Nothing
     }
     , config : DC.config
     , logField : empty
@@ -222,6 +223,7 @@ initData = {
     , confirmLocationCategory : ""
     , canSendSuggestion : true
     , sheetState : COLLAPSED
+    , showOfferedAssistancePopUp : false
     , showDisabilityPopUp : false
     , isChatNotificationDismissed : false
     , searchLocationModelProps : dummySearchLocationModelProps
@@ -437,7 +439,8 @@ dummyRideBooking = RideBookingRes
   bookingDetails : dummyRideBookingAPIDetails ,
   fromLocation :  dummyBookingDetails,
   merchantExoPhone : "",
-  specialLocationTag : Nothing
+  specialLocationTag : Nothing,
+  hasDisability : Nothing
   }
 
 dummyRideBookingAPIDetails ::RideBookingAPIDetails
