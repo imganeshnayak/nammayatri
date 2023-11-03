@@ -302,6 +302,7 @@
       "ny_ic_thanks" : true,
       "ny_ic_tick" : true,
       "ny_ic_tick_white" : true,
+      "ny_ic_timer_clock" : true,
       "ny_ic_tip_icon" : true,
       "ny_ic_top_car" : true,
       "ny_ic_track_google_map" : true,
@@ -341,6 +342,12 @@
       "rounded_corner_background" : true,
       "separator_silent_mode" : true,
       "silent_popup_background" : true,
-      "widget_close_gradient" : true
+      "widget_close_gradient" : true,
+      "ny_ic_calendar" : true,
+      "ny_ic_edit_pencil" : true,
+      "ny_ic_alarm" : true,
+      "ny_ic_ratecard" : true,
+      "ny_ic_ride_scheduled" : true,
+      "ny_ic_ride_cancelled" : true
    }
 }
