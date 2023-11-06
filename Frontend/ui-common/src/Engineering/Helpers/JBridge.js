@@ -1357,6 +1357,7 @@ export const stopLocationPollingAPI = function () {
   }
 }
 export const removeAllPolylines = function (str) {
+  console.log("Inside remove all polylines");
   window.JBridge.removeAllPolylines(str);
 }
 
@@ -1428,6 +1429,18 @@ export const storeCallBackInternetAction = function (cb) {
         console.log("Error occurred in storeCallBackInternetAction ------", error);
       }
     }
+  }
+}
+
+export const storeCallBackEditLocation = function (cb, action ) {
+  try {
+    const callback = callbackMapper.map(function (editLocation) {
+      cb(action(editLocation))();
+    });
+    console.log("In storeCallBackEditLocation ---------- + " + action);
+    window.JBridge.storeCallBackEditLocation(callback);
+  } catch (error) {
+    console.log("Error occurred in storeCallBackEditLocation ------", error);
   }
 }
 

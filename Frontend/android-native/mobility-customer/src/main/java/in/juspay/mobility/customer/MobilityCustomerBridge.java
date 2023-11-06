@@ -171,6 +171,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
 
     @JavascriptInterface
     public void storeCallBackLocateOnMap(String callback) {
+        System.out.println("Inisde storecallbacklocateOnMpa dsfjkhfdkjasfjh");
         storeLocateOnMapCallBack = callback;
     }
 
@@ -241,6 +242,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
 
     @JavascriptInterface
     public void updateRoute(String _payload) {
+        System.out.println("Inside updateRoute eMERCY");
         ExecutorManager.runOnMainThread(() -> {
             if (googleMap != null) {
                 try {
@@ -267,7 +269,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                     JSONObject specialLocationObject = new JSONObject(specialLocation);
                     String destinationSpecialTagIcon = specialLocationObject.getString("destSpecialTagIcon");
 
-                    destMarker.setIcon((BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(eta, dest, destinationSpecialTagIcon.equals("") ? null : destinationSpecialTagIcon, MarkerType.NORMAL_MARKER))));
+                    destMarker.setIcon((BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(eta, dest, destinationSpecialTagIcon.equals("") ? null : destinationSpecialTagIcon, MarkerType.NORMAL_MARKER, true))));
                     destMarker.setTitle("Driver is " + eta);
                     if (polyline != null) {
                         polyline.setEndCap(new ButtCap());
@@ -383,7 +385,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                         .title("")
                         .position(new LatLng(lat, lng))
                         .anchor(0.5f, 0.5f)
-                        .icon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView("", icon,null, MarkerType.SPECIAL_ZONE_MARKER)));
+                        .icon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView("", icon,null, MarkerType.SPECIAL_ZONE_MARKER, true)));
                 Marker m = googleMap.addMarker(markerOptionsObj);
                 if (m != null) {
                     m.hideInfoWindow();
@@ -414,7 +416,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                         if (userPositionMarker == null) {
                             upsertMarker(CURRENT_LOCATION, String.valueOf(getKeyInNativeSharedPrefKeys("LAST_KNOWN_LAT")), String.valueOf(getKeyInNativeSharedPrefKeys("LAST_KNOWN_LON")), 160, 0.5f, 0.9f); //TODO this function will be removed
                         } else {
-                            userPositionMarker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(locationName, CURRENT_LOCATION, null, MarkerType.NORMAL_MARKER)));
+                            userPositionMarker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView(locationName, CURRENT_LOCATION, null, MarkerType.NORMAL_MARKER, true)));
                             userPositionMarker.setTitle("");
                             LatLng latLng = new LatLng(Double.parseDouble(getKeyInNativeSharedPrefKeys("LAST_KNOWN_LAT")), Double.parseDouble(getKeyInNativeSharedPrefKeys("LAST_KNOWN_LON")));
                         }
@@ -436,7 +438,7 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                     layer.removeLayerFromMap();
                 }
                 if (userPositionMarker != null) {
-                    userPositionMarker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView("", CURRENT_LOCATION, null, MarkerType.NORMAL_MARKER)));
+                    userPositionMarker.setIcon(BitmapDescriptorFactory.fromBitmap(getMarkerBitmapFromView("", CURRENT_LOCATION, null, MarkerType.NORMAL_MARKER, true)));
                     userPositionMarker.setTitle("");
                 }
             } catch (Exception e) {
@@ -456,6 +458,10 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
               String points = payload.optString("points", "[]");
               float zoomLevel = (float) payload.optDouble("zoomLevel", 17.0);
               final TextView labelView = payload.optString("labelId", "").equals("") ? null : Objects.requireNonNull(bridgeComponents.getActivity()).findViewById(Integer.parseInt(payload.getString("labelId")));
+              if( payload.optBoolean("editLocation", false))
+              {
+                  EDIT_LOCATION = true;
+              }
               if (geoJson.equals("") || points.equals("[]")){
                 locateOnMap(goToCurrentLocation,lat,lon,zoomLevel);
                 return;
@@ -557,12 +563,14 @@ public class MobilityCustomerBridge extends MobilityCommonBridge {
                                                 else {
                                                     zoneName = "LatLon";
                                                 }
+                                                System.out.println("Sending callback MERCY " + storeLocateOnMapCallBack);
                                                 if (storeLocateOnMapCallBack != null && (!isPointInsidePolygon || isOnGate)){
                                                     if (labelView != null && isOnGate) {
                                                         String labelText = zoneName.length() > labelTextSize ? zoneName.substring(0, labelTextSize-3) + "..." : zoneName;
                                                         labelView.setText(labelText);
                                                         labelView.setVisibility(View.VISIBLE);
                                                     }
+                                                    System.out.println("Sending callback MERCY");
                                                     String javascript = String.format("window.callUICallback('%s','%s','%s','%s');", storeLocateOnMapCallBack, zoneName, lat1, lng);
                                                     Log.e(CALLBACK, javascript);
                                                     bridgeComponents.getJsCallback().addJsToWebView(javascript);

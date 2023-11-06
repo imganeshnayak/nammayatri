@@ -458,6 +458,7 @@ getScreenFromStage stage = case stage of
   DistanceOutsideLimits -> "finding_driver_loader"
   ShortDistance -> "finding_driver_loader"
   TryAgain -> "finding_rides_screen"
+  EditPickUpLocation -> "edit_pickup_location"
 
 getGlobalPayload :: Unit -> Effect (Maybe GlobalPayload)
 getGlobalPayload _ = do

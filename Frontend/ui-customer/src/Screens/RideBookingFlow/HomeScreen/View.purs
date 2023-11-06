@@ -65,7 +65,7 @@ import Engineering.Helpers.Utils (showAndHideLoader)
 import Font.Size as FontSize
 import Font.Style as FontStyle
 import Helpers.Utils (fetchImage, FetchImageFrom(..), decodeError, fetchAndUpdateCurrentLocation, getAssetsBaseUrl, getCurrentLocationMarker, getLocationName, getNewTrackingId, getPreviousVersion, getSearchType, parseFloat, storeCallBackCustomer)
-import JBridge (addMarker, animateCamera, drawRoute, enableMyLocation, firebaseLogEvent, getCurrentPosition, getHeightFromPercent, isCoordOnPath, isInternetAvailable, removeAllPolylines, removeMarker, requestKeyboardShow, showMap, startLottieProcess, toast, updateRoute, getExtendedPath, generateSessionId, initialWebViewSetUp, stopChatListenerService, startChatListenerService, startTimerWithTime, storeCallBackMessageUpdated, isMockLocation, storeCallBackOpenChatScreen, scrollOnResume, waitingCountdownTimer, lottieAnimationConfig, storeKeyBoardCallback, getLayoutBounds, clearChatMessages, startTimerWithTime, addCarousel, updateRouteConfig, addCarouselWithVideoExists, storeCallBackLocateOnMap, storeOnResumeCallback)
+import JBridge (storeCallBackEditLocation, addMarker, animateCamera, drawRoute, enableMyLocation, firebaseLogEvent, getCurrentPosition, getHeightFromPercent, isCoordOnPath, isInternetAvailable, removeAllPolylines, removeMarker, requestKeyboardShow, showMap, startLottieProcess, toast, updateRoute, getExtendedPath, generateSessionId, initialWebViewSetUp, stopChatListenerService, startChatListenerService, startTimerWithTime, storeCallBackMessageUpdated, isMockLocation, storeCallBackOpenChatScreen, scrollOnResume, waitingCountdownTimer, lottieAnimationConfig, storeKeyBoardCallback, getLayoutBounds, clearChatMessages, startTimerWithTime, addCarousel, updateRouteConfig, addCarouselWithVideoExists, storeCallBackLocateOnMap, storeOnResumeCallback)
 import Language.Strings (getString)
 import Language.Types (STR(..))
 import Log (printLog)
@@ -153,6 +153,7 @@ screen initialState =
                 _ <- pure $ removeMarker (getCurrentLocationMarker (getValueToLocalStore VERSION_NAME))
                 pure unit
               RideAccepted -> do
+                void $ runEffectFn2 storeCallBackEditLocation push EditLocation
                 if ( initialState.data.config.notifyRideConfirmationConfig.notify && any (_ == getValueToLocalStore NOTIFIED_CUSTOMER) ["false" , "__failed" , "(null)"] ) then 
                   if (os == "IOS") then liftEffect $ startTimerWithTime (show 5) "notifyCustomer" "1" push NotifyDriverStatusCountDown
                     else liftEffect $ countDown 5 "notifyCustomer" push NotifyDriverStatusCountDown
@@ -190,6 +191,12 @@ screen initialState =
               ConfirmingLocation -> do
                 _ <- pure $ enableMyLocation true
                 _ <- pure $ removeMarker (getCurrentLocationMarker (getValueToLocalStore VERSION_NAME))
+                _ <- storeCallBackLocateOnMap push UpdatePickupLocation
+                pure unit
+              EditPickUpLocation -> do 
+                _ <- pure $ enableMyLocation true
+                _ <- pure $ removeAllPolylines "askdjh"
+                -- _ <- pure $ removeMarker (getCurrentLocationMarker (getValueToLocalStore VERSION_NAME))
                 _ <- storeCallBackLocateOnMap push UpdatePickupLocation
                 pure unit
               TryAgain -> do
@@ -331,17 +338,17 @@ view push state =
                         , padding (Padding 5 5 5 5)
                         , margin (MarginBottom 5)
                         , cornerRadius 5.0
-                        , visibility if (showLabel && ((state.props.currentStage == ConfirmingLocation) || state.props.locateOnMap)) then VISIBLE else INVISIBLE
+                        , visibility if (showLabel && ((state.props.currentStage == ConfirmingLocation) || (state.props.currentStage == EditPickUpLocation) || state.props.locateOnMap)) then VISIBLE else INVISIBLE
                         , id (getNewIDWithTag "LocateOnMapPin")
                         ]
                     , imageView
                         [ width $ V 35
                         , height $ V 35
                         , accessibility DISABLE
-                        , imageWithFallback $ fetchImage FF_COMMON_ASSET $ case (state.props.currentStage == ConfirmingLocation) || state.props.isSource == (Just true) of
+                        , imageWithFallback $ fetchImage FF_COMMON_ASSET $ case (state.props.currentStage == ConfirmingLocation) || (state.props.currentStage == EditPickUpLocation) || state.props.isSource == (Just true) of
                             true  -> "ny_ic_src_marker"
                             false -> "ny_ic_dest_marker"
-                        , visibility if ((state.props.currentStage == ConfirmingLocation) || state.props.locateOnMap) then VISIBLE else GONE
+                        , visibility if ((state.props.currentStage == ConfirmingLocation) || (state.props.currentStage == EditPickUpLocation) || state.props.locateOnMap) then VISIBLE else GONE
                         ]
                     ]
                 ]
@@ -633,7 +640,7 @@ recenterButtonView push state =
         [ width MATCH_PARENT
         , height WRAP_CONTENT
         , background Color.transparent
-        , visibility if state.props.rideRequestFlow && state.props.currentStage /= ConfirmingLocation then GONE else VISIBLE
+        , visibility if state.props.rideRequestFlow && state.props.currentStage /= ConfirmingLocation && state.props.currentStage /= EditPickUpLocation then GONE else VISIBLE
         , gravity RIGHT
         , alignParentBottom "true,-1"
         , padding $ Padding 0 0 16 14
@@ -800,7 +807,7 @@ recentSearchesAndFavourites state push =
   , cornerRadii $ Corners (4.0) true true false false
   ]([ savedLocationsView state push
    , recentSearchesView state push]
-   <> if (getValueToLocalStore DISABILITY_UPDATED == "false" && state.data.config.showDisabilityBanner) then [updateDisabilityBanner state push] else [])
+   <> if (getValueToLocalStore DISABILITY_UPDATED == "false" && state.data.config.showDisabilityBanner) || true then [updateDisabilityBanner state push] else [])
   --  <> if(state.props.isBanner) then [genderBannerView state push] else [])
 
 updateDisabilityBanner :: forall w. HomeScreenState -> (Action -> Effect Unit) -> PrestoDOM (Effect Unit) w
@@ -1044,7 +1051,7 @@ rideRequestFlowView push state =
     [ height WRAP_CONTENT
     , width MATCH_PARENT
     , cornerRadii $ Corners 24.0 true true false false
-    , visibility if (any (_ == state.props.currentStage) [ SettingPrice, ConfirmingLocation, RideCompleted, FindingEstimate, ConfirmingRide, FindingQuotes, TryAgain, RideRating ]) then VISIBLE else GONE
+    , visibility if (any (_ == state.props.currentStage) [ SettingPrice, ConfirmingLocation, EditPickUpLocation, RideCompleted, FindingEstimate, ConfirmingRide, FindingQuotes, TryAgain, RideRating ]) then VISIBLE else GONE
     , alignParentBottom "true,-1"
     ]
     [ -- TODO Add Animations
@@ -1063,7 +1070,7 @@ rideRequestFlowView push state =
             $ if (state.props.currentStage == SettingPrice) then
                 if ( not state.data.config.estimateAndQuoteConfig.enableOnlyAuto || state.props.specialZoneType ==  "OneWaySpecialZoneAPIDetails") then ChooseYourRide.view (push <<< ChooseYourRideAction) (chooseYourRideConfig state) 
                 else suggestedPriceView push state
-              else if (state.props.currentStage == ConfirmingLocation) then
+              else if (state.props.currentStage == ConfirmingLocation || state.props.currentStage == EditPickUpLocation ) then
                 confirmPickUpLocationView push state
               else
                 emptyTextView state
@@ -1119,16 +1126,16 @@ topLeftIconView state push =
           , cornerRadius 24.0
           , visibility if (any (_ == state.props.currentStage) [ FindingEstimate, ConfirmingRide, FindingQuotes, TryAgain , RideCompleted, RideRating]) then GONE else VISIBLE
           , clickable true
-          , onClick push $ if (any (_ == state.props.currentStage) [ SettingPrice, ConfirmingLocation, PricingTutorial, DistanceOutsideLimits ]) then const BackPressed else const OpenSettings
-          , accessibilityHint if (any (_ == state.props.currentStage) [ SettingPrice, ConfirmingLocation, PricingTutorial, DistanceOutsideLimits ]) then "Back : Button" else "Menu : Button"
+          , onClick push $ if (any (_ == state.props.currentStage) [ SettingPrice, ConfirmingLocation, EditPickUpLocation, PricingTutorial, DistanceOutsideLimits ]) then const BackPressed else const OpenSettings
+          , accessibilityHint if (any (_ == state.props.currentStage) [ SettingPrice, ConfirmingLocation, EditPickUpLocation, PricingTutorial, DistanceOutsideLimits ]) then "Back : Button" else "Menu : Button"
           , accessibility ENABLE
           ]
           [ imageView
-              [ imageWithFallback if (any (_ == state.props.currentStage) [ SettingPrice, ConfirmingLocation, PricingTutorial, DistanceOutsideLimits ]) then fetchImage FF_COMMON_ASSET "ny_ic_chevron_left" else if ((getValueFromConfig "showDashboard") == "true") && (checkVersion "LazyCheck") then fetchImage FF_ASSET "ic_menu_notify" else fetchImage FF_ASSET "ny_ic_hamburger"
+              [ imageWithFallback if (any (_ == state.props.currentStage) [ SettingPrice, ConfirmingLocation, EditPickUpLocation, PricingTutorial, DistanceOutsideLimits ]) then fetchImage FF_COMMON_ASSET "ny_ic_chevron_left" else if ((getValueFromConfig "showDashboard") == "true") && (checkVersion "LazyCheck") then fetchImage FF_ASSET "ic_menu_notify" else fetchImage FF_ASSET "ny_ic_hamburger"
               , height $ V 25
               , accessibility DISABLE
               , clickable true
-              , onClick push $ if (any (_ == state.props.currentStage) [ SettingPrice, ConfirmingLocation, PricingTutorial, DistanceOutsideLimits ]) then const BackPressed else const OpenSettings
+              , onClick push $ if (any (_ == state.props.currentStage) [ SettingPrice, ConfirmingLocation, EditPickUpLocation, PricingTutorial, DistanceOutsideLimits ]) then const BackPressed else const OpenSettings
               , width $ V 25
               ]
           ]
@@ -1549,7 +1556,7 @@ confirmPickUpLocationView push state =
     , disableClickFeedback true
     , background Color.transparent
     , accessibility DISABLE
-    , visibility if state.props.currentStage == ConfirmingLocation then VISIBLE else GONE
+    , visibility if state.props.currentStage == ConfirmingLocation || state.props.currentStage == EditPickUpLocation then VISIBLE else GONE
     , padding $ PaddingTop 16
     , cornerRadii $ Corners 24.0 true true false false
     , gravity CENTER
@@ -1946,6 +1953,7 @@ getQuotesPolling pollingId action retryAction count duration push state = do
 driverLocationTracking :: forall action. (action -> Effect Unit) -> (String -> action) -> (String -> action) -> (Int -> Int -> action) -> Number -> String -> HomeScreenState -> String -> Flow GlobalState Unit
 driverLocationTracking push action driverArrivedAction updateState duration trackingId state routeState = do
   _ <- pure $ printLog "trackDriverLocation2_function" trackingId
+  _ <- pure $ spy "LocalStage" (state.props.currentStage)
   if (any (\stage -> isLocalStageOn stage) [ RideAccepted, RideStarted, ChatWithDriver]) && ((getValueToLocalStore TRACKING_ID) == trackingId) then do
     when (state.props.bookingId /= "") $ do
       respBooking <- rideBooking (state.props.bookingId)
@@ -1983,9 +1991,9 @@ driverLocationTracking push action driverArrivedAction updateState duration trac
               sourceSpecialTagIcon = specialLocationIcons state.props.zoneType.sourceTag
               destSpecialTagIcon = specialLocationIcons state.props.zoneType.destinationTag
               specialLocationTag =  if (any (_ == state.props.currentStage) [ RideAccepted, ChatWithDriver]) then
-                                      specialLocationConfig destSpecialTagIcon sourceSpecialTagIcon true getPolylineAnimationConfig
+                                      specialLocationConfig destSpecialTagIcon sourceSpecialTagIcon true getPolylineAnimationConfig false true
                                     else
-                                      specialLocationConfig sourceSpecialTagIcon destSpecialTagIcon false getPolylineAnimationConfig
+                                      specialLocationConfig sourceSpecialTagIcon destSpecialTagIcon false getPolylineAnimationConfig false false
             if (getValueToLocalStore TRACKING_ENABLED) == "False" then do
               _ <- pure $ setValueToLocalStore TRACKING_DRIVER "True"
               _ <- pure $ removeAllPolylines ""
@@ -2024,9 +2032,9 @@ driverLocationTracking push action driverArrivedAction updateState duration trac
                       if locationResp.isInPath then do
                         let newPoints = { points : locationResp.points}
                         let specialLocationTag =  if (any (\stage -> isLocalStageOn stage) [ RideAccepted, ChatWithDriver]) then
-                                                    specialLocationConfig "" sourceSpecialTagIcon true getPolylineAnimationConfig
+                                                    specialLocationConfig "" sourceSpecialTagIcon true getPolylineAnimationConfig false true
                                                   else
-                                                    specialLocationConfig "" destSpecialTagIcon false getPolylineAnimationConfig
+                                                    specialLocationConfig "" destSpecialTagIcon false getPolylineAnimationConfig false false
                         liftFlow $ runEffectFn1 updateRoute updateRouteConfig { json = newPoints, destMarker =  markers.destMarker, eta =  (metersToKm locationResp.distance state), srcMarker =  markers.srcMarker, specialLocation = specialLocationTag, zoomLevel = zoomLevel}
                         _ <- doAff do liftEffect $ push $ updateState locationResp.eta locationResp.distance
                         void $ delay $ Milliseconds duration

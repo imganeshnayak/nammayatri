@@ -30,6 +30,12 @@
             android:textFontWeight="400"
             android:gravity="center"
             android:id="@+id/marker_text"/>
+        <ImageView
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:clickable="true"
+            android:id="@+id/edit_location_image"
+            android:visibility="gone"/>
     </LinearLayout>
     <LinearLayout android:id="@+id/ll_marker_right"
         android:layout_width="match_parent"

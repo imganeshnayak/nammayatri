@@ -1067,13 +1067,15 @@ specialLocationIcons tag =
 
 
 
-specialLocationConfig :: String -> String -> Boolean -> PolylineAnimationConfig -> JB.MapRouteConfig
-specialLocationConfig srcIcon destIcon isAnim animConfig = {
+specialLocationConfig :: String -> String -> Boolean -> PolylineAnimationConfig -> Boolean -> Boolean -> JB.MapRouteConfig
+specialLocationConfig srcIcon destIcon isAnim animConfig isSrcEditable isDestEditable = {
     sourceSpecialTagIcon : srcIcon
   , destSpecialTagIcon : destIcon
   , vehicleSizeTagIcon : (HU.getVehicleSize unit)
   , isAnimation : isAnim
   , polylineAnimationConfig : animConfig
+  , pickUpLocationEditable : isSrcEditable
+  , dropLocationEditable : isDestEditable
 }
 
 updateRouteMarkerConfig :: JB.Locations -> String -> String -> String -> String -> JB.MapRouteConfig -> JB.UpdateRouteMarker

@@ -115,7 +115,7 @@ data EMERGECY_CONTACTS_SCREEN_OUTPUT = GO_TO_HOME_FROM_EMERGENCY_CONTACTS
 data HOME_SCREEN_OUTPUT = LOGOUT
                         | RELOAD Boolean
                         | CANCEL
-                        | RETRY
+                        | RETRY HomeScreenState
                         | NO_OUTPUT
                         | GO_TO_HELP
                         | GO_TO_ABOUT
