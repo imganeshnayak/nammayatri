@@ -478,6 +478,7 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onEvent(JSONObject jsonObject, JuspayResponseHandler juspayResponseHandler) {
                 Log.d(LOG_TAG, "onEvent: " + jsonObject.toString());
+                sharedPref.edit().putString(getResources().getString(in.juspay.mobility.app.R.string.ACTIVITY_STATUS), "onResume").apply();
                 String event = jsonObject.optString("event");
                 switch (event) {
                     case "initiate_result":

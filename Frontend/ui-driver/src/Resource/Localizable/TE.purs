@@ -1086,4 +1086,4 @@ getTE stringKey =
         BY_CLICKING_NEXT_YOU_WILL_BE_AGREEING_TO_OUR -> ""
         THIS_EXTRA_AMOUNT_THE_CUSTOMER_WILL_PAY -> "మీరు {} నిమిషాల కంటే ఎక్కువ వేచి ఉన్నందున కస్టమర్ మీకు చెల్లించే అదనపు మొత్తం ఇది"
         TEN_DIGIT_MOBILE_NUMBER -> "10-అంకెల మొబైల్ నంబర్"
-    
+        VERIFYING_OTP -> "OTPని ధృవీకరిస్తోంది"

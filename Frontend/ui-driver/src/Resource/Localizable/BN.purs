@@ -1086,3 +1086,4 @@ getBN stringKey =
         BY_CLICKING_NEXT_YOU_WILL_BE_AGREEING_TO_OUR -> ""
         THIS_EXTRA_AMOUNT_THE_CUSTOMER_WILL_PAY -> "এই অতিরিক্ত পরিমাণ গ্রাহক আপনাকে প্রদান করবে কারণ আপনি {} মিনিটের বেশি অপেক্ষা করেছেন"
         TEN_DIGIT_MOBILE_NUMBER -> "10-সংখ্যার মোবাইল নম্বর"
+        VERIFYING_OTP -> "OTP যাচাই করা হচ্ছে"
