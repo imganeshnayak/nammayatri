@@ -111,6 +111,7 @@ data KeyStore = USER_NAME
                 | TRIP_STARTED
                 | TIMES_OPENED_NEW_SUBSCRIPTION
                 | CONFIG_VERSION
+                | RIDE_REQUEST_TYPE
 
 derive instance genericKeyStore :: Generic KeyStore _
 instance showKeyStore :: Show KeyStore where

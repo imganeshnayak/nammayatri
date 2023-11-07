@@ -21,7 +21,7 @@ import in.juspay.mobility.app.R;
 import in.juspay.mobility.app.TLSSocketFactory;
 
 
-public class MobilityCallAPI extends AppCompatActivity {
+public class MobilityCallAPI {
 
     private static final String DEFAULT_API_METHOD = "POST";
 
@@ -86,6 +86,7 @@ public class MobilityCallAPI extends AppCompatActivity {
             }
             return response;
         }catch (Exception e){
+            System.out.println("zxc callAPI " + e);
             return defaultResp;
         }
     }

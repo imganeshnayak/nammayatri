@@ -726,6 +726,7 @@ public class MainActivity extends AppCompatActivity {
     protected void onDestroy() {
         if (sharedPref != null) {
             sharedPref.edit().putString(getResources().getString(in.juspay.mobility.app.R.string.ACTIVITY_STATUS), "onDestroy").apply();
+            sharedPref.edit().putString(getString(R.string.ride_request_type), "NORMAL").apply();
         }
         if (hyperServices != null) {
             hyperServices.terminate();

@@ -862,3 +862,7 @@ export const istToUtcDate = function (dateStr) {
 export const setValueToLocalStore = function (key,value){
   JBridge.setInSharedPrefs(key, value);
 }
+
+export const hideWidget = function (){
+  window.JBridge.hideWidget();
+}

@@ -205,7 +205,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
                             break;
 
                         case NotificationTypes.NEW_RIDE_AVAILABLE:
-                            if(sharedPref.getString("DISABLE_WIDGET", "null").equals("true") && sharedPref.getString("REMOVE_CONDITION", "false").equals("false")) {
+                            if((sharedPref.getString("DISABLE_WIDGET", "null").equals("true") || sharedPref.getString("RIDE_REQUEST_TYPE", "NORMAL").equals("NONE")) && sharedPref.getString("REMOVE_CONDITION", "false").equals("false")) {
                                 if (sharedPref.getString("ACTIVITY_STATUS", "null").equals("onDestroy"))  showRR(entity_payload, payload);
                             }else showRR(entity_payload, payload);
                             break;
@@ -413,7 +413,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
     private void showRR(JSONObject entity_payload, JSONObject payload){
         SharedPreferences sharedPref = getApplicationContext().getSharedPreferences(this.getString(R.string.preference_file_key), Context.MODE_PRIVATE);
         sharedPref.edit().putString(getString(R.string.RIDE_STATUS), getString(R.string.NEW_RIDE_AVAILABLE)).apply();
-        if (sharedPref.getString("DRIVER_STATUS_N", "null").equals("Silent") && (sharedPref.getString("ACTIVITY_STATUS", "null").equals("onPause") || sharedPref.getString("ACTIVITY_STATUS", "null").equals("onDestroy"))) {
+        if (sharedPref.getString("DRIVER_STATUS_N", "null").equals("Silent") && (sharedPref.getString("ACTIVITY_STATUS", "null").equals("onPause")) || sharedPref.getString("ACTIVITY_STATUS", "null").equals("onDestroy") || sharedPref.getString("RIDE_REQUEST_TYPE","NORMAL").equals("SILENT")) {
             startWidgetService(null, payload, entity_payload);
         } else {
             NotificationUtils.showAllocationNotification(this, payload, entity_payload);
@@ -502,7 +502,7 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         Intent widgetService = new Intent(getApplicationContext(), WidgetService.class);
         String key = getString(R.string.service);
         String merchantType = key.contains("partner") || key.contains("driver") || key.contains("provider")? "DRIVER" : "USER";
-        if (merchantType.equals("DRIVER") && Settings.canDrawOverlays(getApplicationContext()) && !sharedPref.getString(getResources().getString(R.string.REGISTERATION_TOKEN), "null").equals("null") && (sharedPref.getString(getResources().getString(R.string.ACTIVITY_STATUS), "null").equals("onPause") || sharedPref.getString(getResources().getString(R.string.ACTIVITY_STATUS), "null").equals("onDestroy"))) {
+        if (merchantType.equals("DRIVER") && Settings.canDrawOverlays(getApplicationContext()) && !sharedPref.getString(getResources().getString(R.string.REGISTERATION_TOKEN), "null").equals("null") && (sharedPref.getString(getResources().getString(R.string.ACTIVITY_STATUS), "null").equals("onPause") || sharedPref.getString(getResources().getString(R.string.ACTIVITY_STATUS), "null").equals("onDestroy") || sharedPref.getString(getString(R.string.RIDE_REQUEST_TYPE), "null").equals("SILENT"))) {
             widgetService.putExtra(getResources().getString(R.string.WIDGET_MESSAGE), widgetMessage);
             widgetService.putExtra("payload", payload != null ? payload.toString() : null);
             widgetService.putExtra("data", data != null ? data.toString() : null);

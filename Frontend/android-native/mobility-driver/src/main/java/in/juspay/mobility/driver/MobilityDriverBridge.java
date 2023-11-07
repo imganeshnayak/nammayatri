@@ -106,6 +106,7 @@ import in.juspay.mobility.app.NotificationUtils;
 import in.juspay.mobility.app.OverlaySheetService;
 import in.juspay.mobility.app.TranslatorMLKit;
 import in.juspay.mobility.app.Utils;
+import in.juspay.mobility.app.WidgetService;
 import in.juspay.mobility.app.callbacks.CallBack;
 import in.juspay.mobility.common.MobilityCommonBridge;
 import in.juspay.mobility.driver.mediaPlayer.DefaultMediaPlayerControl;
@@ -1097,6 +1098,12 @@ public class MobilityDriverBridge extends MobilityCommonBridge {
                 break;
         }
         return super.onRequestPermissionResult(requestCode, permissions, grantResults);
+    }
+
+    @JavascriptInterface
+    public void hideWidget(){
+        Intent widgetService = new Intent(bridgeComponents.getContext(), WidgetService.class);
+        bridgeComponents.getContext().stopService(widgetService);
     }
     //endregion
 }

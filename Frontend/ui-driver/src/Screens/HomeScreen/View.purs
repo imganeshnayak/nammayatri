@@ -38,6 +38,7 @@ import Components.RideCompletedCard as RideCompletedCard
 import Components.SelectListModal as SelectListModal
 import PaymentPage (consumeBP)
 import Components.StatsModel as StatsModel
+import Constants (defaultDensity)
 import Control.Monad.Except (runExceptT)
 import Control.Monad.Except.Trans (lift)
 import Control.Transformers.Back.Trans (runBackT)
@@ -47,7 +48,7 @@ import Data.Function.Uncurried (runFn1, runFn2)
 import Data.Int (ceil, toNumber, fromString)
 import Data.Maybe (Maybe(..), fromMaybe, isJust)
 import Data.String as DS
-import Data.Time.Duration (Milliseconds(..))
+import Data.Time.Duration (Milliseconds(..), Seconds(..))
 import Debug (spy)
 import Effect (Effect)
 import Effect.Aff (launchAff)
@@ -67,7 +68,7 @@ import MerchantConfig.Utils (getValueFromConfig)
 import MerchantConfig.Utils as MU
 import Prelude (Unit, bind, const, discard, not, pure, unit, void, ($), (&&), (*), (-), (/), (<), (<<<), (<>), (==), (>), (>=), (||), (<=), show, void, (/=), when, map, otherwise, (+))
 import Presto.Core.Types.Language.Flow (Flow, delay, doAff)
-import PrestoDOM (BottomSheetState(..), Gravity(..), Length(..), Margin(..), Orientation(..), Padding(..), PrestoDOM, Screen, Visibility(..), adjustViewWithKeyboard, afterRender, alignParentBottom, alpha, background, bottomSheetLayout, clickable, color, cornerRadius, ellipsize, fontStyle, frameLayout, gravity, halfExpandedRatio, height, id, imageUrl, imageView, imageWithFallback, layoutGravity, lineHeight, linearLayout, lottieAnimationView, margin, onBackPressed, onClick, orientation, padding, peakHeight, relativeLayout, singleLine, stroke, text, textSize, textView, visibility, weight, width, topShift, onAnimationEnd  )
+import PrestoDOM (BottomSheetState(..), Gravity(..), Length(..), Margin(..), Orientation(..), Padding(..), PrestoDOM, Screen, Visibility(..), adjustViewWithKeyboard, afterRender, alignParentBottom, alpha, background, bottomSheetLayout, clickable, color, cornerRadius, ellipsize, fontStyle, frameLayout, gravity, halfExpandedRatio, height, id, imageUrl, imageView, imageWithFallback, layoutGravity, lineHeight, linearLayout, lottieAnimationView, margin, onBackPressed, onClick, orientation, padding, peakHeight, relativeLayout, singleLine, stroke, text, textSize, textView, visibility, weight, width, topShift, onAnimationEnd)
 import PrestoDOM (BottomSheetState(..), alignParentBottom, layoutGravity, Gravity(..), Length(..), Margin(..), Orientation(..), Padding(..), PrestoDOM, Screen, Visibility(..), afterRender, alpha, background, bottomSheetLayout, clickable, color, cornerRadius, fontStyle, frameLayout, gravity, halfExpandedRatio, height, id, imageUrl, imageView, lineHeight, linearLayout, margin, onBackPressed, onClick, orientation, padding, peakHeight, stroke, text, textSize, textView, visibility, weight, width, imageWithFallback, adjustViewWithKeyboard, lottieAnimationView, relativeLayout, ellipsize, singleLine, scrollView, scrollBarY)
 import PrestoDOM.Animation as PrestoAnim
 import PrestoDOM.Elements.Elements (coordinatorLayout)
@@ -76,14 +77,13 @@ import PrestoDOM.Types.DomAttributes as PTD
 import Screens as ScreenNames
 import Screens.HomeScreen.Controller (Action(..), RideRequestPollingData, ScreenOutput, ScreenOutput(GoToHelpAndSupportScreen), checkPermissionAndUpdateDriverMarker, eval, getPeekHeight)
 import Screens.HomeScreen.ScreenData as HomeScreenData
-import Screens.Types (HomeScreenStage(..), HomeScreenState, KeyboardModalType(..),DriverStatus(..), DriverStatusResult(..), PillButtonState(..),TimerStatus(..), DisabilityType(..), SavedLocationScreenType(..), LocalStoreSubscriptionInfo, SubscriptionBannerType(..))
+import Screens.Types (HomeScreenStage(..), HomeScreenState, KeyboardModalType(..), DriverStatus(..), DriverStatusResult(..), PillButtonState(..), TimerStatus(..), DisabilityType(..), SavedLocationScreenType(..), LocalStoreSubscriptionInfo, SubscriptionBannerType(..))
 import Screens.Types as ST
 import Services.API (GetRidesHistoryResp(..), OrderStatusRes(..), Status(..))
 import Services.Backend as Remote
-import Storage (getValueToLocalStore, KeyStore(..), setValueToLocalStore, getValueToLocalNativeStore, isLocalStageOn, setValueToLocalNativeStore)
+import Storage (KeyStore(..), getValueToLocalNativeStore, getValueToLocalStore, isLocalStageOn, setValueToLocalNativeStore, setValueToLocalStore)
 import Styles.Colors as Color
 import Types.App (GlobalState, defaultGlobalState)
-import Constants (defaultDensity)
 
 screen :: HomeScreenState -> Screen Action HomeScreenState ScreenOutput
 screen initialState =
@@ -97,6 +97,10 @@ screen initialState =
           _ <- HU.storeCallBackForNotification push Notification
           _ <- HU.storeCallBackTime push TimeUpdate
           _ <- runEffectFn2 JB.storeKeyBoardCallback push KeyboardCallback
+          if initialState.props.currentStage == ST.RideCompleted then do
+            _ <- pure $ spy "zxc RIDE_REQUEST_TYPE" (getValueToLocalStore RIDE_REQUEST_TYPE)
+            void $ launchAff $ EHC.flowRunner defaultGlobalState updateRideRequestType
+          else pure unit
           when (getValueToLocalNativeStore IS_RIDE_ACTIVE == "true" && initialState.data.activeRide.status == NOTHING) do
             void $ launchAff $ EHC.flowRunner defaultGlobalState $ runExceptT $ runBackT $ do
               (GetRidesHistoryResp activeRideResponse) <- Remote.getRideHistoryReqBT "1" "0" "true" "null" "null"
@@ -1577,3 +1581,11 @@ genderBanner :: forall w . (Action -> Effect Unit) -> HomeScreenState -> PrestoD
 genderBanner push state =
   Banner.view (push <<< GenderBannerModal) (genderBannerConfig state)
 
+updateRideRequestType :: Flow GlobalState Unit
+updateRideRequestType = do
+  _ <- pure $ setValueToLocalStore RIDE_REQUEST_TYPE "NONE"
+  _ <- pure $ spy "zxc RIDE_REQUEST_TYPE3" (getValueToLocalStore RIDE_REQUEST_TYPE)
+  void $ delay $ Seconds 15.0
+  _ <- pure $ spy "zxc RIDE_REQUEST_TYPE4" (getValueToLocalStore RIDE_REQUEST_TYPE)
+  _ <- pure $ setValueToLocalStore RIDE_REQUEST_TYPE "SILENT"
+  pure unit

@@ -15,6 +15,7 @@
 
 module Flow where
 
+import Debug
 import Log
 import Screens.SubscriptionScreen.Controller
 
@@ -126,6 +127,7 @@ baseAppFlow baseFlow event = do
     versionCode <- lift $ lift $ liftFlow $ getVersionCode
     checkVersion versionCode
     checkTimeSettings
+    _ <- pure $ spy "zxc RIDE_REQUEST SUGGESTIONS" (getValueToLocalStore RIDE_REQUEST_TYPE)
     cacheAppParameters versionCode baseFlow
     void $ lift $ lift $ liftFlow $ initiateLocationServiceClient
     when baseFlow $ lift $ lift $ initUI
@@ -158,6 +160,7 @@ baseAppFlow baseFlow event = do
       setValueToLocalStore IS_BANNER_ACTIVE "True"
       setValueToLocalStore MESSAGES_DELAY "0"
       setValueToLocalStore SHOW_PAYMENT_MODAL "true"
+      -- setValueToLocalStore RIDE_REQUEST_TYPE "NORMAL"
       setValueToLocalNativeStore BUNDLE_VERSION bundle
       setValueToLocalNativeStore GPS_METHOD "CURRENT"
       setValueToLocalNativeStore MAKE_NULL_API_CALL "NO"
@@ -1958,6 +1961,7 @@ homeScreenFlow = do
         
       modifyScreenState $ HomeScreenStateType (\homeScreen -> homeScreen {props { showRideCompleted = true}})
       _ <- updateStage $ HomeScreenStage RideCompleted
+
       void $ lift $ lift $ toggleLoader false
       updateDriverDataToStates
       homeScreenFlow
@@ -2099,6 +2103,7 @@ homeScreenFlow = do
               ST.REDUCED _ -> ST.REDUCED driverGoHomeInfo.cnt 
               _ -> globalstate.globalProps.gotoPopupType}
       _ <- updateStage $ HomeScreenStage HomeScreen
+      _ <- pure $ setValueToLocalStore RIDE_REQUEST_TYPE "NORMAL"
       updateDriverDataToStates
       modifyScreenState $ GlobalPropsType (\globalProps -> globalProps { gotoPopupType = ST.NO_POPUP_VIEW })
       homeScreenFlow

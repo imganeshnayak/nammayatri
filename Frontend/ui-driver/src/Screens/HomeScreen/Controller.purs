@@ -87,6 +87,7 @@ import Engineering.Helpers.Commons (liftFlow)
 import PrestoDOM.Core (getPushFn)
 import Control.Monad.Except.Trans (lift)
 import Data.Either (Either(..))
+import Debug
 
 instance showAction :: Show Action where
   show _ = ""
@@ -920,7 +921,12 @@ eval (RideCompletedAC (RideCompletedCard.ContactSupportPopUpAC PopUpModal.OnButt
 eval (RideCompletedAC (RideCompletedCard.ContactSupportPopUpAC PopUpModal.DismissPopup)) state = continue state {props {showContactSupportPopUp = false}}
 
 eval (RideCompletedAC (RideCompletedCard.RideDetails)) state = exit $ GoToRideDetailsScreen state
-eval (RideCompletedAC (RideCompletedCard.SkipButtonActionController (PrimaryButtonController.OnClick))) state = continue state {props {showRideRating = true}}
+eval (RideCompletedAC (RideCompletedCard.SkipButtonActionController (PrimaryButtonController.OnClick))) state = do
+    _ <- pure $ spy "RIDE_REQUEST_TYPE" "NORMAL"
+    _ <- pure $ setValueToLocalStore RIDE_REQUEST_TYPE "NORMAL"
+    _ <- pure $ hideWidget unit
+    _ <- pure $ spy "zxc RIDE_REQUEST_TYPE2" (getValueToLocalStore RIDE_REQUEST_TYPE)
+    continue state {props {showRideRating = true}}
 eval (RideCompletedAC (RideCompletedCard.BannerAction (Banner.OnClick))) state = continueWithCmd state [pure $ AutoPayBanner (Banner.OnClick) ]
 
 
