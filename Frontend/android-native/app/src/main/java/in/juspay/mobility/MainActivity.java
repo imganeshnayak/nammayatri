@@ -107,6 +107,9 @@ public class MainActivity extends AppCompatActivity {
     private HyperServices hyperServices;
     private Context context;
     private Activity activity;
+    private Handler handler;
+    private Runnable runnable;
+    private Boolean triggeredFinishAffinity;
     @Nullable
     private SharedPreferences sharedPref;
     @SuppressLint("StaticFieldLeak")
@@ -120,14 +123,22 @@ public class MainActivity extends AppCompatActivity {
                 Utils.updateLocaleResource(sharedPreferences.getString(key,"__failed"),context);
             }
             if (key != null && key.equals("REGISTERATION_TOKEN")) {
-                String token = sharedPreferences.getString(key, "null");
+                String token = sharedPreferences.getString(key, "__failed");
                 if (token.equals("__failed")) {
                     final PackageManager pm = getApplicationContext().getPackageManager();
                     final Intent intent = pm.getLaunchIntentForPackage(getApplicationContext().getPackageName());
                     try {
                         if (activity != null) {
-                            activity.finishAffinity();// Finishes all activities.
-                            activity.startActivity(intent);
+                            activity.finishAffinity(); // finishes all activities
+                            handler = new Handler(context.getMainLooper());
+                            runnable = new Runnable() {
+                                @Override
+                                public void run() {
+                                    activity.startActivity(intent);
+                                }
+                            };
+                            triggeredFinishAffinity = true;
+                            handler.postDelayed(runnable, 1000);
                         } else {
                             sharedPreferences.edit().clear().apply();
                         }
@@ -478,7 +489,6 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onEvent(JSONObject jsonObject, JuspayResponseHandler juspayResponseHandler) {
                 Log.d(LOG_TAG, "onEvent: " + jsonObject.toString());
-                sharedPref.edit().putString(getResources().getString(in.juspay.mobility.app.R.string.ACTIVITY_STATUS), "onResume").apply();
                 String event = jsonObject.optString("event");
                 switch (event) {
                     case "initiate_result":
@@ -728,6 +738,18 @@ public class MainActivity extends AppCompatActivity {
             sharedPref.edit().putString(getResources().getString(in.juspay.mobility.app.R.string.ACTIVITY_STATUS), "onDestroy").apply();
         }
         pauseYoutubePlayer();
+        if (triggeredFinishAffinity)
+        {
+            triggeredFinishAffinity = false;
+            if(handler != null && runnable != null){
+                handler.removeCallbacks(runnable);
+                handler = null;
+                runnable = null;
+            }
+            final PackageManager pm = getApplicationContext().getPackageManager();
+            final Intent intent = pm.getLaunchIntentForPackage(getApplicationContext().getPackageName());
+            activity.startActivity(intent);
+        }
         if (hyperServices != null) {
             hyperServices.terminate();
         }

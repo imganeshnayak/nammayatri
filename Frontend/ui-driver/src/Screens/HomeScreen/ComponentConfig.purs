@@ -1004,7 +1004,7 @@ getAccessibilityPopupData state pwdtype isDriverArrived =
                                               { secondaryText= getString CUSTOMER_HAS_POOR_HEARING_CHAT_WITH_THEM_INSTEAD_OF_CALLING ,
                                                 imageUrl = fetchImage FF_ASSET "ny_ic_deaf_pickup",
                                                 videoUrl = state.data.config.purpleRideConfig.hearingImpairmentVideo,
-                                                mediaType = if DSC.null state.data.config.purpleRideConfig.hearingImpairmentVideo then "" else "VideoLink",,
+                                                mediaType = if DSC.null state.data.config.purpleRideConfig.hearingImpairmentVideo then "" else "VideoLink",
                                                 videoId = "HearingImpairmentCoverVideo"
                                               }
       Just ST.LOCOMOTOR_DISABILITY, true -> accessibilityConfig'
