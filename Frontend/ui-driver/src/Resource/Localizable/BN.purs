@@ -1085,3 +1085,6 @@ getBN stringKey =
         DRIVER_GO_HOME_REQUEST_NOT_PRESENT -> ""
         BY_CLICKING_NEXT_YOU_WILL_BE_AGREEING_TO_OUR -> ""
         THIS_EXTRA_AMOUNT_THE_CUSTOMER_WILL_PAY -> "এই অতিরিক্ত পরিমাণ গ্রাহক আপনাকে প্রদান করবে কারণ আপনি {} মিনিটের বেশি অপেক্ষা করেছেন"
+        ACCOUNT_BLOCKED -> "অ্যাকাউন্ট অবরুদ্ধ!"
+        YOU_HAVE_BEEN_BLOCKED_FROM_TAKING_RIDES -> "আপনাকে রাইড করা থেকে ব্লক করা হয়েছে।\nদয়া করে সাহায্যের জন্য সহায়তার সাথে যোগাযোগ করুন।"
+        DISMISS -> "খারিজ"

@@ -1085,3 +1085,6 @@ getML stringKey =
         COMPLETE_PAYMENT_TO_CONTINUE _ -> ""
         BY_CLICKING_NEXT_YOU_WILL_BE_AGREEING_TO_OUR -> ""
         THIS_EXTRA_AMOUNT_THE_CUSTOMER_WILL_PAY -> "നിങ്ങൾ {} മിനിറ്റിലധികം കാത്തിരുന്നതിനാൽ ഉപഭോക്താവ് നിങ്ങൾക്ക് നൽകുന്ന അധിക തുകയാണിത്"
+        ACCOUNT_BLOCKED -> "അക്കൗണ്ട് തടഞ്ഞു!"
+        YOU_HAVE_BEEN_BLOCKED_FROM_TAKING_RIDES -> "നിങ്ങളെ സവാരി ചെയ്യുന്നതിൽ നിന്ന് തടഞ്ഞിരിക്കുന്നു.\nസഹായത്തിന് പിന്തുണയുമായി ബന്ധപ്പെടുക."
+        DISMISS -> "പിരിച്ചുവിടുക"

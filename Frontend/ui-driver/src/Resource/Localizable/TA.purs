@@ -1085,3 +1085,6 @@ getTA stringKey =
         NO_GOTO_LOCS_ADDED_YET_DESC -> ""
         BY_CLICKING_NEXT_YOU_WILL_BE_AGREEING_TO_OUR -> ""
         THIS_EXTRA_AMOUNT_THE_CUSTOMER_WILL_PAY -> "நீங்கள் {} நிமிடங்களுக்கு மேல் காத்திருந்ததால் வாடிக்கையாளர் உங்களுக்குச் செலுத்தும் கூடுதல் தொகை இது"
+        ACCOUNT_BLOCKED -> "கணக்கு தடுக்கப்பட்டது!"
+        YOU_HAVE_BEEN_BLOCKED_FROM_TAKING_RIDES -> "நீங்கள் சவாரி செய்வதிலிருந்து தடுக்கப்பட்டுள்ளீர்கள்.\nஉதவிக்கு ஆதரவைத் தொடர்பு கொள்ளவும்."
+        DISMISS -> "நிராகரி"

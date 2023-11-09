@@ -189,7 +189,8 @@ initData = {
         subscriptionPopupType : NO_SUBSCRIPTION_POPUP,
         showGenericAccessibilityPopUp : false,
         waitTimeStatus : NoStatus,
-        isMockLocation : false
+        isMockLocation : false,
+        accountBlockedPopup : false
     }
 }
 

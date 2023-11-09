@@ -63,7 +63,6 @@ import Screens (ScreenName(..), getScreen)
 import Screens.Types as ST
 import Services.API (GetRidesHistoryResp, RidesInfo(..), Status(..), GetCurrentPlanResp(..), PlanEntity(..), PaymentBreakUp(..))
 import Services.Accessor (_lat, _lon)
-import Services.Config (getCustomerNumber)
 import Storage (KeyStore(..), deleteValueFromLocalStore, getValueToLocalNativeStore, getValueToLocalStore, setValueToLocalNativeStore, setValueToLocalStore)
 import Types.App (FlowBT, GlobalState(..), HOME_SCREENOUTPUT(..), ScreenType(..))
 import Types.ModifyScreenState (modifyScreenState)
@@ -90,6 +89,7 @@ import Components.ErrorModal.Controller as ErrorModalController
 import Data.Int as Int
 import Data.Function.Uncurried as Uncurried
 import Engineering.Helpers.Commons as EHC
+import Services.Config as SC
 
 instance showAction :: Show Action where
   show _ = ""
@@ -333,6 +333,7 @@ data Action = NoAction
             | AddLocation PrimaryButtonController.Action
             | ConfirmDisableGoto PopUpModal.Action
             | UpdateOriginDist Number Number
+            | AccountBlockedAC PopUpModal.Action
             | UpdateAndNotify ST.Location Boolean
             | UpdateWaitTime ST.TimerStatus
             | NotifyAPI
@@ -357,6 +358,12 @@ eval (GotoKnowMoreAction PopUpModal.OnButton1Click) state = continue state { dat
 eval (ConfirmDisableGoto PopUpModal.OnButton2Click) state = continue state { data { driverGotoState { confirmGotoCancel = false } }} 
 
 eval (ConfirmDisableGoto PopUpModal.OnButton1Click) state = updateAndExit state{ data { driverGotoState { confirmGotoCancel = false } }}  $ DisableGoto state{ data { driverGotoState { confirmGotoCancel = false } }} 
+
+eval (AccountBlockedAC PopUpModal.OnButton2Click) state = continue state { props { accountBlockedPopup = false } }
+
+eval (AccountBlockedAC PopUpModal.OnButton1Click) state = do 
+  void $ pure $ showDialer (SC.getSupportNumber "") false 
+  continue state
 
 eval (GotoRequestPopupAction (PopUpModal.OnButton1Click)) state = 
   case state.data.driverGotoState.goToPopUpType of
@@ -409,6 +416,7 @@ eval BackPressed state = do
   else if state.data.driverGotoState.showGoto then continue state { data { driverGotoState { showGoto = false }}} 
   else if state.data.driverGotoState.goToPopUpType /= ST.NO_POPUP_VIEW then continue state { data { driverGotoState { goToPopUpType = ST.NO_POPUP_VIEW }}} 
   else if state.props.showContactSupportPopUp then continue state {props {showContactSupportPopUp = false}}
+  else if state.props.accountBlockedPopup then continue state {props {accountBlockedPopup = false}}
   else do
     _ <- pure $ minimizeApp ""
     continue state

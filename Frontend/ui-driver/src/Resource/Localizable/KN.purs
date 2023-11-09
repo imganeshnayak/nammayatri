@@ -1085,3 +1085,6 @@ getKN stringKey =
         CALL_REQUEST_HAS_BEEN_PLACED -> ""
         BY_CLICKING_NEXT_YOU_WILL_BE_AGREEING_TO_OUR -> ""
         THIS_EXTRA_AMOUNT_THE_CUSTOMER_WILL_PAY -> "ಇದು ಗ್ರಾಹಕರು ನಿಮಗೆ ಪಾವತಿಸುವ ಹೆಚ್ಚುವರಿ ಮೊತ್ತವಾಗಿದೆ ಏಕೆಂದರೆ ನೀವು {} ನಿಮಿಷಗಳಿಗಿಂತ ಹೆಚ್ಚು ಕಾಯುತ್ತಿದ್ದೀರಿ"
+        ACCOUNT_BLOCKED -> "ಖಾತೆಯನ್ನು ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ!"
+        YOU_HAVE_BEEN_BLOCKED_FROM_TAKING_RIDES -> "ನಿಮ್ಮನ್ನು ಸವಾರಿ ಮಾಡದಂತೆ ನಿರ್ಬಂಧಿಸಲಾಗಿದೆ.\nದಯವಿಟ್ಟು ಸಹಾಯಕ್ಕಾಗಿ ಬೆಂಬಲವನ್ನು ಸಂಪರ್ಕಿಸಿ."
+        DISMISS -> "ವಜಾಗೊಳಿಸಿ"

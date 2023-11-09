@@ -1085,3 +1085,6 @@ getHI stringKey =
         CHOOSE_LANGUAGE -> ""
         BY_CLICKING_NEXT_YOU_WILL_BE_AGREEING_TO_OUR -> ""
         THIS_EXTRA_AMOUNT_THE_CUSTOMER_WILL_PAY -> "यह वह अतिरिक्त राशि है जो ग्राहक आपको भुगतान करेगा क्योंकि आपने {} मिनट से अधिक प्रतीक्षा की है"
+        ACCOUNT_BLOCKED -> "खाता अवरुद्ध!"
+        YOU_HAVE_BEEN_BLOCKED_FROM_TAKING_RIDES -> "आपको सवारी लेने से रोक दिया गया है।\nकृपया सहायता के लिए सहायता से संपर्क करें।"
+        DISMISS -> "खारिज करें"

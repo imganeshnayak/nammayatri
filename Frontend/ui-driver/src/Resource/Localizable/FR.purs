@@ -798,4 +798,7 @@ getFR stringKey =
         UNABLE_TO_GET_YOUR_LOCATION  -> "Impossible d'obtenir votre position!"
         TURN_OFF_ANY_MOCK_LOCATION_APP_AND_RESTART  -> "Désactivez toute application Mock Location que vous utilisez et redémarrez l'application."
         BY_CLICKING_NEXT_YOU_WILL_BE_AGREEING_TO_OUR -> ""
+        ACCOUNT_BLOCKED -> "Compte bloqué !"
+        YOU_HAVE_BEEN_BLOCKED_FROM_TAKING_RIDES -> "Vous n'avez pas été autorisé à participer à des courses.\nVeuillez contacter l'assistance pour obtenir de l'aide."
+        DISMISS -> "Rejeter"
         _ -> ""

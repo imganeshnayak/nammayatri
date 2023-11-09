@@ -1085,3 +1085,6 @@ getEN stringKey =
         DRIVER_GO_HOME_REQUEST_NOT_PRESENT -> ""
         BY_CLICKING_NEXT_YOU_WILL_BE_AGREEING_TO_OUR -> ""
         THIS_EXTRA_AMOUNT_THE_CUSTOMER_WILL_PAY -> "This is the extra amount the customer will pay you because you have waited more than {} minutes"
+        ACCOUNT_BLOCKED -> "Account blocked!"
+        YOU_HAVE_BEEN_BLOCKED_FROM_TAKING_RIDES -> "You have been blocked from taking rides.\nPlease contact support for help."
+        DISMISS -> "Dismiss"
