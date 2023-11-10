@@ -83,6 +83,16 @@ findByDriverAndSearchTryId (Id driverId) (Id searchTryId) =
         )
     ]
 
+findByDriverSearchTryIdAndResponse :: (MonadFlow m, EsqDBFlow m r, CacheFlow m r) => Id Person -> Id SearchTry -> m (Maybe SearchRequestForDriver)
+findByDriverSearchTryIdAndResponse (Id driverId) (Id searchTryId) =
+  findOneWithKV
+    [ Se.And
+        [ Se.Is BeamSRFD.searchTryId $ Se.Eq searchTryId,
+          Se.Is BeamSRFD.response $ Se.Eq (Just Domain.Accept),
+          Se.Is BeamSRFD.driverId $ Se.Eq driverId
+        ]
+    ]
+
 -- Should not support driver Id as a secondryKey index in Kv so creating a new key while creating the entry in redis for active searchRequestForDriver
 findByDriver :: (MonadFlow m, EsqDBFlow m r, CacheFlow m r) => Id Person -> m [SearchRequestForDriver]
 findByDriver (Id driverId) = do
@@ -161,7 +171,8 @@ instance FromTType' BeamSRFD.SearchRequestForDriver SearchRequestForDriver where
             driverSpeed = driverSpeed,
             mode = mode,
             goHomeRequestId = Id <$> goHomeRequestId,
-            rideFrequencyScore = rideFrequencyScore
+            rideFrequencyScore = rideFrequencyScore,
+            customerCancellationDues = customerCancellationDues
           }
 
 instance ToTType' BeamSRFD.SearchRequestForDriver SearchRequestForDriver where
@@ -197,5 +208,6 @@ instance ToTType' BeamSRFD.SearchRequestForDriver SearchRequestForDriver where
         BeamSRFD.driverSpeed = driverSpeed,
         BeamSRFD.mode = mode,
         BeamSRFD.goHomeRequestId = getId <$> goHomeRequestId,
-        BeamSRFD.rideFrequencyScore = rideFrequencyScore
+        BeamSRFD.rideFrequencyScore = rideFrequencyScore,
+        BeamSRFD.customerCancellationDues = customerCancellationDues
       }

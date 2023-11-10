@@ -1,3 +1,4 @@
+{-# LANGUAGE InstanceSigs #-}
 {-
  Copyright 2022-23, Juspay India Pvt Ltd
 
@@ -140,6 +141,7 @@ instance FromTType' BeamTC.TransporterConfig TransporterConfig where
         A.Error _ -> Nothing
 
 instance ToTType' BeamTC.TransporterConfig TransporterConfig where
+  toTType' :: TransporterConfig -> BeamTC.TransporterConfig
   toTType' TransporterConfig {..} = do
     BeamTC.TransporterConfigT
       { BeamTC.merchantId = getId merchantId,
@@ -232,5 +234,11 @@ instance ToTType' BeamTC.TransporterConfig TransporterConfig where
         BeamTC.enableUdfForOffers = enableUdfForOffers,
         BeamTC.nightSafetyRouteDeviationThreshold = nightSafetyRouteDeviationThreshold,
         BeamTC.nightSafetyStartTime = nightSafetyStartTime,
-        BeamTC.nightSafetyEndTime = nightSafetyEndTime
+        BeamTC.nightSafetyEndTime = nightSafetyEndTime,
+        BeamTC.cancellationFee = cancellationFee,
+        BeamTC.driverDistanceTravelledOnPickupThreshold = driverDistanceTravelledOnPickupThreshold,
+        BeamTC.driverTimeSpentOnPickupThreshold = driverTimeSpentOnPickupThreshold,
+        BeamTC.driverDistanceToPickupThreshold = driverDistanceToPickupThreshold,
+        BeamTC.cancellationFeeDisputeLimit = cancellationFeeDisputeLimit,
+        BeamTC.numOfCancellationsAllowed = numOfCancellationsAllowed
       }

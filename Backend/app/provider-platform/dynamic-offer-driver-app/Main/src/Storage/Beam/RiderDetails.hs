@@ -19,6 +19,7 @@ module Storage.Beam.RiderDetails where
 import qualified Database.Beam as B
 import Kernel.External.Encryption
 import Kernel.Prelude
+import Kernel.Types.Common (Money)
 import Tools.Beam.UtilsTH
 
 data RiderDetailsT f = RiderDetailsT
@@ -33,6 +34,8 @@ data RiderDetailsT f = RiderDetailsT
     hasTakenValidRide :: B.C f Bool,
     hasTakenValidRideAt :: B.C f (Maybe UTCTime),
     otpCode :: B.C f (Maybe Text),
+    cancellationDues :: B.C f Money,
+    disputeChancesUsed :: B.C f Int,
     createdAt :: B.C f UTCTime,
     updatedAt :: B.C f UTCTime,
     nightSafetyChecks :: B.C f Bool

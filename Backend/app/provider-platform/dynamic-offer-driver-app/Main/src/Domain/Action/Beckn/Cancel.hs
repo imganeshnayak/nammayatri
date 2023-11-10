@@ -31,6 +31,7 @@ import qualified Domain.Types.Ride as SRide
 import qualified Domain.Types.SearchTry as ST
 import EulerHS.Prelude
 import Kernel.External.Maps
+import Kernel.Prelude (roundToIntegral)
 import qualified Kernel.Storage.Esqueleto as Esq
 import Kernel.Types.Common
 import Kernel.Types.Id
@@ -45,6 +46,7 @@ import qualified SharedLogic.External.LocationTrackingService.Types as LT
 import qualified SharedLogic.SearchTryLocker as CS
 import qualified Storage.CachedQueries.Driver.GoHomeRequest as CQDGR
 import qualified Storage.CachedQueries.Merchant as QM
+import qualified Storage.CachedQueries.Merchant.TransporterConfig as SCT
 import qualified Storage.Queries.Booking as QRB
 import qualified Storage.Queries.BookingCancellationReason as QBCR
 import qualified Storage.Queries.DriverInformation as QDI
@@ -52,6 +54,7 @@ import qualified Storage.Queries.DriverQuote as QDQ
 import qualified Storage.Queries.Person as QPers
 import qualified Storage.Queries.Person as QPerson
 import qualified Storage.Queries.Ride as QRide
+import qualified Storage.Queries.RiderDetails as QRD
 import qualified Storage.Queries.SearchRequest as QSR
 import qualified Storage.Queries.SearchRequestForDriver as QSRD
 import qualified Storage.Queries.SearchTry as QST
@@ -105,6 +108,34 @@ cancel req merchant booking = do
       logDebug $ "RideCancelled Coin Event by customer distance to pickup" <> show disToPickup
       logDebug "RideCancelled Coin Event by customer"
       DC.driverCoinsEvent ride.driverId merchant.id booking.merchantOperatingCityId (DCT.Cancellation ride.createdAt booking.distanceToPickup disToPickup)
+
+  transporterConfig <- SCT.findByMerchantOpCityId booking.merchantOperatingCityId >>= fromMaybeM (TransporterConfigNotFound booking.merchantOperatingCityId.getId)
+  whenJust mbRide $ \ride -> do
+    mbLocation <- do
+      driverLocations <- LF.driversLocation [ride.driverId]
+      return $ listToMaybe driverLocations
+    disToPickup <- forM mbLocation $ \location -> do
+      driverDistanceToPickup booking.providerId booking.merchantOperatingCityId (getCoordinates location) (getCoordinates booking.fromLocation)
+
+    fork "calculate customer cancellation dues" $ do
+      whenJust disToPickup $ \driverDistToPickup -> do
+        now <- getCurrentTime
+        let driverBookingDuration = roundToIntegral $ diffUTCTime now booking.createdAt
+        let condition = driverBookingDuration > transporterConfig.driverTimeSpentOnPickupThreshold && driverDistToPickup < transporterConfig.driverDistanceToPickupThreshold
+        isChargable <-
+          if not condition
+            then do
+              driverQuote <- QDQ.findById (Id booking.quoteId) >>= fromMaybeM (QuoteNotFound booking.quoteId)
+              searchReqForDriver <- QSRD.findByDriverSearchTryIdAndResponse ride.driverId driverQuote.searchTryId >>= fromMaybeM (InternalError "SearchRequestForDriver Not Found")
+              return $ (searchReqForDriver.actualDistanceToPickup - driverDistToPickup) > transporterConfig.driverDistanceTravelledOnPickupThreshold
+            else return condition
+        when isChargable $ do
+          riderId <- booking.riderId & fromMaybeM (RiderDetailsDoNotExist "BOOKING" booking.id.getId)
+          rider <- QRD.findById riderId >>= fromMaybeM (RiderDetailsNotFound riderId.getId)
+          QRD.updateCancellationDues riderId (rider.cancellationDues + transporterConfig.cancellationFee)
+
+    logDebug "RideCancelled Coin Event"
+    DC.driverCoinsEvent ride.driverId merchant.id booking.merchantOperatingCityId (DCT.Cancellation ride.createdAt booking.distanceToPickup disToPickup)
 
   whenJust mbRide $ \ride -> do
     triggerRideCancelledEvent RideEventData {ride = ride{status = SRide.CANCELLED}, personId = ride.driverId, merchantId = merchant.id}

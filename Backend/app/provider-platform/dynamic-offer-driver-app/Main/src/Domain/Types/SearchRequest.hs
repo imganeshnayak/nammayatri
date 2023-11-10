@@ -45,6 +45,7 @@ data SearchRequest = SearchRequest
     device :: Maybe Text,
     customerLanguage :: Maybe Maps.Language,
     disabilityTag :: Maybe Text,
+    customerCancellationDues :: Money,
     createdAt :: UTCTime
   }
   deriving (Generic, PrettyShow, Show)

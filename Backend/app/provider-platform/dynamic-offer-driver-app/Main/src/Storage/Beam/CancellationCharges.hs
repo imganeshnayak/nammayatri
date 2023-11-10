@@ -12,40 +12,30 @@
   the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
 {-# LANGUAGE DerivingStrategies #-}
-{-# LANGUAGE TemplateHaskell #-}
 
-module Storage.Beam.FareParameters where
+module Storage.Beam.CancellationCharges where
 
 import qualified Database.Beam as B
-import qualified Domain.Types.FareParameters as Domain
 import Kernel.Prelude
-import Kernel.Types.Common hiding (id)
+import Kernel.Types.Common (Money)
 import Tools.Beam.UtilsTH
 
-data FareParametersT f = FareParametersT
+data CancellationChargesT f = CancellationChargesT
   { id :: B.C f Text,
-    baseFare :: B.C f Money,
-    driverSelectedFare :: B.C f (Maybe Money),
-    customerExtraFee :: B.C f (Maybe Money),
-    waitingCharge :: B.C f (Maybe Money),
-    rideExtraTimeFare :: B.C f (Maybe Money),
-    nightShiftCharge :: B.C f (Maybe Money),
-    nightShiftRateIfApplies :: B.C f (Maybe Double),
-    serviceCharge :: B.C f (Maybe Money),
-    fareParametersType :: B.C f Domain.FareParametersType,
-    govtCharges :: B.C f (Maybe Money),
-    customerCancellationDues :: B.C f Money
+    driverId :: B.C f Text,
+    rideId :: B.C f (Maybe Text),
+    cancellationCharges :: B.C f Money
   }
   deriving (Generic, B.Beamable)
 
-instance B.Table FareParametersT where
-  data PrimaryKey FareParametersT f
+instance B.Table CancellationChargesT where
+  data PrimaryKey CancellationChargesT f
     = Id (B.C f Text)
     deriving (Generic, B.Beamable)
   primaryKey = Id . id
 
-type FareParameters = FareParametersT Identity
+type CancellationCharges = CancellationChargesT Identity
 
-$(enableKVPG ''FareParametersT ['id] [])
+$(enableKVPG ''CancellationChargesT ['id] [])
 
-$(mkTableInstances ''FareParametersT "fare_parameters")
+$(mkTableInstances ''CancellationChargesT "cancellation_charges")

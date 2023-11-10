@@ -59,6 +59,7 @@ import qualified SharedLogic.Estimate as SHEst
 import SharedLogic.FareCalculator
 import SharedLogic.FarePolicy
 import SharedLogic.GoogleMaps
+import qualified SharedLogic.RiderDetails as SRD
 import qualified Storage.CachedQueries.Merchant as CQM
 import qualified Storage.CachedQueries.Merchant.MerchantOperatingCity as CQMOC
 import qualified Storage.CachedQueries.Merchant.MerchantPaymentMethod as CQMPM
@@ -66,6 +67,7 @@ import Storage.CachedQueries.Merchant.TransporterConfig as CTC
 import qualified Storage.Queries.Estimate as QEst
 import qualified Storage.Queries.Geometry as QGeometry
 import qualified Storage.Queries.QuoteSpecialZone as QQuoteSpecialZone
+import qualified Storage.Queries.RiderDetails as QRD
 import qualified Storage.Queries.SearchRequest as QSR
 import qualified Storage.Queries.SearchRequestSpecialZone as QSearchRequestSpecialZone
 import Tools.Error
@@ -80,6 +82,7 @@ data DSearchReq = DSearchReq
     bapUri :: BaseUrl,
     bapCity :: Context.City,
     bapCountry :: Context.Country,
+    customerPhoneNum :: Maybe Text,
     pickupLocation :: LatLong,
     pickupTime :: UTCTime,
     dropLocation :: LatLong,
@@ -153,6 +156,17 @@ handler merchant sReq = do
 
   allFarePoliciesProduct <- getAllFarePoliciesProduct merchantId merchantOpCityId fromLocationLatLong toLocationLatLong
   let farePolicies = selectFarePolicy result.distance allFarePoliciesProduct.farePolicies
+
+  customerCancellationDue <- case sReq.customerPhoneNum of
+    Just number -> do
+      now <- getCurrentTime
+      (riderDetails, isNewRider) <- SRD.getRiderDetails merchant.id (fromMaybe "+91" merchant.mobileCountryCode) number now False
+      when isNewRider $ QRD.create riderDetails
+      return riderDetails.cancellationDues
+    Nothing -> do
+      logWarning "Failed to calculate Customer Cancellation Dues as BAP Phone Number is NULL"
+      return 0
+
   (quotes, mbEstimateInfos) <-
     case allFarePoliciesProduct.flow of
       DFareProduct.RIDE_OTP -> do
@@ -178,7 +192,8 @@ handler merchant sReq = do
                     avgSpeedOfVehicle = Nothing,
                     driverSelectedFare = Nothing,
                     customerExtraFee = Nothing,
-                    nightShiftCharge = Nothing
+                    nightShiftCharge = Nothing,
+                    customerCancellationDues = customerCancellationDue
                   }
             buildSpecialZoneQuote
               searchRequestSpecialZone
@@ -190,16 +205,16 @@ handler merchant sReq = do
               allFarePoliciesProduct.specialLocationTag
         for_ listOfSpecialZoneQuotes QQuoteSpecialZone.create
         return (Just (mkQuoteInfo fromLocation toLocation now <$> listOfSpecialZoneQuotes), Nothing)
-      DFareProduct.NORMAL -> buildEstimates farePolicies result fromLocation toLocation allFarePoliciesProduct.specialLocationTag allFarePoliciesProduct.area routeInfo merchantOpCityId
+      DFareProduct.NORMAL -> buildEstimates farePolicies result fromLocation toLocation allFarePoliciesProduct.specialLocationTag allFarePoliciesProduct.area routeInfo merchantOpCityId customerCancellationDue
   merchantPaymentMethods <- CQMPM.findAllByMerchantOpCityId merchantOpCityId
   let paymentMethodsInfo = DMPM.mkPaymentMethodInfo <$> merchantPaymentMethods
   buildSearchRes merchant fromLocationLatLong toLocationLatLong mbEstimateInfos quotes searchMetricsMVar paymentMethodsInfo
   where
     listVehicleVariantHelper farePolicy = catMaybes $ everyPossibleVariant <&> \var -> find ((== var) . (.vehicleVariant)) farePolicy
 
-    buildEstimates farePolicies result fromLocation toLocation specialLocationTag area routeInfo merchantOpCityId = do
+    buildEstimates farePolicies result fromLocation toLocation specialLocationTag area routeInfo merchantOpCityId customerCancellationDues = do
       driverPoolCfg <- getDriverPoolConfig merchantOpCityId Nothing result.distance
-      estimateInfos <- buildEstimatesInfos fromLocation toLocation driverPoolCfg result farePolicies specialLocationTag area routeInfo merchantOpCityId
+      estimateInfos <- buildEstimatesInfos fromLocation toLocation driverPoolCfg result farePolicies specialLocationTag area routeInfo merchantOpCityId customerCancellationDues
       return (Nothing, Just estimateInfos)
 
     selectFarePolicy distance farePolicies = do
@@ -229,8 +244,9 @@ handler merchant sReq = do
       DFareProduct.Area ->
       RouteInfo ->
       Id DMOC.MerchantOperatingCity ->
+      Money ->
       Flow [EstimateInfo]
-    buildEstimatesInfos fromLocation toLocation driverPoolCfg result farePolicies specialLocationTag area routeInfo merchantOpCityId = do
+    buildEstimatesInfos fromLocation toLocation driverPoolCfg result farePolicies specialLocationTag area routeInfo merchantOpCityId customerCancellationDues = do
       let merchantId = merchant.id
       if null farePolicies
         then do
@@ -253,9 +269,9 @@ handler merchant sReq = do
           logDebug $ "Search handler: driver pool " <> show driverPool
 
           let onlyFPWithDrivers = filter (\fp -> isJust (find (\dp -> dp.variant == fp.vehicleVariant) driverPool)) farePolicies
-          searchReq <- buildSearchRequest sReq merchantId merchantOpCityId fromLocation toLocation result.distance result.duration specialLocationTag area
+          searchReq <- buildSearchRequest sReq merchantId merchantOpCityId fromLocation toLocation result.distance result.duration specialLocationTag area customerCancellationDues
           Redis.setExp (searchRequestKey $ getId searchReq.id) routeInfo 3600
-          estimates <- mapM (SHEst.buildEstimate searchReq.id sReq.pickupTime result.distance specialLocationTag) onlyFPWithDrivers
+          estimates <- mapM (SHEst.buildEstimate searchReq.id sReq.pickupTime result.distance specialLocationTag customerCancellationDues) onlyFPWithDrivers
           triggerSearchEvent SearchEventData {searchRequest = Left searchReq, merchantId = merchantId}
 
           forM_ estimates $ \est -> do
@@ -312,8 +328,9 @@ buildSearchRequest ::
   Seconds ->
   Maybe Text ->
   DFareProduct.Area ->
+  Money ->
   m DSR.SearchRequest
-buildSearchRequest DSearchReq {..} providerId merchantOpCityId fromLocation toLocation estimatedDistance estimatedDuration specialLocationTag area = do
+buildSearchRequest DSearchReq {..} providerId merchantOpCityId fromLocation toLocation estimatedDistance estimatedDuration specialLocationTag area customerCancellationDues = do
   uuid <- generateGUID
   now <- getCurrentTime
   pure
@@ -325,6 +342,7 @@ buildSearchRequest DSearchReq {..} providerId merchantOpCityId fromLocation toLo
         bapCountry = Just bapCountry,
         autoAssignEnabled = Nothing,
         merchantOperatingCityId = merchantOpCityId,
+        customerCancellationDues,
         ..
       }
 

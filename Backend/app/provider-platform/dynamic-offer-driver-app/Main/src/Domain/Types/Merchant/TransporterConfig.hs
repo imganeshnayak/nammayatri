@@ -137,6 +137,12 @@ data TransporterConfigD u = TransporterConfig
     nightSafetyRouteDeviationThreshold :: Meters,
     nightSafetyStartTime :: Seconds,
     nightSafetyEndTime :: Seconds,
+    cancellationFee :: Money,
+    driverDistanceTravelledOnPickupThreshold :: Meters,
+    driverTimeSpentOnPickupThreshold :: Int,
+    cancellationFeeDisputeLimit :: Int,
+    driverDistanceToPickupThreshold :: Meters,
+    numOfCancellationsAllowed :: Int,
     createdAt :: UTCTime,
     updatedAt :: UTCTime
   }
