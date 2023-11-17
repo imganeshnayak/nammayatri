@@ -54,6 +54,7 @@ import Kernel.External.Maps (LatLong)
 import Kernel.Types.APISuccess (APISuccess)
 import Kernel.Types.Id
 import Kernel.Utils.Common
+import Lib.RoutesTh ()
 import Servant
 import Tools.Auth
 
