@@ -38,26 +38,25 @@ type DefaultResp a b = Vault ./ a '[JSON] (DefaultRespHeaders b)
 
 type DefReqBody = ReqBody '[JSON]
 
-mkRoutes :: Name -> [[Name]] -> Q [Dec]
-mkRoutes apiDec apiHandlerList =
+mkRoutes :: Name -> Name -> [[Name]] -> Q [Dec]
+mkRoutes apiDec apiType apiHandlerList =
   do
     mkProxyDec apiDec
     +++ concatMapM mkHandlerFuncDec (concat apiHandlerList)
-    +++ mkHandlerFuncs apiHandlerList
+    +++ mkHandlerFuncs apiType apiHandlerList
 
 mkProxyDec :: Name -> Q [Dec]
 mkProxyDec apiDec = do
   let name = mkName "apis"
   return [SigD name (AppT (ConT ''Proxy) (ConT apiDec)), ValD (VarP name) (NormalB (ConE 'Proxy)) []]
 
-mkHandlerFuncs :: [[Name]] -> Q [Dec]
-mkHandlerFuncs apiHandlerList = do
+mkHandlerFuncs :: Name -> [[Name]] -> Q [Dec]
+mkHandlerFuncs apiType apiHandlerList = do
   let name = mkName "handler"
   bodyExpr <- foldREmptyList (\a b -> (\x -> InfixE x (ConE '(:<|>)) (Just b)) . Just <$> (getInternalQueryHandlerList a)) getInternalQueryHandlerList apiHandlerList
-  return [FunD name ([Clause [VarP keyName] (NormalB bodyExpr) []])]
+  return [SigD name ((ConT apiType)), FunD name ([Clause [] (NormalB bodyExpr) []])]
   where
-    keyName = mkName "apiKey"
-    getAppExpr apiHndlr = (AppE (VarE (mkName (nameBase apiHndlr))) (VarE keyName))
+    getAppExpr apiHndlr = VarE (mkName (nameBase apiHndlr))
     getInternalQueryHandlerList :: [Name] -> Q Exp
     getInternalQueryHandlerList = foldREmptyList (\a b -> pure (InfixE (Just (getAppExpr a)) (ConE '(:<|>)) (Just b))) (pure . getAppExpr)
 
@@ -109,6 +108,8 @@ type HealthCheckAPIs =
 
 type MobiusAPIs = HealthCheckAPIs
 
+type ApiType = Text
+
 mobiusAPIs :: Proxy MobiusAPIs
 mobiusAPIs = Proxy
 
@@ -125,4 +126,4 @@ checkApp3 = do
   pure "App is UP"
 
 routesQDec :: Q [Dec]
-routesQDec = mkRoutes ''MobiusAPIs [['checkApp1, 'checkApp2, 'checkApp3]]
+routesQDec = mkRoutes ''MobiusAPIs ''ApiType [['checkApp1, 'checkApp2], ['checkApp3, 'checkApp2]]
