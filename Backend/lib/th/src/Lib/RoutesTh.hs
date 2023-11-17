@@ -2,14 +2,17 @@
 {-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 
-module Mobius.Utils.TH.RoutesTh where
+module Lib.RoutesTh where
 
 import Data.HashMap.Lazy (singleton)
 import EulerHS.Prelude
 import Language.Haskell.TH
-import Mobius.Utils.Routes (DefaultRespHeaders, defaultFlowWithTrace)
-import Mobius.Utils.TH.UtilsTh (foldREmptyList, (+++))
+import Lib.UtilsTh (foldREmptyList, (+++))
+import Mobius.Utils.Routes (defaultFlowWithTrace)
 import Servant
+
+type DefaultRespHeaders =
+  Headers '[Header "x-requestid" Text, Header "x-sessionid" Text]
 
 type (./) = (:>)
 

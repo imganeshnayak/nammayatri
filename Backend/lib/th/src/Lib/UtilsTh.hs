@@ -1,15 +1,17 @@
 {-# OPTIONS_GHC -Wno-missing-export-lists #-}
 
-module Mobius.Utils.TH.UtilsTh where
+module Lib.UtilsTh where
 
 import Data.Char (toLower, toUpper)
-import Data.List ((\\))
+import Data.List (head, init, last, nub, (\\))
 import Data.List.Split (splitOn)
-import EulerHS.Prelude (Applicative (liftA2), Bool (False, True), Char, Monad ((>>=)), MonadFail (fail), Semigroup ((<>)), Show, String, filter, filterM, foldlM, foldrM, head, init, intercalate, last, not, return, show, snd, ($), (.), (<$>), (<&>), (==))
+import EulerHS.Prelude (Applicative (liftA2), Bool (False, True), Char, Eq, Monad ((>>=)), MonadFail (fail), Semigroup ((<>)), Show, String, filter, filterM, foldlM, foldrM, intercalate, not, return, show, snd, ($), (.), (<$>), (<&>), (==))
 import qualified GHC.List as L
 import Language.Haskell.TH
 import Language.Haskell.TH.Syntax ()
-import Mobius.Utils.Utils (removeDuplicatesFromList)
+
+removeDuplicatesFromList :: Eq a => [a] -> [a]
+removeDuplicatesFromList lst = nub lst
 
 extractProjectName :: Info -> Name
 extractProjectName (TyConI (DataD _ tyName _ _ _ _)) = tyName --head (splitOn "." (nameBase tyName))

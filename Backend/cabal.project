@@ -33,6 +33,7 @@ packages:
   lib/special-zone
   lib/scheduler
   lib/sessionizer-metrics
+  lib/th
   test
   lib/producer
 
