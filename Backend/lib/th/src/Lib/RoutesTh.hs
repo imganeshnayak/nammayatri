@@ -1,67 +1,41 @@
-{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeOperators #-}
-{-# OPTIONS_GHC -Wno-missing-export-lists #-}
 
 module Lib.RoutesTh where
 
---import Data.HashMap.Lazy (singleton)
-
+import Data.List (nub)
 import qualified EulerHS.Language as L
 import EulerHS.Prelude
 import Kernel.Utils.Common
 import Language.Haskell.TH
-import Lib.UtilsTh (foldREmptyList, (+++))
---import Mobius.Utils.Routes (defaultFlowWithTrace)
+import Lib.UtilsTh ((+++))
 import Servant
 
-type DefaultRespHeaders =
-  Headers '[Header "x-requestid" Text, Header "x-sessionid" Text]
+data Group = Single Name | Grp [Group]
 
-type (./) = (:>)
-
-infixr 4 ./
-
-type (++.) = (:<|>)
-
-infixr 3 ++.
-
-type (.:) = Capture
-
-infixr 5 .:
-
-type (.?) = QueryParam
-
-infixr 5 .?
-
-type DefaultResp a b = Vault ./ a '[JSON] (DefaultRespHeaders b)
-
-type DefReqBody = ReqBody '[JSON]
-
-mkRoutes :: Name -> Name -> [[Name]] -> Q [Dec]
-mkRoutes apiDec apiType apiHandlerList =
+mkRoutes :: Name -> Name -> Group -> Q [Dec]
+mkRoutes apiDec apiType apiHandlerGrps =
   do
     mkProxyDec apiDec
-    +++ concatMapM mkHandlerFuncDec (concat apiHandlerList)
-    +++ mkHandlerFuncs apiType apiHandlerList
+    +++ mkHandlerFuncDec apiHandlerGrps
+    +++ mkHandlerFuncs apiType apiHandlerGrps
 
 mkProxyDec :: Name -> Q [Dec]
 mkProxyDec apiDec = do
   let name = mkName "apis"
   return [SigD name (AppT (ConT ''Proxy) (ConT apiDec)), ValD (VarP name) (NormalB (ConE 'Proxy)) []]
 
-mkHandlerFuncs :: Name -> [[Name]] -> Q [Dec]
-mkHandlerFuncs apiType apiHandlerList = do
+mkHandlerFuncs :: Name -> Group -> Q [Dec]
+mkHandlerFuncs apiType apiHandlers = do
   let name = mkName "handler"
-  bodyExpr <- foldREmptyList (\a b -> (\x -> InfixE x (ConE '(:<|>)) (Just b)) . Just <$> (getInternalQueryHandlerList a)) getInternalQueryHandlerList apiHandlerList
+  let bodyExpr = generateHandler apiHandlers
   return [SigD name ((ConT apiType)), FunD name ([Clause [] (NormalB bodyExpr) []])]
   where
     getAppExpr apiHndlr = VarE (mkName (nameBase apiHndlr))
-    getInternalQueryHandlerList :: [Name] -> Q Exp
-    getInternalQueryHandlerList = foldREmptyList (\a b -> pure (InfixE (Just (getAppExpr a)) (ConE '(:<|>)) (Just b))) (pure . getAppExpr)
+    generateHandler (Single name) = getAppExpr name
+    generateHandler (Grp grps) = ParensE $ foldl1 (\acc e -> UInfixE acc (ConE '(:<|>)) e) (map generateHandler grps)
 
-mkHandlerFuncDec :: Name -> Q [Dec]
-mkHandlerFuncDec apiHndlr = do
+mkHandlerFuncDec :: Group -> Q [Dec]
+mkHandlerFuncDec (Single apiHndlr) = do
   noOfParams <- funcParamCnt apiHndlr
   let name = mkName (nameBase apiHndlr)
       vars = createVar noOfParams
@@ -72,11 +46,11 @@ mkHandlerFuncDec apiHndlr = do
   where
     createVar 0 = []
     createVar count = mkName ("var_" <> (show count)) : createVar (count - 1)
+mkHandlerFuncDec (Grp grps) = nub <$> (concatMapM mkHandlerFuncDec grps)
 
 funcParamCnt :: Name -> Q Int
-funcParamCnt _name = do
-  fInfo <- reify _name
-  -- return $ 3
+funcParamCnt name = do
+  fInfo <- reify name
   case fInfo of
     VarI _ fType _ -> return $ countTypesInFunc fType
     _ -> fail "Invalid Function Declaration"
@@ -93,19 +67,14 @@ countTypesInFunc t = case t of
   ArrowT -> 1
   _ -> 0
 
+--- FOR TESTING ---
+
 printHaskellCode :: IO ()
 printHaskellCode = do
   decs <- runQ routesQDec
   liftIO $ putStrLn $ pprint decs
 
-type HealthCheckAPIs =
-  "internal"
-    ./ ( "heartbeat" ./ Vault ./ Get '[JSON, PlainText] (DefaultRespHeaders Text)
-           ++. "redis" ./ "heartbeat" ./ Vault ./ Get '[JSON, PlainText] (DefaultRespHeaders Text)
-           ++. "postgres" ./ "heartbeat" ./ Vault ./ Get '[JSON, PlainText] (DefaultRespHeaders Text)
-       )
-
-type MobiusAPIs = HealthCheckAPIs
+type MobiusAPIs = Text
 
 type ApiType = Text
 
@@ -125,4 +94,4 @@ checkApp3 = do
   pure "App is UP"
 
 routesQDec :: Q [Dec]
-routesQDec = mkRoutes ''MobiusAPIs ''ApiType [['checkApp1, 'checkApp2], ['checkApp3, 'checkApp2]]
+routesQDec = mkRoutes ''MobiusAPIs ''ApiType (Grp [Grp [Grp [Single 'checkApp1, Single 'checkApp2], Single 'checkApp2], Grp [Single 'checkApp3, Single 'checkApp2]])

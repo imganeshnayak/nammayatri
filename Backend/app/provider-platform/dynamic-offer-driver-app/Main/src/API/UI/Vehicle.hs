@@ -36,7 +36,7 @@ import EulerHS.Prelude hiding (id)
 import Kernel.Types.Id
 -- import Kernel.Utils.Common
 
-import Lib.RoutesTh (mkRoutes)
+import Lib.RoutesTh (Group (..), mkRoutes)
 import Servant
 import Tools.Auth
 
@@ -62,7 +62,7 @@ type API =
 
 type FS = FlowServer API
 
-mkRoutes ''API ''FS [['DVehicle.listVehicles, 'DVehicle.updateVehicle, 'DVehicle.getVehicle]]
+mkRoutes ''API ''FS (Grp (Single <$> ['DVehicle.listVehicles, 'DVehicle.updateVehicle, 'DVehicle.getVehicle]))
 
 -- handler :: FlowServer API
 -- handler =
