@@ -19,14 +19,16 @@ module Beckn.Types.Core.Taxi.OnStatus.Order.RideAssignedOrder
 where
 
 import Beckn.Types.Core.Taxi.Common.Agent as Reexport
-import Beckn.Types.Core.Taxi.Common.Authorization as Reexport
-import Beckn.Types.Core.Taxi.Common.StartInfo as Reexport
-import Beckn.Types.Core.Taxi.Common.Vehicle as Reexport
+-- import Beckn.Types.Core.Taxi.Common.Authorization as Reexport
+-- import Beckn.Types.Core.Taxi.Common.StartInfo as Reexport
+-- import Beckn.Types.Core.Taxi.Common.Vehicle as Reexport
+
+-- import Kernel.Utils.Schema
+import Beckn.Types.Core.Taxi.Common.FulfillmentInfo as Reexport
 import Beckn.Types.Core.Taxi.OnStatus.Order.OrderState (RideAssignedOrderCode (RIDE_ASSIGNED))
 import Data.Aeson as A
 import Data.OpenApi hiding (Example, example, name, tags)
 import Kernel.Prelude
-import Kernel.Utils.Schema
 
 data RideAssignedOrder = RideAssignedOrder
   { id :: Text,
@@ -38,13 +40,13 @@ data RideAssignedOrder = RideAssignedOrder
 orderState :: RideAssignedOrderCode
 orderState = RIDE_ASSIGNED
 
-data FulfillmentInfo = FulfillmentInfo
-  { id :: Text, -- bppRideId
-    start :: StartInfo,
-    agent :: Agent,
-    vehicle :: Vehicle
-  }
-  deriving (Generic, Show, FromJSON, ToJSON)
+-- data FulfillmentInfo = FulfillmentInfo
+--   { id :: Text, -- bppRideId
+--     start :: StartInfo,
+--     agent :: Agent,
+--     vehicle :: Vehicle
+--   }
+--   deriving (Generic, Show, FromJSON, ToJSON)
 
-instance ToSchema FulfillmentInfo where
-  declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions
+-- instance ToSchema FulfillmentInfo where
+--   declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions

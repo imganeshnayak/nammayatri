@@ -22,7 +22,7 @@ import Beckn.Types.Core.Taxi.Common.BreakupItem as Reexport
 import Beckn.Types.Core.Taxi.Common.DecimalValue as Reexport
 import Data.Aeson as A
 import Data.OpenApi hiding (Example, example, title, value)
-import EulerHS.Prelude hiding (id, (.=))
+import EulerHS.Prelude hiding (id)
 import Kernel.Utils.Schema
 
 data RideCompletedQuote = RideCompletedQuote

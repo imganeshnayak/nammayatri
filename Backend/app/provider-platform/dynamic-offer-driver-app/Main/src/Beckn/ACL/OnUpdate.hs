@@ -153,14 +153,16 @@ mkFullfillment mbDriver ride booking mbVehicle mbImage tags = do
               location =
                 RideAssignedOU.Location
                   { gps = RideAssignedOU.Gps {lat = booking.fromLocation.lat, lon = booking.fromLocation.lon}
-                  }
+                  },
+              time = Nothing
             },
         end =
           RideAssignedOU.EndInfo
             { location =
                 RideAssignedOU.Location
                   { gps = RideAssignedOU.Gps {lat = booking.toLocation.lat, lon = booking.toLocation.lon} -- assuming locations will always be in correct order in list
-                  }
+                  },
+              time = Nothing
             },
         agent,
         _type = if booking.bookingType == DRB.NormalBooking then RideAssignedOU.RIDE else RideAssignedOU.RIDE_OTP,
@@ -238,7 +240,7 @@ buildOnUpdateMessage req@RideCompletedBuildReq {} = do
                     },
                 payment =
                   Just
-                    OnUpdate.RideCompletedPayment
+                    OnUpdate.Payment
                       { _type = maybe OnUpdate.ON_FULFILLMENT (Common.castDPaymentType . (.paymentType)) req.paymentMethodInfo,
                         params =
                           OnUpdate.PaymentParams

@@ -34,6 +34,9 @@ createMany = traverse_ create
 findAllByBookingId :: (MonadFlow m, CacheFlow m r, EsqDBFlow m r) => Id Booking -> m [FareBreakup]
 findAllByBookingId bookingId = findAllWithKV [Se.Is BeamFB.bookingId $ Se.Eq $ getId bookingId]
 
+deleteAllByBookingId :: MonadFlow m => Id Booking -> m ()
+deleteAllByBookingId bookingId = deleteWithKV [Se.Is BeamFB.bookingId $ Se.Eq $ getId bookingId]
+
 instance FromTType' BeamFB.FareBreakup FareBreakup where
   fromTType' BeamFB.FareBreakupT {..} = do
     pure $
@@ -53,10 +56,3 @@ instance ToTType' BeamFB.FareBreakup FareBreakup where
         BeamFB.description = description,
         BeamFB.amount = amount
       }
-
--- FIXME
--- deleteAllByBookingId :: Id Booking -> SqlDB ()
--- deleteAllByBookingId bookingId =
---   delete $ do
---     fareBreakup <- from $ table @FareBreakupT
---     where_ $ fareBreakup ^. FareBreakupBookingId ==. val (toKey bookingId)

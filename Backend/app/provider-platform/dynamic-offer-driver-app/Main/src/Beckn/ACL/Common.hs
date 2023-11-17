@@ -21,10 +21,9 @@ import qualified Beckn.Types.Core.Taxi.Common.Tags as Tags
 import qualified Beckn.Types.Core.Taxi.Common.Vehicle as Common
 import qualified Beckn.Types.Core.Taxi.Search as Search
 import Data.Maybe
-import qualified Domain.Types.Location as DLoc
-import qualified Beckn.Types.Core.Taxi.Common.VehicleVariant as Common
 import qualified Domain.Types.BookingCancellationReason as DBCR
 import qualified Domain.Types.FareParameters as DFParams
+import qualified Domain.Types.Location as DLoc
 import qualified Domain.Types.Merchant.MerchantPaymentMethod as DMPM
 import qualified Domain.Types.Vehicle.Variant as Variant
 import Kernel.Prelude
@@ -98,6 +97,7 @@ getTag tagGroupCode tagCode (Tags.TG tagGroups) = do
   tagGroup <- find (\tagGroup -> tagGroup.code == tagGroupCode) tagGroups
   tag <- find (\tag -> tag.code == Just tagCode) tagGroup.list
   tag.value
+
 castCancellationSource :: DBCR.CancellationSource -> Common.CancellationSource
 castCancellationSource = \case
   DBCR.ByUser -> Common.ByUser
@@ -106,6 +106,7 @@ castCancellationSource = \case
   DBCR.ByAllocator -> Common.ByAllocator
   DBCR.ByApplication -> Common.ByApplication
 
+-- FIXME - is it the same for all apis??
 filterRequiredBreakups :: DFParams.FareParametersType -> Common.BreakupItem -> Bool
 filterRequiredBreakups fParamsType breakup = do
   let title = breakup.title
@@ -132,27 +133,27 @@ filterRequiredBreakups fParamsType breakup = do
                ]
 
 -- FIXME - is it the same for all apis??
-    -- filterRequiredBreakups fParamsType breakup = do
-    --   case fParamsType of
-    --     DFParams.Progressive ->
-    --       breakup.title == "BASE_FARE"
-    --         || breakup.title == "SERVICE_CHARGE"
-    --         || breakup.title == "DEAD_KILOMETER_FARE"
-    --         || breakup.title == "EXTRA_DISTANCE_FARE"
-    --         || breakup.title == "DRIVER_SELECTED_FARE"
-    --         || breakup.title == "CUSTOMER_SELECTED_FARE"
-    --         || breakup.title == "TOTAL_FARE"
-    --         || breakup.title == "WAITING_OR_PICKUP_CHARGES"
-    --         || breakup.title == "EXTRA_TIME_FARE"
-    --     DFParams.Slab ->
-    --       breakup.title == "BASE_FARE"
-    --         || breakup.title == "SERVICE_CHARGE"
-    --         || breakup.title == "WAITING_OR_PICKUP_CHARGES"
-    --         || breakup.title == "PLATFORM_FEE"
-    --         || breakup.title == "SGST"
-    --         || breakup.title == "CGST"
-    --         || breakup.title == "FIXED_GOVERNMENT_RATE"
-    --         || breakup.title == "CUSTOMER_SELECTED_FARE"
-    --         || breakup.title == "TOTAL_FARE"
-    --         || breakup.title == "NIGHT_SHIFT_CHARGE"
-    --         || breakup.title == "EXTRA_TIME_FARE"
+-- filterRequiredBreakups fParamsType breakup = do
+--   case fParamsType of
+--     DFParams.Progressive ->
+--       breakup.title == "BASE_FARE"
+--         || breakup.title == "SERVICE_CHARGE"
+--         || breakup.title == "DEAD_KILOMETER_FARE"
+--         || breakup.title == "EXTRA_DISTANCE_FARE"
+--         || breakup.title == "DRIVER_SELECTED_FARE"
+--         || breakup.title == "CUSTOMER_SELECTED_FARE"
+--         || breakup.title == "TOTAL_FARE"
+--         || breakup.title == "WAITING_OR_PICKUP_CHARGES"
+--         || breakup.title == "EXTRA_TIME_FARE"
+--     DFParams.Slab ->
+--       breakup.title == "BASE_FARE"
+--         || breakup.title == "SERVICE_CHARGE"
+--         || breakup.title == "WAITING_OR_PICKUP_CHARGES"
+--         || breakup.title == "PLATFORM_FEE"
+--         || breakup.title == "SGST"
+--         || breakup.title == "CGST"
+--         || breakup.title == "FIXED_GOVERNMENT_RATE"
+--         || breakup.title == "CUSTOMER_SELECTED_FARE"
+--         || breakup.title == "TOTAL_FARE"
+--         || breakup.title == "NIGHT_SHIFT_CHARGE"
+--         || breakup.title == "EXTRA_TIME_FARE"

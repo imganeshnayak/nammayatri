@@ -56,9 +56,9 @@ import qualified Domain.Types.Person as DP
 import qualified Domain.Types.Ride as SRide
 import qualified Domain.Types.SearchRequest as DSR
 import qualified Domain.Types.SearchTry as DST
+import qualified Domain.Types.Vehicle as DVeh
 import qualified EulerHS.Types as ET
 import qualified Kernel.External.Verification.Interface.Idfy as Idfy
-import qualified Domain.Types.Vehicle as DVeh
 import Kernel.Prelude
 import Kernel.Storage.Hedis as Redis
 import qualified Kernel.Types.Beckn.Context as Context
@@ -184,7 +184,7 @@ sendRideAssignedUpdateToBAP booking ride driver veh = do
       Just transporterConfig ->
         if transporterConfig.refillVehicleModel
           then do
-            reffiledVeh <- refillVehicleModel veh
+            reffiledVeh <- refillVehicleModel
             pure $
               case reffiledVeh of
                 Right reffiledVeh' -> reffiledVeh'
@@ -201,8 +201,8 @@ sendRideAssignedUpdateToBAP booking ride driver veh = do
   void $ callOnUpdate transporter booking.bapId booking.bapUri booking.bapCity booking.bapCountry booking.transactionId rideAssignedMsg retryConfig
   where
     refillKey = "REFILLED_" <> ride.driverId.getId
-    updateVehicle V.Vehicle {..} newModel = V.Vehicle {model = newModel, ..}
-    refillVehicleModel veh = try @_ @SomeException do
+    updateVehicle DVeh.Vehicle {..} newModel = DVeh.Vehicle {model = newModel, ..}
+    refillVehicleModel = try @_ @SomeException do
       -- TODO: remove later
       mbIsRefilledToday :: Maybe Bool <- Redis.get refillKey
       case mbIsRefilledToday of

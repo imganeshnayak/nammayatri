@@ -26,7 +26,6 @@ import qualified Domain.Types.Ride as DRide
 import Environment
 import EulerHS.Prelude
 import Kernel.Beam.Functions as B
-import Kernel.Storage.Esqueleto as Esq
 import Kernel.Types.Error
 import Kernel.Types.Id
 import Kernel.Utils.Common
@@ -80,17 +79,17 @@ handler transporterId req = do
     Just ride -> do
       case ride.status of
         DRide.NEW -> do
-          newRideInfo <- SyncRide.fetchNewRideInfo ride
+          newRideInfo <- SyncRide.fetchNewRideInfo ride booking
           pure $ RideAssignedBuildReq {bookingId = booking.id, newRideInfo = newRideInfo}
         DRide.INPROGRESS -> do
-          newRideInfo <- SyncRide.fetchNewRideInfo ride
+          newRideInfo <- SyncRide.fetchNewRideInfo ride booking
           pure $ RideStartedBuildReq {newRideInfo}
         DRide.COMPLETED -> do
-          newRideInfo <- SyncRide.fetchNewRideInfo ride
+          newRideInfo <- SyncRide.fetchNewRideInfo ride booking
           rideCompletedInfo <- SyncRide.fetchRideCompletedInfo ride booking
           pure $ RideCompletedBuildReq {newRideInfo, rideCompletedInfo}
         DRide.CANCELLED -> do
-          newRideInfo <- SyncRide.fetchNewRideInfo ride
+          newRideInfo <- SyncRide.fetchNewRideInfo ride booking
           bookingCancelledInfo <- SyncRide.fetchBookingCancelledInfo (Just ride) booking
           pure $ BookingCancelledBuildReq {mbNewRideInfo = Just newRideInfo, bookingCancelledInfo}
     Nothing -> do

@@ -22,7 +22,7 @@ import Beckn.Types.Core.Taxi.Common.Authorization as Reexport
 import Beckn.Types.Core.Taxi.Common.TimeTimestamp as Reexport
 import Data.Aeson as A
 import Data.OpenApi hiding (Example, example)
-import EulerHS.Prelude hiding (id, (.=))
+import EulerHS.Prelude hiding (id)
 import Kernel.Utils.Schema
 
 data RideStartedStartInfo = RideStartedStartInfo

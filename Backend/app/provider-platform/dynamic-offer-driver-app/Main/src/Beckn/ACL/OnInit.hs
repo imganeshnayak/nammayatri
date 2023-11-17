@@ -20,14 +20,13 @@ import Domain.Action.Beckn.Init as DInit
 import qualified Domain.Types.Booking as DRB
 import qualified Domain.Types.FareParameters as DFParams
 import qualified Domain.Types.Location as DL
-import qualified Domain.Types.Vehicle.Variant as VehVar
 import Kernel.Prelude
 import SharedLogic.FareCalculator
 
 mkOnInitMessage :: DInit.InitRes -> OnInit.OnInitMessage
 mkOnInitMessage res = do
   let rb = res.booking
-      vehicleVariant = castVehicleVariant res.booking.vehicleVariant
+      vehicleVariant = Common.castVariant res.booking.vehicleVariant
       itemId = Common.mkItemId res.transporter.shortId.getShortId res.booking.vehicleVariant
       fareDecimalValue = fromIntegral rb.estimatedFare
       currency = "INR"
@@ -135,4 +134,3 @@ mkOnInitMessage res = do
     buildFulfillmentType = \case
       DRB.NormalBooking -> OnInit.RIDE
       DRB.SpecialZoneBooking -> OnInit.RIDE_OTP
-

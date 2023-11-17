@@ -29,6 +29,7 @@ import qualified Domain.Types.FarePolicy.FareBreakup as DFareBreakup
 import qualified Domain.Types.Merchant as DM
 import qualified Domain.Types.Ride as DRide
 import EulerHS.Prelude hiding (id)
+import Kernel.Beam.Functions as B
 import Kernel.Types.Common hiding (id)
 import Kernel.Types.Error
 import Kernel.Types.Id (Id)
@@ -46,6 +47,7 @@ data DOnStatusReq = DOnStatusReq
 data NewRideInfo = NewRideInfo
   { bppRideId :: Id DRide.BPPRide,
     driverName :: Text,
+    driverImage :: Maybe Text,
     driverMobileNumber :: Text,
     driverMobileCountryCode :: Maybe Text,
     driverRating :: Maybe Centesimal,
@@ -105,9 +107,9 @@ data RideEntity
       { ride :: DRide.Ride
       }
 
-buildRideEntity :: Esq.EsqDBReplicaFlow m r => DB.Booking -> (DRide.Ride -> DRide.Ride) -> NewRideInfo -> m RideEntity
+buildRideEntity :: (MonadFlow m, CacheFlow m r, EsqDBFlow m r) => DB.Booking -> (DRide.Ride -> DRide.Ride) -> NewRideInfo -> m RideEntity
 buildRideEntity booking updRide newRideInfo = do
-  mbExistingRide <- Esq.runInReplica $ QRide.findByBPPRideId newRideInfo.bppRideId
+  mbExistingRide <- B.runInReplica $ QRide.findByBPPRideId newRideInfo.bppRideId
   case mbExistingRide of
     Nothing -> do
       newRide <- buildNewRide booking newRideInfo
@@ -116,7 +118,7 @@ buildRideEntity booking updRide newRideInfo = do
       unless (existingRide.bookingId == booking.id) $ throwError (InvalidRequest "Invalid rideId")
       pure $ UpdatedRide {ride = updRide existingRide, rideOldStatus = existingRide.status}
 
-rideBookingTransaction :: DB.BookingStatus -> DRide.RideStatus -> DB.Booking -> RideEntity -> Esq.SqlDB ()
+rideBookingTransaction :: (MonadFlow m, CacheFlow m r, EsqDBFlow m r) => DB.BookingStatus -> DRide.RideStatus -> DB.Booking -> RideEntity -> m ()
 rideBookingTransaction bookingNewStatus rideNewStatus booking rideEntity = do
   unless (booking.status == bookingNewStatus) $ do
     QB.updateStatus booking.id bookingNewStatus
@@ -135,33 +137,30 @@ isStatusChanged bookingOldStatus bookingNewStatus rideEntity = do
         RenewedRide {} -> True
   bookingStatusChanged || rideStatusChanged
 
-onStatus :: (EsqDBFlow m r, Esq.EsqDBReplicaFlow m r) => DOnStatusReq -> m ()
+onStatus :: (MonadFlow m, CacheFlow m r, EsqDBFlow m r) => DOnStatusReq -> m ()
 onStatus req = do
   booking <- QB.findByBPPBookingId req.bppBookingId >>= fromMaybeM (BookingDoesNotExist $ "BppBookingId: " <> req.bppBookingId.getId)
   case req.rideDetails of
     NewBookingDetails -> do
-      mbExistingRide <- Esq.runInReplica $ QRide.findActiveByRBId booking.id
-      Esq.runTransaction $ do
-        unless (booking.status == bookingNewStatus) $ do
-          QB.updateStatus booking.id bookingNewStatus
-        whenJust mbExistingRide \existingRide -> do
-          unless (existingRide.status == rideNewStatus) $ do
-            QRide.updateStatus existingRide.id rideNewStatus
+      mbExistingRide <- B.runInReplica $ QRide.findActiveByRBId booking.id
+      unless (booking.status == bookingNewStatus) $ do
+        QB.updateStatus booking.id bookingNewStatus
+      whenJust mbExistingRide \existingRide -> do
+        unless (existingRide.status == rideNewStatus) $ do
+          QRide.updateStatus existingRide.id rideNewStatus
       where
         bookingNewStatus = DB.NEW
         rideNewStatus = DRide.CANCELLED
     RideAssignedDetails {newRideInfo} -> do
       rideEntity <- buildRideEntity booking updateNewRide newRideInfo
-      Esq.runTransaction $ do
-        rideBookingTransaction bookingNewStatus rideNewStatus booking rideEntity
+      rideBookingTransaction bookingNewStatus rideNewStatus booking rideEntity
       where
         bookingNewStatus = DB.TRIP_ASSIGNED
         rideNewStatus = DRide.NEW
         updateNewRide newRide = newRide{status = rideNewStatus}
     RideStartedDetails {newRideInfo, rideStartedInfo} -> do
       rideEntity <- buildRideEntity booking updateRideStarted newRideInfo
-      Esq.runTransaction $ do
-        rideBookingTransaction bookingNewStatus rideNewStatus booking rideEntity
+      rideBookingTransaction bookingNewStatus rideNewStatus booking rideEntity
       where
         bookingNewStatus = DB.TRIP_ASSIGNED
         rideNewStatus = DRide.INPROGRESS
@@ -172,13 +171,12 @@ onStatus req = do
                  }
     RideCompletedDetails {newRideInfo, rideStartedInfo, rideCompletedInfo} -> do
       rideEntity <- buildRideEntity booking updateRideCompleted newRideInfo
-      Esq.runTransaction $ do
-        rideBookingTransaction bookingNewStatus rideNewStatus booking rideEntity
-        when (isStatusChanged booking.status bookingNewStatus rideEntity) $ do
-          breakups <- traverse (buildFareBreakup booking.id) rideCompletedInfo.fareBreakups
-          QFareBreakup.deleteAllByBookingId booking.id
-          QFareBreakup.createMany breakups
-          whenJust rideCompletedInfo.paymentUrl $ QB.updatePaymentUrl booking.id
+      rideBookingTransaction bookingNewStatus rideNewStatus booking rideEntity
+      when (isStatusChanged booking.status bookingNewStatus rideEntity) $ do
+        breakups <- traverse (buildFareBreakup booking.id) rideCompletedInfo.fareBreakups
+        QFareBreakup.deleteAllByBookingId booking.id
+        QFareBreakup.createMany breakups
+        whenJust rideCompletedInfo.paymentUrl $ QB.updatePaymentUrl booking.id
       where
         bookingNewStatus = DB.COMPLETED
         rideNewStatus = DRide.COMPLETED
@@ -199,12 +197,11 @@ onStatus req = do
             Just (RenewedRide {ride}) -> Just ride.id
             Nothing -> Nothing
       let bookingCancellationReason = mkBookingCancellationReason booking.id mbRideId cancellationSource booking.merchantId
-      Esq.runTransaction $ do
-        whenJust mbRideEntity \rideEntity -> do
-          rideBookingTransaction bookingNewStatus rideNewStatus booking rideEntity
-        when (maybe (booking.status == bookingNewStatus) (isStatusChanged booking.status bookingNewStatus) mbRideEntity) $ do
-          unless (cancellationSource == DBCR.ByUser) $
-            QBCR.upsert bookingCancellationReason
+      whenJust mbRideEntity \rideEntity -> do
+        rideBookingTransaction bookingNewStatus rideNewStatus booking rideEntity
+      when (maybe (booking.status == bookingNewStatus) (isStatusChanged booking.status bookingNewStatus) mbRideEntity) $ do
+        unless (cancellationSource == DBCR.ByUser) $
+          QBCR.upsert bookingCancellationReason
       where
         bookingNewStatus = DB.CANCELLED
         rideNewStatus = DRide.CANCELLED
@@ -215,9 +212,16 @@ buildNewRide booking NewRideInfo {..} = do
   id <- generateGUID
   shortId <- generateShortId
   now <- getCurrentTime
+  let fromLocation = booking.fromLocation
+      toLocation = case booking.bookingDetails of
+        DB.OneWayDetails details -> Just details.toLocation
+        DB.RentalDetails _ -> Nothing
+        DB.DriverOfferDetails details -> Just details.toLocation
+        DB.OneWaySpecialZoneDetails details -> Just details.toLocation
   let createdAt = now
       updatedAt = now
       merchantId = Just booking.merchantId
+      merchantOperatingCityId = Just booking.merchantOperatingCityId
       bookingId = booking.id
       status = DRide.NEW
       vehicleVariant = booking.vehicleVariant

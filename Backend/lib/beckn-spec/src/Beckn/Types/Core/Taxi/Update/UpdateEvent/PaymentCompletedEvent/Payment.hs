@@ -36,13 +36,13 @@ data Payment = Payment
   }
   deriving (Generic, Show)
 
-instance FromJSON RideCompletedPayment where
+instance FromJSON Payment where
   parseJSON = genericParseJSON JSON.stripPrefixUnderscoreIfAny
 
-instance ToJSON RideCompletedPayment where
+instance ToJSON Payment where
   toJSON = genericToJSON JSON.stripPrefixUnderscoreIfAny
 
-instance ToSchema RideCompletedPayment where
+instance ToSchema Payment where
   declareNamedSchema = genericDeclareUnNamedSchema $ fromAesonOptions JSON.stripPrefixUnderscoreIfAny
 
 data PaymentStatus = PAID | NOT_PAID

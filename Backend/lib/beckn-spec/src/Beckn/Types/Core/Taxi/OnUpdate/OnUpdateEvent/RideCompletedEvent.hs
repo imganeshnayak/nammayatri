@@ -20,7 +20,8 @@ module Beckn.Types.Core.Taxi.OnUpdate.OnUpdateEvent.RideCompletedEvent
 where
 
 import Beckn.Types.Core.Taxi.Common.DecimalValue as Reexport
-import Beckn.Types.Core.Taxi.Common.RideCompletedPayment as Reexport
+import Beckn.Types.Core.Taxi.Common.FulfillmentInfo
+import Beckn.Types.Core.Taxi.Common.Payment as Reexport
 import Beckn.Types.Core.Taxi.Common.RideCompletedQuote as Reexport
 import Beckn.Types.Core.Taxi.OnUpdate.OnUpdateEvent.OnUpdateEventType (OnUpdateEventType (RIDE_COMPLETED))
 import qualified Control.Lens as L
@@ -28,14 +29,15 @@ import Data.Aeson as A
 import Data.OpenApi hiding (Example, example, tags, title, value)
 import EulerHS.Prelude hiding (fromList, id)
 import GHC.Exts (fromList)
-import Kernel.Utils.Schema
+
+-- import Beckn.Types.Core.Taxi.Common.BreakupItem as Reexport
 
 data RideCompletedEvent = RideCompletedEvent
   { id :: Text,
     -- update_target :: Text,
     quote :: RideCompletedQuote,
     fulfillment :: FulfillmentInfo,
-    payment :: Maybe RideCompletedPayment
+    payment :: Maybe Payment
   }
   deriving (Generic, Show)
 
@@ -64,7 +66,7 @@ instance ToSchema RideCompletedEvent where
   declareNamedSchema _ = do
     txt <- declareSchemaRef (Proxy :: Proxy Text)
     quote <- declareSchemaRef (Proxy :: Proxy RideCompletedQuote)
-    payment <- declareSchemaRef (Proxy :: Proxy RideCompletedPayment)
+    payment <- declareSchemaRef (Proxy :: Proxy Payment)
     update_type <- declareSchemaRef (Proxy :: Proxy OnUpdateEventType)
     let st =
           mempty
@@ -104,6 +106,25 @@ instance ToSchema RideCompletedEvent where
                    "fulfillment",
                    "payment"
                  ]
+
+-- data RideCompletedQuote = RideCompletedQuote
+--   { price :: QuotePrice,
+--     breakup :: [BreakupItem]
+--   }
+--   deriving (Generic, FromJSON, ToJSON, Show)
+
+-- instance ToSchema RideCompletedQuote where
+--   declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions
+
+-- data QuotePrice = QuotePrice
+--   { currency :: Text,
+--     value :: DecimalValue,
+--     computed_value :: DecimalValue
+--   }
+-- deriving (Generic, FromJSON, ToJSON, Show)
+
+-- instance ToSchema QuotePrice where
+--   declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions
 
 data DistanceRelatedTags = DistanceRelatedTags
   { chargeable_distance :: DecimalValue,

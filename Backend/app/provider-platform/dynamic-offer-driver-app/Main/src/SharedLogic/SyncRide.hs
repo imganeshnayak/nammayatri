@@ -24,6 +24,10 @@ module SharedLogic.SyncRide
 where
 
 import qualified "dashboard-helper-api" Dashboard.ProviderPlatform.Ride as Common
+-- import Kernel.Storage.Esqueleto.Transactionable (runInReplica)
+
+import Data.Either.Extra (eitherToMaybe)
+import qualified Domain.Action.UI.DriverOnboarding.AadhaarVerification as Aadhaar
 import qualified Domain.Types.Booking as DB
 import qualified Domain.Types.BookingCancellationReason as DBCR
 import qualified Domain.Types.BookingCancellationReason as DBCReason
@@ -35,15 +39,15 @@ import qualified Domain.Types.Ride as DRide
 import qualified Domain.Types.Vehicle as DVeh
 import Environment
 import EulerHS.Prelude (whenNothing_)
--- import Kernel.Storage.Esqueleto.Transactionable (runInReplica)
-
 import Kernel.Beam.Functions
 import Kernel.Prelude
+import Kernel.Types.Id
 import Kernel.Utils.Common
 import Kernel.Utils.Error.BaseError.HTTPError.BecknAPIError
 import qualified SharedLogic.CallBAP as CallBAP
 import qualified Storage.CachedQueries.Merchant.MerchantPaymentMethod as CQMPM
 import qualified Storage.Queries.BookingCancellationReason as QBCReason
+import qualified Storage.Queries.DriverInformation as QDI
 import qualified Storage.Queries.FareParameters as QFareParams
 import qualified Storage.Queries.Person as QP
 import qualified Storage.Queries.Vehicle as QVeh
@@ -64,19 +68,24 @@ rideSync mbCancellationSource Nothing booking merchant =
 data NewRideInfo = NewRideInfo
   { driver :: DP.Person,
     vehicle :: DVeh.Vehicle,
-    ride :: DRide.Ride
+    ride :: DRide.Ride,
+    booking :: DB.Booking,
+    image :: Maybe Text
   }
 
 syncNewRide :: DRide.Ride -> DB.Booking -> Flow Common.RideSyncRes
-syncNewRide ride' booking = do
-  NewRideInfo {..} <- fetchNewRideInfo ride'
+syncNewRide ride' booking' = do
+  NewRideInfo {..} <- fetchNewRideInfo ride' booking'
   handle (errHandler (Just ride.status) booking.status "ride assigned") $
     CallBAP.sendRideAssignedUpdateToBAP booking ride driver vehicle
   pure $ Common.RideSyncRes Common.RIDE_NEW "Success. Sent ride started update to bap"
 
-fetchNewRideInfo :: DRide.Ride -> Flow NewRideInfo
-fetchNewRideInfo ride = do
+fetchNewRideInfo :: DRide.Ride -> DB.Booking -> Flow NewRideInfo
+fetchNewRideInfo ride booking = do
   driver <- QP.findById ride.driverId >>= fromMaybeM (PersonNotFound ride.driverId.getId)
+  driverInfo <- QDI.findById (cast ride.driverId) >>= fromMaybeM DriverInfoNotFound
+  resp <- try @_ @SomeException (Aadhaar.fetchAndCacheAadhaarImage driver driverInfo)
+  let image = join (eitherToMaybe resp)
   vehicle <- QVeh.findById ride.driverId >>= fromMaybeM (VehicleNotFound ride.driverId.getId)
   pure NewRideInfo {..}
 

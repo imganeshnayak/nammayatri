@@ -19,6 +19,7 @@ import qualified Data.Text as T
 import Domain.Action.Beckn.Search
 import Domain.Types.Booking as DRB
 import qualified Domain.Types.BookingCancellationReason as DBCR
+import qualified Domain.Types.DriverOnboarding.VehicleRegistrationCertificate as DVRC
 import qualified Domain.Types.DriverQuote as DDQ
 import qualified Domain.Types.Location as DL
 import qualified Domain.Types.Merchant as DM
@@ -67,7 +68,7 @@ import qualified Tools.Notifications as Notify
 
 data DConfirmReq = DConfirmReq
   { bookingId :: Id DRB.Booking,
-    vehicleVariant :: VehVar.Variant,
+    vehicleVariant :: DVeh.Variant,
     driverId :: Maybe Text,
     customerMobileCountryCode :: Text,
     customerPhoneNumber :: Text,
@@ -85,7 +86,7 @@ data DConfirmRes = DConfirmRes
     riderMobileCountryCode :: Text,
     riderPhoneNumber :: Text,
     riderName :: Maybe Text,
-    vehicleVariant :: VehVar.Variant,
+    vehicleVariant :: DVeh.Variant,
     transporter :: DM.Merchant,
     driverId :: Maybe Text,
     driverName :: Maybe Text
@@ -308,31 +309,24 @@ getRiderDetails merchantId customerMobileCountryCode customerPhoneNumber now =
           }
 
 mkRideDetails ::
-  ( CacheFlow m r,
-    EsqDBFlow m r,
-    HasPrettyLogger m r,
-    EncFlow m r,
-    HasFlowEnv m r '["selfUIUrl" ::: BaseUrl],
-    HasFlowEnv m r '["nwAddress" ::: BaseUrl]
-  ) =>
   DRide.Ride ->
   DPerson.Person ->
   DVeh.Vehicle ->
-  VehicleRegistrationCertificate ->
-  m SRD.RideDetails
-mkRideDetails ride driver vehicleRegCert = do
-    SRD.RideDetails
-      { id = ride.id,
-        driverName = driver.firstName,
-        driverNumber = driver.mobileNumber,
-        driverCountryCode = driver.mobileCountryCode,
-        vehicleNumber = vehicle.registrationNo,
-        vehicleColor = Just vehicle.color,
-        vehicleVariant = Just vehicle.variant,
-        vehicleModel = Just vehicle.model,
-        vehicleClass = Nothing,
-        fleetOwnerId = vehicleRegCert >>= (.fleetOwnerId)
-      }
+  Maybe DVRC.VehicleRegistrationCertificate ->
+  SRD.RideDetails
+mkRideDetails ride driver vehicle vehicleRegCert = do
+  SRD.RideDetails
+    { id = ride.id,
+      driverName = driver.firstName,
+      driverNumber = driver.mobileNumber,
+      driverCountryCode = driver.mobileCountryCode,
+      vehicleNumber = vehicle.registrationNo,
+      vehicleColor = Just vehicle.color,
+      vehicleVariant = Just vehicle.variant,
+      vehicleModel = Just vehicle.model,
+      vehicleClass = Nothing,
+      fleetOwnerId = vehicleRegCert >>= (.fleetOwnerId)
+    }
 
 cancelBooking ::
   ( EsqDBFlow m r,

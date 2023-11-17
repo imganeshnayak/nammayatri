@@ -14,6 +14,7 @@
 
 module Beckn.ACL.OnStatus (buildOnStatusReq) where
 
+import Beckn.ACL.Common (getTag)
 import qualified Beckn.ACL.Common as Common
 import qualified Beckn.Types.Core.Taxi.API.OnStatus as OnStatus
 import qualified Beckn.Types.Core.Taxi.OnStatus as OnStatus
@@ -21,12 +22,14 @@ import Beckn.Types.Core.Taxi.OnStatus.Order.BookingCancelledOrder as OnStatusBoo
 import Beckn.Types.Core.Taxi.OnStatus.Order.RideAssignedOrder as OnStatusRideAssigned
 import Beckn.Types.Core.Taxi.OnStatus.Order.RideCompletedOrder as OnStatusRideCompleted
 import Beckn.Types.Core.Taxi.OnStatus.Order.RideStartedOrder as OnStatusRideStarted
+import qualified Data.Text as T
 import qualified Domain.Action.Beckn.OnStatus as DOnStatus
 import Kernel.Prelude
 import Kernel.Product.Validation.Context
 import qualified Kernel.Types.Beckn.Context as Context
 import Kernel.Types.Id (Id (Id))
 import Kernel.Utils.Common
+import Tools.Error (GenericError (InvalidRequest))
 
 buildOnStatusReq ::
   ( HasFlowEnv m r '["coreVersion" ::: Text]
@@ -36,91 +39,126 @@ buildOnStatusReq ::
 buildOnStatusReq req = do
   validateContext Context.ON_STATUS req.context
   handleError req.contents $ \message ->
-    return $ parseOrder message.order
+    parseOrder message.order
 
-parseOrder :: OnStatus.Order -> DOnStatus.DOnStatusReq
+parseOrder :: (MonadFlow m) => OnStatus.Order -> m DOnStatus.DOnStatusReq
 parseOrder (OnStatus.NewBooking raOrder) = do
-  DOnStatus.DOnStatusReq
-    { bppBookingId = Id raOrder.id,
-      rideDetails = DOnStatus.NewBookingDetails
-    }
+  pure
+    DOnStatus.DOnStatusReq
+      { bppBookingId = Id raOrder.id,
+        rideDetails = DOnStatus.NewBookingDetails
+      }
 parseOrder (OnStatus.RideAssigned raOrder) = do
-  let newRideInfo = mkNewRideInfo raOrder.fulfillment
-  DOnStatus.DOnStatusReq
-    { bppBookingId = Id raOrder.id,
-      rideDetails = DOnStatus.RideAssignedDetails {newRideInfo}
-    }
+  newRideInfo <- buildNewRideInfo raOrder.fulfillment
+  pure
+    DOnStatus.DOnStatusReq
+      { bppBookingId = Id raOrder.id,
+        rideDetails = DOnStatus.RideAssignedDetails {newRideInfo}
+      }
 parseOrder (OnStatus.RideStarted rsOrder) = do
-  let newRideInfo = mkNewRideInfo . mkRideAssignedFulfillment $ rsOrder.fulfillment
+  newRideInfo <- buildNewRideInfo . mkRideAssignedFulfillment $ rsOrder.fulfillment
+  rideStartTime <- fromMaybeM (InvalidRequest "fulfillment.start.time is not present in RideStarted Order.") (rsOrder.fulfillment.start.time <&> (.timestamp))
+  tagsGroup <- fromMaybeM (InvalidRequest "agent tags is not present in DriverArrived Event.") rsOrder.fulfillment.tags
+  let driverArrivalTime =
+        readMaybe . T.unpack
+          =<< getTag "driver_arrived_info" "arrival_time" tagsGroup
   let rideStartedInfo =
         DOnStatus.RideStartedInfo
-          { rideStartTime = rsOrder.fulfillment.start.time.timestamp,
-            driverArrivalTime = rsOrder.arrival_time
+          { rideStartTime,
+            driverArrivalTime
           }
-  DOnStatus.DOnStatusReq
-    { bppBookingId = Id rsOrder.id,
-      rideDetails = DOnStatus.RideStartedDetails {newRideInfo, rideStartedInfo}
-    }
+  pure
+    DOnStatus.DOnStatusReq
+      { bppBookingId = Id rsOrder.id,
+        rideDetails = DOnStatus.RideStartedDetails {newRideInfo, rideStartedInfo}
+      }
   where
-    mkRideAssignedFulfillment OnStatusRideStarted.FulfillmentInfo {..} = OnStatusRideAssigned.FulfillmentInfo {start = mkRideAssignedStartInfo start, ..}
+    mkRideAssignedFulfillment OnStatusRideStarted.FulfillmentInfo {..} = OnStatusRideAssigned.FulfillmentInfo {..}
 parseOrder (OnStatus.RideCompleted rcOrder) = do
-  let newRideInfo = mkNewRideInfo . mkRideAssignedFulfillment $ rcOrder.fulfillment
+  tagsGroup <- fromMaybeM (InvalidRequest "agent tags is not present in RideCompleted Order.") rcOrder.fulfillment.tags
+  chargeableDistance :: HighPrecMeters <-
+    fromMaybeM (InvalidRequest "chargeable_distance is not present.") $
+      readMaybe . T.unpack
+        =<< getTag "ride_distance_details" "chargeable_distance" tagsGroup
+  traveledDistance :: HighPrecMeters <-
+    fromMaybeM (InvalidRequest "traveled_distance is not present.") $
+      readMaybe . T.unpack
+        =<< getTag "ride_distance_details" "traveled_distance" tagsGroup
+  let driverArrivalTime =
+        readMaybe . T.unpack
+          =<< getTag "driver_arrived_info" "arrival_time" tagsGroup
+  newRideInfo <- buildNewRideInfo . mkRideAssignedFulfillment $ rcOrder.fulfillment
+  rideStartTime <- fromMaybeM (InvalidRequest "fulfillment.start.time is not present in RideCompleted Order.") (rcOrder.fulfillment.start.time <&> (.timestamp))
+  rideEndTime <- fromMaybeM (InvalidRequest "fulfillment.end.time is not present in RideCompleted Order.") (rcOrder.fulfillment.end.time <&> (.timestamp))
   let rideStartedInfo =
         DOnStatus.RideStartedInfo
-          { rideStartTime = rcOrder.fulfillment.start.time.timestamp,
-            driverArrivalTime = rcOrder.arrival_time
+          { rideStartTime,
+            driverArrivalTime
           }
   let rideCompletedInfo =
         DOnStatus.RideCompletedInfo
-          { rideEndTime = rcOrder.fulfillment.end.time.timestamp,
+          { rideEndTime,
             fare = roundToIntegral rcOrder.quote.price.value,
             totalFare = roundToIntegral rcOrder.quote.price.computed_value,
             fareBreakups = mkOnStatusFareBreakup <$> rcOrder.quote.breakup,
-            chargeableDistance = realToFrac rcOrder.fulfillment.chargeable_distance,
-            traveledDistance = realToFrac rcOrder.fulfillment.traveled_distance,
+            chargeableDistance,
+            traveledDistance,
             paymentUrl = rcOrder.payment >>= (.uri)
           }
-  DOnStatus.DOnStatusReq
-    { bppBookingId = Id rcOrder.id,
-      rideDetails = DOnStatus.RideCompletedDetails {newRideInfo, rideStartedInfo, rideCompletedInfo}
-    }
+  pure
+    DOnStatus.DOnStatusReq
+      { bppBookingId = Id rcOrder.id,
+        rideDetails = DOnStatus.RideCompletedDetails {newRideInfo, rideStartedInfo, rideCompletedInfo}
+      }
   where
-    mkRideAssignedFulfillment OnStatusRideCompleted.FulfillmentInfo {..} = OnStatusRideAssigned.FulfillmentInfo {start = mkRideAssignedStartInfo start, ..}
+    mkRideAssignedFulfillment OnStatusRideCompleted.FulfillmentInfo {..} = OnStatusRideAssigned.FulfillmentInfo {..}
     mkOnStatusFareBreakup breakup =
       DOnStatus.OnStatusFareBreakup
         { amount = realToFrac breakup.price.value,
           description = breakup.title
         }
 parseOrder (OnStatus.BookingCancelled bcOrder) = do
-  let mbNewRideInfo = mkNewRideInfo . mkRideAssignedFulfillment <$> bcOrder.fulfillment
-  DOnStatus.DOnStatusReq
-    { bppBookingId = Id bcOrder.id,
-      rideDetails =
-        DOnStatus.BookingCancelledDetails
-          { mbNewRideInfo,
-            cancellationSource = Common.castCancellationSource bcOrder.cancellation_reason
-          }
-    }
+  mbNewRideInfo <- forM bcOrder.fulfillment (buildNewRideInfo . mkRideAssignedFulfillment)
+  pure
+    DOnStatus.DOnStatusReq
+      { bppBookingId = Id bcOrder.id,
+        rideDetails =
+          DOnStatus.BookingCancelledDetails
+            { mbNewRideInfo,
+              cancellationSource = Common.castCancellationSource bcOrder.cancellation_reason
+            }
+      }
   where
     mkRideAssignedFulfillment OnStatusBookingCancelled.FulfillmentInfo {..} = OnStatusRideAssigned.FulfillmentInfo {..}
 
-mkRideAssignedStartInfo :: OnStatusRideStarted.RideStartedStartInfo -> OnStatusRideAssigned.StartInfo
-mkRideAssignedStartInfo OnStatusRideStarted.RideStartedStartInfo {..} = OnStatusRideAssigned.StartInfo {..}
-
-mkNewRideInfo :: OnStatusRideAssigned.FulfillmentInfo -> DOnStatus.NewRideInfo
-mkNewRideInfo fulfillment =
-  DOnStatus.NewRideInfo
-    { bppRideId = Id fulfillment.id,
-      otp = fulfillment.start.authorization.token,
-      driverName = fulfillment.agent.name,
-      driverMobileNumber = fulfillment.agent.phone,
-      driverMobileCountryCode = fulfillment.agent.phoneCountryCode,
-      driverRating = realToFrac <$> fulfillment.agent.rating,
-      driverRegisteredAt = fulfillment.agent.tags.registered_at,
-      vehicleNumber = fulfillment.vehicle.registration,
-      vehicleColor = fulfillment.vehicle.color,
-      vehicleModel = fulfillment.vehicle.model
-    }
+buildNewRideInfo :: (MonadFlow m) => OnStatusRideAssigned.FulfillmentInfo -> m DOnStatus.NewRideInfo
+buildNewRideInfo fulfillment = do
+  vehicle <- fromMaybeM (InvalidRequest "vehicle is not present in RideAssigned Order.") $ fulfillment.vehicle
+  agent <- fromMaybeM (InvalidRequest "agent is not present in RideAssigned Order.") $ fulfillment.agent
+  agentPhone <- fromMaybeM (InvalidRequest "agent phoneNumber is not present in RideAssigned Order.") $ agent.phone
+  tagsGroup <- fromMaybeM (InvalidRequest "agent tags is not present in RideAssigned Order.") agent.tags
+  registeredAt :: UTCTime <-
+    fromMaybeM (InvalidRequest "registered_at is not present.") $
+      readMaybe . T.unpack
+        =<< getTag "driver_details" "registered_at" tagsGroup
+  let rating :: Maybe HighPrecMeters =
+        readMaybe . T.unpack
+          =<< getTag "driver_details" "rating" tagsGroup
+  authorization <- fromMaybeM (InvalidRequest "authorization is not present in RideAssigned Order.") $ fulfillment.start.authorization
+  pure
+    DOnStatus.NewRideInfo
+      { bppRideId = Id fulfillment.id,
+        otp = authorization.token,
+        driverName = agent.name,
+        driverMobileNumber = agentPhone,
+        driverMobileCountryCode = Just "+91", -----------TODO needs to be added in agent Tags------------
+        driverRating = realToFrac <$> rating,
+        driverImage = agent.image,
+        driverRegisteredAt = registeredAt,
+        vehicleNumber = vehicle.registration,
+        vehicleColor = vehicle.color,
+        vehicleModel = vehicle.model
+      }
 
 handleError ::
   (MonadFlow m) =>

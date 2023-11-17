@@ -20,16 +20,18 @@ where
 import Beckn.Types.Core.Taxi.Common.Agent as Reexport
 import Beckn.Types.Core.Taxi.Common.Gps as Reexport
 import qualified Beckn.Types.Core.Taxi.Common.Tags as T
+import Beckn.Types.Core.Taxi.Common.TimeTimestamp as Reexport
 import Data.Aeson (omitNothingFields)
 import Data.Aeson.Types (Options)
 import Data.OpenApi hiding (tags)
 import Kernel.Prelude
-import Kernel.Utils.JSON (stripPrefixUnderscoreIfAny)
+import Kernel.Utils.JSON (removeNullFields, stripPrefixUnderscoreIfAny)
 import Kernel.Utils.Schema (genericDeclareUnNamedSchema)
 
 data StartInfo = StartInfo
   { authorization :: Maybe Authorization,
-    location :: Location
+    location :: Location,
+    time :: Maybe TimeTimestamp
   }
   deriving (Generic, Show, FromJSON, ToJSON)
 
@@ -77,10 +79,17 @@ instance ToJSON FulfillmentInfo where
 instance ToSchema FulfillmentInfo where
   declareNamedSchema = genericDeclareUnNamedSchema $ fromAesonOptions stripPrefixUnderscoreAndRemoveNullFields
 
-newtype EndInfo = EndInfo
-  { location :: Location
+data EndInfo = EndInfo
+  { location :: Location,
+    time :: Maybe TimeTimestamp
   }
-  deriving (Generic, Show, FromJSON, ToJSON)
+  deriving (Generic, Show)
+
+instance ToJSON EndInfo where
+  toJSON = genericToJSON removeNullFields
+
+instance FromJSON EndInfo where
+  parseJSON = genericParseJSON removeNullFields
 
 instance ToSchema EndInfo where
   declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions

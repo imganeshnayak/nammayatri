@@ -15,10 +15,9 @@
 module Beckn.ACL.OnUpdate (buildOnUpdateReq) where
 
 import Beckn.ACL.Common (getTag)
-import qualified Beckn.Types.Core.Taxi.OnUpdate as OnUpdate
-import qualified Beckn.Types.Core.Taxi.OnUpdate.OnUpdateEvent.BookingCancelledEvent as OnUpdate
-import qualified Data.Text as T
 import qualified Beckn.ACL.Common as Common
+import qualified Beckn.Types.Core.Taxi.OnUpdate as OnUpdate
+import qualified Data.Text as T
 import qualified Domain.Action.Beckn.OnUpdate as DOnUpdate
 import EulerHS.Prelude hiding (state)
 import Kernel.Prelude (roundToIntegral)
@@ -164,5 +163,5 @@ parseEvent transactionId (OnUpdate.EstimateRepetition erEvent) = do
         bppEstimateId = Id erEvent.item.id,
         bppBookingId = Id $ erEvent.id,
         bppRideId = Id erEvent.fulfillment.id,
-        cancellationSource = Common.castCancellationSource cancellation_reason
+        cancellationSource = Common.castCancellationSource cancellationReason
       }
