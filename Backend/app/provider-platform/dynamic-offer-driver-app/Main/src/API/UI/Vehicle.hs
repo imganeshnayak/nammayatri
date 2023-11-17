@@ -11,6 +11,8 @@
 
  the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
+{-# OPTIONS_GHC -Wno-missing-signatures #-}
+{-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module API.UI.Vehicle
   ( API,
@@ -25,14 +27,16 @@ module API.UI.Vehicle
 where
 
 import qualified Domain.Action.UI.Vehicle as DVehicle
-import qualified Domain.Types.Merchant as DM
-import qualified Domain.Types.Merchant.MerchantOperatingCity as DMOC
+-- import qualified Domain.Types.Merchant as DM
+-- import qualified Domain.Types.Merchant.MerchantOperatingCity as DMOC
 import qualified Domain.Types.Person as SP
 import qualified Domain.Types.Vehicle.Variant as Variant
 import Environment
 import EulerHS.Prelude hiding (id)
 import Kernel.Types.Id
-import Kernel.Utils.Common
+-- import Kernel.Utils.Common
+
+import Lib.RoutesTh (mkRoutes)
 import Servant
 import Tools.Auth
 
@@ -56,17 +60,21 @@ type API =
              :> Get '[JSON] DVehicle.GetVehicleRes
        )
 
-handler :: FlowServer API
-handler =
-  listVehicles
-    :<|> updateVehicle
-    :<|> getVehicle
+type FS = FlowServer API
 
-listVehicles :: SP.Person -> Maybe Variant.Variant -> Maybe Text -> Maybe Int -> Maybe Int -> FlowHandler DVehicle.ListVehicleRes
-listVehicles admin variantM mbRegNum limitM = withFlowHandlerAPI . DVehicle.listVehicles admin variantM mbRegNum limitM
+mkRoutes ''API ''FS [['DVehicle.listVehicles, 'DVehicle.updateVehicle, 'DVehicle.getVehicle]]
 
-updateVehicle :: SP.Person -> Id SP.Person -> DVehicle.UpdateVehicleReq -> FlowHandler DVehicle.UpdateVehicleRes
-updateVehicle admin driverId = withFlowHandlerAPI . DVehicle.updateVehicle admin driverId
+-- handler :: FlowServer API
+-- handler =
+--   listVehicles
+--     :<|> updateVehicle
+--     :<|> getVehicle
 
-getVehicle :: (Id SP.Person, Id DM.Merchant, Id DMOC.MerchantOperatingCity) -> Maybe Text -> Maybe (Id SP.Person) -> FlowHandler DVehicle.GetVehicleRes
-getVehicle (personId, merchantId, merchantOpCityId) registrationNoM = withFlowHandlerAPI . DVehicle.getVehicle (personId, merchantId, merchantOpCityId) registrationNoM
+-- listVehicles :: SP.Person -> Maybe Variant.Variant -> Maybe Text -> Maybe Int -> Maybe Int -> FlowHandler DVehicle.ListVehicleRes
+-- listVehicles admin variantM mbRegNum limitM = withFlowHandlerAPI . DVehicle.listVehicles admin variantM mbRegNum limitM
+
+-- updateVehicle :: SP.Person -> Id SP.Person -> DVehicle.UpdateVehicleReq -> FlowHandler DVehicle.UpdateVehicleRes
+-- updateVehicle admin driverId = withFlowHandlerAPI . DVehicle.updateVehicle admin driverId
+
+-- getVehicle :: (Id SP.Person, Id DM.Merchant, Id DMOC.MerchantOperatingCity) -> Maybe Text -> Maybe (Id SP.Person) -> FlowHandler DVehicle.GetVehicleRes
+-- getVehicle (personId, merchantId, merchantOpCityId) registrationNoM = withFlowHandlerAPI . DVehicle.getVehicle (personId, merchantId, merchantOpCityId) registrationNoM

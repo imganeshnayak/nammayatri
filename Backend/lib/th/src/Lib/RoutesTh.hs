@@ -63,34 +63,33 @@ mkHandlerFuncs apiType apiHandlerList = do
 mkHandlerFuncDec :: Name -> Q [Dec]
 mkHandlerFuncDec apiHndlr = do
   noOfParams <- funcParamCnt apiHndlr
-  let name = mkName (nameBase apiHndlr <> "Handler")
+  let name = mkName (nameBase apiHndlr)
       vars = createVar noOfParams
       varPs = VarP <$> vars
       funcExpr = foldl' AppE (VarE apiHndlr) $ (VarE <$> vars)
-      bodyExpr = AppE (VarE 'withFlowHandlerAPI) funcExpr
+      bodyExpr = AppE (VarE 'withFlowHandlerAPI) $ (funcExpr)
   return [FunD name ([Clause varPs (NormalB bodyExpr) []])]
   where
     createVar 0 = []
     createVar count = mkName ("var_" <> (show count)) : createVar (count - 1)
 
 funcParamCnt :: Name -> Q Int
-funcParamCnt _ = do
-  --fInfo <- reify name
-  return $ 3
-
--- case fInfo of
---   VarI _ fType _ -> return $ countTypesInFunc fType
---   _ -> fail "Invalid Function Declaration"
+funcParamCnt _name = do
+  fInfo <- reify _name
+  -- return $ 3
+  case fInfo of
+    VarI _ fType _ -> return $ countTypesInFunc fType
+    _ -> fail "Invalid Function Declaration"
 
 countTypesInFunc :: Language.Haskell.TH.Type -> Int
 countTypesInFunc t = case t of
-  AppT t1 t2 -> (countTypesInFunc t1 + countTypesInFunc t2)
+  AppT t1 t2 -> countTypesInFunc t1 + countTypesInFunc t2
   AppKindT t1 _ -> countTypesInFunc t1
   SigT t1 _ -> countTypesInFunc t1
   ParensT t1 -> countTypesInFunc t1
   ForallT _ _ t1 -> countTypesInFunc t1
-  InfixT t1 _ t2 -> (countTypesInFunc t1 + countTypesInFunc t2)
-  UInfixT t1 _ t2 -> (countTypesInFunc t1 + countTypesInFunc t2)
+  InfixT t1 _ t2 -> countTypesInFunc t1 + countTypesInFunc t2
+  UInfixT t1 _ t2 -> countTypesInFunc t1 + countTypesInFunc t2
   ArrowT -> 1
   _ -> 0
 

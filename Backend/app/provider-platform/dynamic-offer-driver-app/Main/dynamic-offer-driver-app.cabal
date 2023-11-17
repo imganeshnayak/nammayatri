@@ -634,6 +634,7 @@ library
     , template-haskell
     , text
     , text-conversions
+    , th-routes
     , time
     , unordered-containers
     , uuid
@@ -743,6 +744,7 @@ executable dynamic-offer-driver-app-exe
     , template-haskell
     , text
     , text-conversions
+    , th-routes
     , time
     , unordered-containers
     , uuid

@@ -150,6 +150,7 @@ library:
     - special-zone-a
     - payment
     - sessionizer-metrics
+    - th-routes
 
 executables:
   dynamic-offer-driver-app-exe:
@@ -179,3 +180,4 @@ executables:
       - mobility-core
       - beckn-spec
       - beckn-services
+      - th-routes
