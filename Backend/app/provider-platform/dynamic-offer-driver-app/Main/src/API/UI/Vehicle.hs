@@ -11,7 +11,6 @@
 
  the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
-{-# OPTIONS_GHC -Wno-missing-signatures #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module API.UI.Vehicle
@@ -60,9 +59,7 @@ type API =
              :> Get '[JSON] DVehicle.GetVehicleRes
        )
 
-type FS = FlowServer API
-
-mkRoutes ''API ''FS (Grp (Single <$> ['DVehicle.listVehicles, 'DVehicle.updateVehicle, 'DVehicle.getVehicle]))
+mkRoutes ''API ''FlowServer ''FlowHandler (Grp (Single <$> ['DVehicle.listVehicles, 'DVehicle.updateVehicle, 'DVehicle.getVehicle]))
 
 -- handler :: FlowServer API
 -- handler =

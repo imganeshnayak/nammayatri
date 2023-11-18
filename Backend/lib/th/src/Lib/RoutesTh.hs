@@ -12,47 +12,47 @@ import Servant
 
 data Group = Single Name | Grp [Group]
 
-mkRoutes :: Name -> Name -> Group -> Q [Dec]
-mkRoutes apiDec apiType apiHandlerGrps =
+mkRoutes :: Name -> Name -> Name -> Group -> Q [Dec]
+mkRoutes apiDec handlerTypeCons returnTypeCons apiHandlerGrps =
   do
     mkProxyDec apiDec
-    +++ mkHandlerFuncDec apiHandlerGrps
-    +++ mkHandlerFuncs apiType apiHandlerGrps
+    +++ mkHandlerFuncDec returnTypeCons apiHandlerGrps
+    +++ mkHandlerFuncs apiDec handlerTypeCons apiHandlerGrps
 
 mkProxyDec :: Name -> Q [Dec]
 mkProxyDec apiDec = do
-  let name = mkName "apis"
+  let name = mkName "apisProxy"
   return [SigD name (AppT (ConT ''Proxy) (ConT apiDec)), ValD (VarP name) (NormalB (ConE 'Proxy)) []]
 
-mkHandlerFuncs :: Name -> Group -> Q [Dec]
-mkHandlerFuncs apiType apiHandlers = do
+mkHandlerFuncs :: Name -> Name -> Group -> Q [Dec]
+mkHandlerFuncs apiDec handlerTypeCons apiHandlers = do
   let name = mkName "handler"
   let bodyExpr = generateHandler apiHandlers
-  return [SigD name ((ConT apiType)), FunD name ([Clause [] (NormalB bodyExpr) []])]
+  return [SigD name (AppT (ConT handlerTypeCons) (ConT apiDec)), FunD name ([Clause [] (NormalB bodyExpr) []])]
   where
     getAppExpr apiHndlr = VarE (mkName (nameBase apiHndlr))
     generateHandler (Single name) = getAppExpr name
     generateHandler (Grp grps) = ParensE $ foldl1 (\acc e -> UInfixE acc (ConE '(:<|>)) e) (map generateHandler grps)
 
-mkHandlerFuncDec :: Group -> Q [Dec]
-mkHandlerFuncDec (Grp grps) = nub <$> (concatMapM mkHandlerFuncDec grps)
-mkHandlerFuncDec (Single apiHndlr) = do
-  noOfParams <- funcParamCnt apiHndlr
+mkHandlerFuncDec :: Name -> Group -> Q [Dec]
+mkHandlerFuncDec returnTypeCons (Grp grps) = nub <$> (concatMapM (mkHandlerFuncDec returnTypeCons) grps)
+mkHandlerFuncDec returnTypeCons (Single apiHndlr) = do
+  (noOfParams, fType) <- funcParamCntAndType apiHndlr
   let name = mkName (nameBase apiHndlr)
       vars = createVar noOfParams
       varPs = VarP <$> vars
       funcExpr = foldl' AppE (VarE apiHndlr) $ (VarE <$> vars)
       bodyExpr = AppE (VarE 'withFlowHandlerAPI) $ (funcExpr)
-  return [FunD name ([Clause varPs (NormalB bodyExpr) []])]
+  return [SigD name (correctLastType returnTypeCons fType), FunD name ([Clause varPs (NormalB bodyExpr) []])]
   where
     createVar 0 = []
     createVar count = mkName ("var_" <> (show count)) : createVar (count - 1)
 
-funcParamCnt :: Name -> Q Int
-funcParamCnt name = do
+funcParamCntAndType :: Name -> Q (Int, Language.Haskell.TH.Type)
+funcParamCntAndType name = do
   fInfo <- reify name
   case fInfo of
-    VarI _ fType _ -> return $ countTypesInFunc fType
+    VarI _ fType _ -> return $ (countTypesInFunc fType, fType)
     _ -> fail "Invalid Function Declaration"
 
 countTypesInFunc :: Language.Haskell.TH.Type -> Int
@@ -66,6 +66,15 @@ countTypesInFunc t = case t of
   UInfixT t1 _ t2 -> countTypesInFunc t1 + countTypesInFunc t2
   ArrowT -> 1
   _ -> 0
+
+correctLastType :: Name -> Language.Haskell.TH.Type -> Language.Haskell.TH.Type
+correctLastType tp (ForallT _ _ t1) = correctLastType tp t1
+correctLastType tp (AppT (AppT ArrowT m) t) = (AppT (AppT ArrowT m) (correctLastType tp t))
+correctLastType tp t = changeType tp t
+
+changeType :: Name -> Language.Haskell.TH.Type -> Language.Haskell.TH.Type
+changeType tp (AppT _ t) = AppT (ConT tp) t
+changeType _ t = t
 
 --- FOR TESTING ---
 
@@ -94,4 +103,4 @@ checkApp3 = do
   pure "App is UP"
 
 routesQDec :: Q [Dec]
-routesQDec = mkRoutes ''MobiusAPIs ''ApiType (Grp [Grp [Grp [Single 'checkApp1, Single 'checkApp2], Single 'checkApp2], Grp [Single 'checkApp3, Single 'checkApp2]])
+routesQDec = mkRoutes ''MobiusAPIs ''ApiType ''Text (Grp [Grp [Grp [Single 'checkApp1, Single 'checkApp2], Single 'checkApp2], Grp [Single 'checkApp3, Single 'checkApp2]])

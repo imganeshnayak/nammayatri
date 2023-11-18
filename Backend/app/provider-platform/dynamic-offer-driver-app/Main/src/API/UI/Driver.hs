@@ -11,7 +11,6 @@
 
  the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
-{-# OPTIONS_GHC -Wno-missing-signatures #-}
 {-# OPTIONS_GHC -Wno-unused-top-binds #-}
 
 module API.UI.Driver
@@ -196,11 +195,10 @@ type API =
                :> Get '[JSON] DDriver.HistoryEntryDetailsEntityV2
          )
 
-type FS = FlowServer API
-
 mkRoutes
   ''API
-  ''FS
+  ''FlowServer
+  ''FlowHandler
   ( Grp
       [ Grp
           ( Single
@@ -261,6 +259,10 @@ mkRoutes
 --     :<|> ( setActivity
 --              :<|> ( activateGoHomeFeature
 --                       :<|> deactivateGoHomeFeature
+--                       :> ( a
+--                            :<|> b
+--                            :<|> c
+--                           )
 --                       :<|> addHomeLocation
 --                       :<|> getHomeLocations
 --                       :<|> deleteHomeLocation
