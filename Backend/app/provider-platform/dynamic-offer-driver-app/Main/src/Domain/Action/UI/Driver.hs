@@ -69,6 +69,7 @@ module Domain.Action.UI.Driver
     updateMetaData,
     getDriverPaymentsHistoryV2,
     getHistoryEntryDetailsEntityV2,
+    getDriverPaymentsHistoryEntityDetailsV22,
     calcExecutionTime,
     fetchDriverPhoto,
   )
@@ -1758,6 +1759,9 @@ data DriverFeeInfoEntity = DriverFeeInfoEntity
     offerAndPlanDetails :: Maybe Text
   }
   deriving (Generic, Show, FromJSON, ToJSON, ToSchema)
+
+getDriverPaymentsHistoryEntityDetailsV22 :: (EsqDBReplicaFlow m r, EsqDBFlow m r, EncFlow m r, CacheFlow m r) => Text -> (Id SP.Person, Id DM.Merchant, Id DMOC.MerchantOperatingCity) -> m HistoryEntryDetailsEntityV2
+getDriverPaymentsHistoryEntityDetailsV22 a b = getHistoryEntryDetailsEntityV2 b a
 
 getHistoryEntryDetailsEntityV2 :: (EsqDBReplicaFlow m r, EsqDBFlow m r, EncFlow m r, CacheFlow m r) => (Id SP.Person, Id DM.Merchant, Id DMOC.MerchantOperatingCity) -> Text -> m HistoryEntryDetailsEntityV2
 getHistoryEntryDetailsEntityV2 (_, _, merchantOpCityId) invoiceShortId = do

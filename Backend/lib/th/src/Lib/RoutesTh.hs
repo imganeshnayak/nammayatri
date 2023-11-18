@@ -35,6 +35,7 @@ mkHandlerFuncs apiType apiHandlers = do
     generateHandler (Grp grps) = ParensE $ foldl1 (\acc e -> UInfixE acc (ConE '(:<|>)) e) (map generateHandler grps)
 
 mkHandlerFuncDec :: Group -> Q [Dec]
+mkHandlerFuncDec (Grp grps) = nub <$> (concatMapM mkHandlerFuncDec grps)
 mkHandlerFuncDec (Single apiHndlr) = do
   noOfParams <- funcParamCnt apiHndlr
   let name = mkName (nameBase apiHndlr)
@@ -46,7 +47,6 @@ mkHandlerFuncDec (Single apiHndlr) = do
   where
     createVar 0 = []
     createVar count = mkName ("var_" <> (show count)) : createVar (count - 1)
-mkHandlerFuncDec (Grp grps) = nub <$> (concatMapM mkHandlerFuncDec grps)
 
 funcParamCnt :: Name -> Q Int
 funcParamCnt name = do
