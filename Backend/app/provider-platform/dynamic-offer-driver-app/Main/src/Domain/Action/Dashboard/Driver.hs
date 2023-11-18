@@ -1162,7 +1162,7 @@ getPaymentHistoryEntityDetails merchantShortId opCity driverId invoiceId = do
   let personId = cast @Common.Driver @DP.Person driverId
   driver <- B.runInReplica $ QPerson.findById personId >>= fromMaybeM (PersonDoesNotExist personId.getId)
   unless (merchant.id == driver.merchantId) $ throwError (PersonDoesNotExist personId.getId)
-  Driver.getHistoryEntryDetailsEntityV2 (personId, merchant.id, merchantOpCityId) invoiceId.getId
+  Driver.getHistoryEntryDetailsEntityV2 invoiceId.getId (personId, merchant.id, merchantOpCityId)
 
 updateSubscriptionDriverFeeAndInvoice :: ShortId DM.Merchant -> Context.City -> Id Common.Driver -> Common.SubscriptionDriverFeesAndInvoicesToUpdate -> Flow Common.SubscriptionDriverFeesAndInvoicesToUpdate
 updateSubscriptionDriverFeeAndInvoice merchantShortId _ driverId Common.SubscriptionDriverFeesAndInvoicesToUpdate {..} = do

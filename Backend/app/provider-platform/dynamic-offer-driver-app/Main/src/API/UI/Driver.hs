@@ -202,15 +202,14 @@ mkRoutes
   ''API
   ''FS
   ( Grp
-      [ ( Grp
-            ( Single
-                <$> [ 'DDriver.createDriver,
-                      'DDriver.listDriver,
-                      'DDriver.changeDriverEnableState,
-                      'DDriver.deleteDriver
-                    ]
-            )
-        ),
+      [ Grp
+          ( Single
+              <$> [ 'DDriver.createDriver,
+                    'DDriver.listDriver,
+                    'DDriver.changeDriverEnableState,
+                    'DDriver.deleteDriver
+                  ]
+          ),
         Grp
           [ Single 'DDriver.setActivity,
             Grp
@@ -247,7 +246,7 @@ mkRoutes
             Single 'DDriver.getDriverPayments,
             Single 'DDriver.clearDriverDues,
             Single 'DDriver.getDriverPaymentsHistoryV2,
-            Single 'DDriver.getDriverPaymentsHistoryEntityDetailsV22
+            Single 'DDriver.getHistoryEntryDetailsEntityV2
           ]
       ]
   )
@@ -378,4 +377,4 @@ mkRoutes
 -- getDriverPaymentsHistoryV2 pMode mbLimit mbOffset = withFlowHandlerAPI . DDriver.getDriverPaymentsHistoryV2 pMode mbLimit mbOffset
 
 -- getDriverPaymentsHistoryEntityDetailsV2 :: Text -> (Id SP.Person, Id Merchant.Merchant, Id DMOC.MerchantOperatingCity) -> FlowHandler DDriver.HistoryEntryDetailsEntityV2
--- getDriverPaymentsHistoryEntityDetailsV2 invoiceId (driverId, merchantId, merchantOpCityId) = withFlowHandlerAPI $ DDriver.getHistoryEntryDetailsEntityV22 invoiceId (driverId, merchantId, merchantOpCityId)
+-- getDriverPaymentsHistoryEntityDetailsV2 invoiceId (driverId, merchantId, merchantOpCityId) = withFlowHandlerAPI $ DDriver.getHistoryEntryDetailsEntityV2 invoiceId (driverId, merchantId, merchantOpCityId)
