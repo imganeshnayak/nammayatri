@@ -1,16 +1,20 @@
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE TemplateHaskell #-}
 
-module Lib.RoutesTh where
+module Lib.RoutesTh
+  ( module Lib.RoutesTh,
+    module Lib.GroupParser,
+  )
+where
 
 import Data.List (nub)
 import qualified EulerHS.Language as L
 import EulerHS.Prelude
 import Kernel.Utils.Common
 import Language.Haskell.TH
+import Lib.GroupParser (Group (..), handlerExp)
 import Lib.UtilsTh ((+++))
 import Servant
-
-data Group = Single Name | Grp [Group]
 
 mkRoutes :: Name -> Name -> Name -> Group -> Q [Dec]
 mkRoutes apiDec handlerTypeCons returnTypeCons apiHandlerGrps =
@@ -103,4 +107,4 @@ checkApp3 = do
   pure "App is UP"
 
 routesQDec :: Q [Dec]
-routesQDec = mkRoutes ''MobiusAPIs ''ApiType ''Text (Grp [Grp [Grp [Single 'checkApp1, Single 'checkApp2], Single 'checkApp2], Grp [Single 'checkApp3, Single 'checkApp2]])
+routesQDec = mkRoutes ''MobiusAPIs ''ApiType ''Text [handlerExp| [[[ checkApp1, checkApp2], checkApp2], [ checkApp3, checkApp2]] |]

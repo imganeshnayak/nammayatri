@@ -26,6 +26,7 @@ flag Local
 
 library
   exposed-modules:
+      Lib.GroupParser
       Lib.RoutesTh
       Lib.UtilsTh
   other-modules:
@@ -78,6 +79,7 @@ library
     , http-client
     , http-types
     , mobility-core
+    , parsec
     , record-dot-preprocessor
     , record-hasfield
     , servant

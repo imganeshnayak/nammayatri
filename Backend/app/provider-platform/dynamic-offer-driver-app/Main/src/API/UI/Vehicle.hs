@@ -1,3 +1,4 @@
+{-# LANGUAGE QuasiQuotes #-}
 {-
  Copyright 2022-23, Juspay India Pvt Ltd
 
@@ -34,8 +35,7 @@ import Environment
 import EulerHS.Prelude hiding (id)
 import Kernel.Types.Id
 -- import Kernel.Utils.Common
-
-import Lib.RoutesTh (Group (..), mkRoutes)
+import Lib.RoutesTh (handlerExp, mkRoutes)
 import Servant
 import Tools.Auth
 
@@ -59,7 +59,7 @@ type API =
              :> Get '[JSON] DVehicle.GetVehicleRes
        )
 
-mkRoutes ''API ''FlowServer ''FlowHandler (Grp (Single <$> ['DVehicle.listVehicles, 'DVehicle.updateVehicle, 'DVehicle.getVehicle]))
+mkRoutes ''API ''FlowServer ''FlowHandler [handlerExp| [ DVehicle.listVehicles, DVehicle.updateVehicle, DVehicle.getVehicle] |]
 
 -- handler :: FlowServer API
 -- handler =

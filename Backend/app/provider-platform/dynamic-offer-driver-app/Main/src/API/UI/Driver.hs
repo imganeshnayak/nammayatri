@@ -1,3 +1,4 @@
+{-# LANGUAGE QuasiQuotes #-}
 {-
  Copyright 2022-23, Juspay India Pvt Ltd
 
@@ -55,7 +56,7 @@ import Kernel.External.Maps (LatLong)
 import Kernel.Types.APISuccess (APISuccess)
 import Kernel.Types.Id
 import Kernel.Utils.Common
-import Lib.RoutesTh (Group (..), mkRoutes)
+import Lib.RoutesTh (handlerExp, mkRoutes)
 import Servant
 import Tools.Auth
 
@@ -199,55 +200,41 @@ mkRoutes
   ''API
   ''FlowServer
   ''FlowHandler
-  ( Grp
-      [ Grp
-          ( Single
-              <$> [ 'DDriver.createDriver,
-                    'DDriver.listDriver,
-                    'DDriver.changeDriverEnableState,
-                    'DDriver.deleteDriver
-                  ]
-          ),
-        Grp
-          [ Single 'DDriver.setActivity,
-            Grp
-              ( Single
-                  <$> [ 'DDriver.activateGoHomeFeature,
-                        'DDriver.deactivateGoHomeFeature,
-                        'DDriver.addHomeLocation,
-                        'DDriver.getHomeLocations,
-                        'DDriver.deleteHomeLocation,
-                        'DDriver.updateHomeLocation
-                      ]
-              ),
-            Single 'DDriver.getNearbySearchRequests,
-            Single 'DDriver.offerQuote,
-            Single 'DDriver.respondQuote,
-            Grp
-              ( Single
-                  <$> [ 'DDriver.getInformation,
-                        'DDriver.updateDriver,
-                        'DDriver.getStats,
-                        'DDriver.driverPhotoUpload,
-                        'DDriver.fetchDriverPhoto
-                      ]
-              ),
-            Single 'DDriver.updateMetaData,
-            Grp
-              ( Single
-                  <$> [ 'DDriver.validate,
-                        'DDriver.verifyAuth,
-                        'DDriver.resendOtp,
-                        'DDriver.remove
-                      ]
-              ),
-            Single 'DDriver.getDriverPayments,
-            Single 'DDriver.clearDriverDues,
-            Single 'DDriver.getDriverPaymentsHistoryV2,
-            Single 'DDriver.getHistoryEntryDetailsEntityV2
-          ]
-      ]
-  )
+  [handlerExp| [
+        [ DDriver.createDriver,
+            DDriver.listDriver,
+            DDriver.changeDriverEnableState,
+            DDriver.deleteDriver],
+        [
+            DDriver.setActivity,
+            [
+                DDriver.activateGoHomeFeature,
+                DDriver.deactivateGoHomeFeature,
+                DDriver.addHomeLocation,
+                DDriver.getHomeLocations,
+                DDriver.deleteHomeLocation,
+                DDriver.updateHomeLocation],
+            DDriver.getNearbySearchRequests,
+            DDriver.offerQuote,
+            DDriver.respondQuote,
+            [
+                DDriver.getInformation,
+                DDriver.updateDriver,
+                DDriver.getStats,
+                DDriver.driverPhotoUpload,
+                DDriver.fetchDriverPhoto],
+            DDriver.updateMetaData,
+            [
+                DDriver.validate,
+                DDriver.verifyAuth,
+                DDriver.resendOtp,
+                DDriver.remove
+            ],
+            DDriver.getDriverPayments,
+            DDriver.clearDriverDues,
+            DDriver.getDriverPaymentsHistoryV2,
+            DDriver.getHistoryEntryDetailsEntityV2]
+      ]|]
 
 -- handler :: FlowServer API
 -- handler =
