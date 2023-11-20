@@ -1,6 +1,6 @@
-import {
-  callbackMapper
-} from "presto-ui";
+import { callbackMapper } from 'presto-ui';
+
+var timerIdForTimeout;
 const btnLoaderState = new Map();
 const {
   JBridge
@@ -899,6 +899,64 @@ export const addMediaFile = function (viewID) {
   }
 }
 
+export const clearFocus = function (id){
+  if(window.JBridge.clearFocus){
+    return JBridge.clearFocus(id)
+  }
+}
+
+
+export const removeMediaPlayer = function (id) {
+    if (window.JBridge.removeMediaPlayer){
+      JBridge.removeMediaPlayer();
+    }
+};
+
+export const renderBase64ImageFile = function (base64Image, id, fitCenter, imgScaleType){
+  try{
+    return JBridge.renderBase64ImageFile(base64Image, id, fitCenter, imgScaleType);
+  }catch (err){
+    return JBridge.renderBase64ImageFile(base64Image, id, fitCenter);
+  }
+}
+
+export const uploadMultiPartData = function (path, url, fileType) {
+  if (window.JBridge.uploadMultiPartData){
+    JBridge.uploadMultiPartData(path, url, fileType);
+  }
+}
+
+export const startAudioRecording = function (id) {
+    if (window.JBridge.startAudioRecording){
+      if (window.__OS == "IOS") {
+        return JBridge.startAudioRecording() == "0" ? false : true;
+     } else {
+        return JBridge.startAudioRecording();
+     }
+    }
+};
+
+export const stopAudioRecording = function (id) {
+    if (window.JBridge.stopAudioRecording){
+      return JBridge.stopAudioRecording();
+    }
+}
+
+export const saveAudioFile = function (source) {
+    if (window.JBridge.saveAudioFile){
+      return JBridge.saveAudioFile(source);
+    }
+}
+
+
+export const differenceBetweenTwoUTC = function (str1, str2) {
+    var curr1 = new Date(str1);
+    var departure = new Date(str2);
+    var diff =(curr1.getTime() - departure.getTime())/ 1000;
+    diff = (Math.round(diff));
+    return diff
+};
+
 export const isCoordOnPath = function (data) {
   return function (lat) {
     return function (lon) {
@@ -1444,6 +1502,17 @@ export const storeCallBackImageUpload = function (cb) {
       }
     }
   }
+}
+
+export const storeCallBackUploadMultiPartData = function (cb, action) {
+    try {
+      var callback = callbackMapper.map(function (fileType, fileId) {
+          cb(action (fileType)(fileId))();
+      });
+      window.JBridge.storeCallBackUploadMultiPartData(callback);
+    }catch (error){
+      console.log("Error occurred in storeCallBackUploadMultiPartData ------", error);
+    }
 }
 
 export const storeCallBackOverlayPermission = function (cb) {
@@ -2017,10 +2086,21 @@ export const waitingCountdownTimer = function (startingTime) {
   };
 };
 
-export const cleverTapEvent = function (_event) {
-  return function (param) {
-    if (window.JBridge.cleverTapEvent) {
-      return JBridge.cleverTapEvent(_event, JSON.stringify(param));
+export const clearWaitingTimer = function (id){
+  console.log("clearWaitingTimer" + id);
+  if(__OS == "IOS" && id=="countUpTimerId") {
+    if (window.JBridge.clearCountUpTimer) {
+      window.JBridge.clearCountUpTimer();
+    }
+  } else {
+    clearInterval(parseInt(id));
+  }
+}
+
+export const cleverTapEvent = function(event){
+  return function (param){
+    if (window.JBridge.cleverTapEvent){
+        return JBridge.cleverTapEvent(event, JSON.stringify(param));
     }
   }
 }

@@ -209,3 +209,11 @@ green600 = "#269574"
 
 squidInkBlue :: Color
 squidInkBlue = "#303440"
+green200 :: Color
+green200 = "#2053BB6F"
+
+transparentGrey :: Color
+transparentGrey = "#66888888"
+
+brightBlue :: Color
+brightBlue = "#0066FF"

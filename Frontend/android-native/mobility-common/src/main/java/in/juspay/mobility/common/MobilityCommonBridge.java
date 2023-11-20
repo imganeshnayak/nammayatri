@@ -10,9 +10,12 @@
 package in.juspay.mobility.common;
 
 import static android.Manifest.permission.ACCESS_FINE_LOCATION;
+import static android.Manifest.permission.CAMERA;
 import static android.Manifest.permission.POST_NOTIFICATIONS;
 import static android.Manifest.permission.READ_EXTERNAL_STORAGE;
+import static android.Manifest.permission.RECORD_AUDIO;
 import static android.Manifest.permission.WRITE_EXTERNAL_STORAGE;
+import static android.app.Activity.RESULT_OK;
 import static android.content.Context.MODE_PRIVATE;
 
 import android.Manifest;
@@ -139,6 +142,7 @@ import com.google.android.gms.tasks.CancellationTokenSource;
 import com.google.android.gms.tasks.Task;
 import com.google.maps.android.SphericalUtil;
 import com.google.maps.android.data.geojson.GeoJsonLayer;
+import com.theartofdev.edmodo.cropper.CropImage;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -147,6 +151,7 @@ import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -155,7 +160,9 @@ import java.io.Reader;
 import java.io.StringWriter;
 import java.io.Writer;
 import java.lang.reflect.Method;
+import java.net.HttpURLConnection;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.nio.charset.StandardCharsets;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -168,7 +175,6 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.TimeZone;
 
-
 import in.juspay.hyper.bridge.HyperBridge;
 import in.juspay.hyper.constants.LogCategory;
 import in.juspay.hyper.constants.LogSubCategory;
@@ -176,6 +182,10 @@ import in.juspay.hyper.core.BridgeComponents;
 import in.juspay.hyper.core.ExecutorManager;
 import in.juspay.hyper.core.JsCallback;
 import in.juspay.hyper.core.JuspayLogger;
+import in.juspay.hypersdk.data.KeyValueStore;
+import in.juspay.mobility.app.AudioRecorder;
+import in.juspay.mobility.app.services.MobilityCallAPI;
+import in.juspay.mobility.common.mediaPlayer.DefaultMediaPlayerControl;
 
 public class MobilityCommonBridge extends HyperBridge {
 
@@ -240,6 +250,13 @@ public class MobilityCommonBridge extends HyperBridge {
     protected String downloadLayout;
     protected int labelTextSize = 30;
 
+    private ArrayList<MediaPlayerView> audioPlayers = new ArrayList<>();
+    private AudioRecorder audioRecorder = null;
+    private static final int IMAGE_CAPTURE_REQ_CODE = 101;
+    private boolean isUploadPopupOpen = false;
+    private static final int CREDENTIAL_PICKER_REQUEST = 74;
+    private static final int IMAGE_PERMISSION_REQ_CODE = 4997;
+
 
 
     public MobilityCommonBridge(BridgeComponents bridgeComponents) {
@@ -278,6 +295,8 @@ public class MobilityCommonBridge extends HyperBridge {
         markers = new JSONObject();
         zoneMarkers = new HashMap<>();
         layer = null;
+        audioRecorder = null;
+
         if(onGlobalLayoutListener != null && bridgeComponents.getActivity() != null) {
             View parentView = bridgeComponents.getActivity().findViewById(android.R.id.content);
             if(parentView != null) {
@@ -294,6 +313,7 @@ public class MobilityCommonBridge extends HyperBridge {
         storeLocateOnMapCallBack = null;
         storeDashboardCallBack = null;
         userPositionMarker = null;
+        audioPlayers = new ArrayList<>();
     }
 
     // region Store and Trigger CallBack
@@ -1015,7 +1035,7 @@ public class MobilityCommonBridge extends HyperBridge {
                     }
                 }
             } catch (Exception e) {
-                Log.e("FAILED WHILE REALLOCATING", e.toString());
+                Log.e("FAILED REALLOCATING", e.toString());
             }
         });
     }
@@ -1234,7 +1254,7 @@ public class MobilityCommonBridge extends HyperBridge {
         });
     }
 
-    @SuppressLint({"UseCompatLoadingForDrawables", "SetTextI18n"})
+    @SuppressLint({"UseCompatLoadingForDrawables", "SetTextI18n", "LongLogTag"})
     protected Bitmap getMarkerBitmapFromView(String locationName, String imageName, String specialLocationTagIcon, MarkerType markerType) {
         Context context = bridgeComponents.getContext();
         @SuppressLint("InflateParams")
@@ -2583,6 +2603,315 @@ public class MobilityCommonBridge extends HyperBridge {
                 context.unregisterReceiver(timeChangeCallback);
             } catch (Exception ignored) {
             }
+        }
+    }
+
+    @JavascriptInterface
+    public void addMediaFile(String viewID, String source, String actionPlayerID, String playIcon, String pauseIcon, String timerID) {
+        Log.d(LOG_TAG, "addMediaFile: " + source);
+        Context context = bridgeComponents.getContext();
+        Activity activity = bridgeComponents.getActivity();
+        ExecutorManager.runOnMainThread(() -> {
+            MediaPlayerView audioPlayer;
+            if (Integer.parseInt(actionPlayerID) != -1) {
+                if (Integer.parseInt(timerID) != -1) {
+                    audioPlayer = new MediaPlayerView(context, activity, Integer.parseInt(actionPlayerID), playIcon, pauseIcon, Integer.parseInt(timerID));
+                    audioPlayer.setTimerColorAndSize(Color.WHITE, 14);
+                    audioPlayer.setVisualizerBarPlayedColor(Color.WHITE);
+                } else {
+                    audioPlayer = new MediaPlayerView(context, activity, Integer.parseInt(actionPlayerID), playIcon, pauseIcon);
+                    audioPlayer.setTimerColorAndSize(Color.GRAY, 14);
+                }
+            } else {
+                audioPlayer = new MediaPlayerView(context, activity);
+            }
+            try {
+                audioPlayer.inflateView(Integer.parseInt(viewID));
+                if (source.startsWith("http")) {
+                    Thread thread = new Thread(() -> {
+                        try {
+                            String base64 = getAPIResponse(source);
+                            byte[] decodedAudio = Base64.decode(base64, Base64.DEFAULT);
+                            File tempMp3 = File.createTempFile("audio_cache", source.substring(source.length()-3), context.getCacheDir());
+                            tempMp3.deleteOnExit();
+                            FileOutputStream fos = new FileOutputStream(tempMp3);
+                            fos.write(decodedAudio);
+                            fos.close();
+                            FileInputStream fis = new FileInputStream(tempMp3);
+                            audioPlayer.addAudioFileInput(fis);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    thread.start();
+                } else {
+                    File file = new File(source);
+                    FileInputStream fis = new FileInputStream(file);
+                    audioPlayer.addAudioFileInput(fis);
+                }
+                audioPlayers.add(audioPlayer);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    private String getAPIResponse(String url) {
+        if (url.equals("")) return "";
+        StringBuilder result = new StringBuilder();
+        try {
+            HttpURLConnection connection = (HttpURLConnection) (new URL(url).openConnection());
+            connection.setRequestMethod("GET");
+            connection.setRequestProperty("token", getKeysInSharedPref("REGISTERATION_TOKEN"));
+            connection.setRequestProperty("x-device", getKeysInSharedPref("DEVICE_DETAILS"));
+            connection.connect();
+            int respCode = connection.getResponseCode();
+            InputStreamReader respReader;
+            if ((respCode < 200 || respCode >= 300) && respCode != 302) {
+                respReader = new InputStreamReader(connection.getErrorStream());
+                BufferedReader in = new BufferedReader(respReader);
+                String inputLine;
+                while ((inputLine = in.readLine()) != null) {
+                    result.append(inputLine);
+                }
+                return "";
+            } else {
+                respReader = new InputStreamReader(connection.getInputStream());
+                BufferedReader in = new BufferedReader(respReader);
+                String inputLine;
+                while ((inputLine = in.readLine()) != null) {
+                    result.append(inputLine);
+                }
+                return result.toString();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+            return "";
+        }
+    }
+
+    @JavascriptInterface
+    public void addMediaPlayer(String viewID, String source) {
+        ExecutorManager.runOnMainThread(() -> {
+            MediaPlayerView audioPlayer = new MediaPlayerView(bridgeComponents.getContext(), bridgeComponents.getActivity());
+            try {
+                audioPlayer.inflateView(Integer.parseInt(viewID));
+                if (source.contains(".mp3")) {
+                    audioPlayer.addAudioFileUrl(source);
+                } else {
+                    Thread thread = new Thread(() -> {
+                        try {
+                            String base64 = MobilityCallAPI.callAPI(source, MobilityCallAPI.getBaseHeaders(bridgeComponents.getContext()), null, "GET", false).getResponseBody();
+                            byte[] decodedAudio = Base64.decode(base64, Base64.DEFAULT);
+                            File tempMp3 = File.createTempFile("audio_cache", "mp3", bridgeComponents.getContext().getCacheDir());
+                            tempMp3.deleteOnExit();
+                            FileOutputStream fos = new FileOutputStream(tempMp3);
+                            fos.write(decodedAudio);
+                            fos.close();
+                            FileInputStream fis = new FileInputStream(tempMp3);
+                            audioPlayer.addAudioFileInput(fis);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    });
+                    thread.start();
+                }
+                audioPlayers.add(audioPlayer);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    @JavascriptInterface
+    public void pauseMediaPlayer() {
+        if (DefaultMediaPlayerControl.mediaPlayer.isPlaying()) {
+            DefaultMediaPlayerControl.mediaPlayer.pause();
+        }
+        for (MediaPlayerView audioPlayer : audioPlayers) {
+            audioPlayer.onPause(audioPlayer.getPlayer());
+        }
+    }
+
+    @JavascriptInterface
+    public void removeMediaPlayer() {
+        try {
+            if (audioPlayers != null) {
+                for (MediaPlayerView audioPlayer : audioPlayers) {
+                    audioPlayer.resetListeners();
+                }
+                bridgeComponents.getContext().getCacheDir().delete();
+                audioPlayers.clear();
+                DefaultMediaPlayerControl.mediaPlayer.reset();
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    //region Image Rendering
+
+    @JavascriptInterface
+    public void renderBase64Image(String url, String id, boolean fitCenter, String imgScaleType) {
+        renderBase64ImageFile(url.contains("http") ? MobilityCallAPI.callAPI(url, MobilityCallAPI.getBaseHeaders(bridgeComponents.getContext()), null, "GET", false).getResponseBody() : url, id, fitCenter, imgScaleType);
+    }
+
+    @JavascriptInterface
+    public void renderBase64ImageFile(String base64Image, String id, boolean fitCenter, String imgScaleType) {
+        ExecutorManager.runOnMainThread(() -> {
+            try {
+                if (!base64Image.equals("") && id != null && bridgeComponents.getActivity() != null) {
+                    LinearLayout layout = bridgeComponents.getActivity().findViewById(Integer.parseInt(id));
+                    if (layout != null){
+                        byte[] decodedString = Base64.decode(base64Image, Base64.DEFAULT);
+                        Bitmap decodedByte = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length);
+                        ImageView imageView = new ImageView(bridgeComponents.getContext());
+                        ViewGroup.LayoutParams layoutParams = new ViewGroup.LayoutParams(layout.getWidth(),layout.getHeight());
+                        imageView.setLayoutParams(layoutParams);
+                        imageView.setImageBitmap(decodedByte);
+                        imageView.setScaleType(getScaleTypes(imgScaleType));
+                        imageView.setAdjustViewBounds(true);
+                        imageView.setClipToOutline(true);
+                        layout.removeAllViews();
+                        layout.addView(imageView);
+                    }
+                }
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        });
+    }
+
+    //region Audio Recorder
+
+    @JavascriptInterface
+    public boolean startAudioRecording() {
+        if (isMicrophonePermissionEnabled()) {
+            audioRecorder = new AudioRecorder();
+            audioRecorder.startRecording(bridgeComponents.getContext());
+            System.out.println("Started recording");
+            return true;
+        } else {
+            if (bridgeComponents.getActivity() != null) {
+                ActivityCompat.requestPermissions(bridgeComponents.getActivity(), new String[]{RECORD_AUDIO}, AudioRecorder.REQUEST_RECORD_AUDIO_PERMISSION);
+            }
+            return false;
+        }
+    }
+
+    public boolean isMicrophonePermissionEnabled() {
+        return ActivityCompat.checkSelfPermission(bridgeComponents.getContext(), RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED;
+    }
+
+    @JavascriptInterface
+    public String stopAudioRecording() {
+        if (audioRecorder != null) {
+            String res = audioRecorder.stopRecording();
+            Log.d(LOG_TAG, "stopAudioRecording: " + res);
+            audioRecorder = null;
+            return res;
+        }
+        return null;
+    }
+
+    @JavascriptInterface
+    public String saveAudioFile(String source) throws IOException {
+        File sourceFile = new File(source);
+        FileInputStream fis = new FileInputStream(sourceFile);
+        File destFile = new File(bridgeComponents.getContext().getFilesDir().getAbsolutePath() + "/final_audio_record.mp3");
+        FileOutputStream fos = new FileOutputStream(destFile);
+        int n;
+        while ((n = fis.read()) != -1) {
+            fos.write(n);
+        }
+        fis.close();
+        fos.close();
+        return destFile.getAbsolutePath();
+    }
+
+    @Override
+    public boolean onActivityResult(int requestCode, int resultCode, Intent data) {
+        switch (requestCode) {
+            case IMAGE_CAPTURE_REQ_CODE:
+                if (resultCode == RESULT_OK) {
+                    if (bridgeComponents.getActivity() != null) {
+                        isUploadPopupOpen = false;
+                        in.juspay.mobility.app.Utils.captureImage(data, bridgeComponents.getActivity(), bridgeComponents.getContext());
+                    }
+                } else {
+                    isUploadPopupOpen = false;
+                }
+                break;
+            case CropImage.CROP_IMAGE_ACTIVITY_REQUEST_CODE:
+                if (resultCode == RESULT_OK) {
+                    new Thread(() -> in.juspay.mobility.app.Utils.encodeImageToBase64(data, bridgeComponents.getContext(), null)).start();
+                } else if (resultCode == CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
+                    CropImage.ActivityResult result = CropImage.getActivityResult(data);
+                    Log.e(OVERRIDE, result.getError().toString());
+                }
+                break;
+        }
+        return super.onActivityResult(requestCode, resultCode, data);
+    }
+
+    @Override
+    public boolean onRequestPermissionResult(int requestCode, String[] permissions, int[] grantResults) {
+        switch (requestCode) {
+            case IMAGE_PERMISSION_REQ_CODE:
+                Context context = bridgeComponents.getContext();
+                if ((ActivityCompat.checkSelfPermission(context, CAMERA) == PackageManager.PERMISSION_GRANTED)) {
+                    if (bridgeComponents.getActivity() != null) {
+                        Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+                        KeyValueStore.write(context, bridgeComponents.getSdkName(), context.getResources().getString(in.juspay.mobility.app.R.string.TIME_STAMP_FILE_UPLOAD), timeStamp);
+                        Uri photoFile = FileProvider.getUriForFile(context, context.getPackageName() + ".provider", new File(context.getFilesDir(), "IMG_" + timeStamp + ".jpg"));
+                        takePicture.putExtra(MediaStore.EXTRA_OUTPUT, photoFile);
+                        Intent chooseFromFile = new Intent(Intent.ACTION_GET_CONTENT);
+                        chooseFromFile.setType("image/*");
+                        Intent chooser = Intent.createChooser(takePicture, context.getString(in.juspay.mobility.app.R.string.upload_image));
+                        chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{chooseFromFile});
+                        bridgeComponents.getActivity().startActivityForResult(chooser, IMAGE_CAPTURE_REQ_CODE, null);
+                    }
+                } else {
+                    Toast.makeText(context, context.getString(in.juspay.mobility.app.R.string.please_allow_permission_to_capture_the_image), Toast.LENGTH_SHORT).show();
+                }
+                break;
+            case AudioRecorder.REQUEST_RECORD_AUDIO_PERMISSION:
+                if (grantResults.length > 0 && grantResults[0] != PackageManager.PERMISSION_GRANTED) {
+                    Toast.makeText(bridgeComponents.getContext(), "Permission Denied", Toast.LENGTH_SHORT).show();
+                }
+                break;
+            default:
+                break;
+        }
+        return super.onRequestPermissionResult(requestCode, permissions, grantResults);
+    }
+
+    @JavascriptInterface
+    public void uploadFile() { // TODO : need to handle thr storage permission
+        if (!isUploadPopupOpen) {
+            ExecutorManager.runOnMainThread(() -> {
+                Context context = bridgeComponents.getContext();
+                if ((ActivityCompat.checkSelfPermission(context.getApplicationContext(), CAMERA) == PackageManager.PERMISSION_GRANTED)) {
+                    if (bridgeComponents.getActivity() != null) {
+                        Intent takePicture = new Intent(MediaStore.ACTION_IMAGE_CAPTURE);
+                        String timeStamp = new SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(new Date());
+                        KeyValueStore.write(context, bridgeComponents.getSdkName(), context.getResources().getString(in.juspay.mobility.app.R.string.TIME_STAMP_FILE_UPLOAD), timeStamp);
+                        Uri photoFile = FileProvider.getUriForFile(context, context.getPackageName() + ".provider", new File(context.getFilesDir(), "IMG_" + timeStamp + ".jpg"));
+                        takePicture.putExtra(MediaStore.EXTRA_OUTPUT, photoFile);
+                        Intent chooseFromFile = new Intent(Intent.ACTION_GET_CONTENT);
+                        chooseFromFile.setType("image/*");
+                        Intent chooser = Intent.createChooser(takePicture, context.getString(in.juspay.mobility.app.R.string.upload_image));
+                        chooser.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{chooseFromFile});
+                        isUploadPopupOpen = true;
+                        bridgeComponents.getActivity().startActivityForResult(chooser, IMAGE_CAPTURE_REQ_CODE, null);
+                    }
+                } else {
+                    if (bridgeComponents.getActivity() != null) {
+                        ActivityCompat.requestPermissions(bridgeComponents.getActivity(), new String[]{CAMERA, READ_EXTERNAL_STORAGE, WRITE_EXTERNAL_STORAGE}, IMAGE_PERMISSION_REQ_CODE);
+                    }
+                }
+            });
         }
     }
 }

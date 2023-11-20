@@ -56,8 +56,8 @@ import Engineering.Helpers.Commons as EHC
 import Engineering.Helpers.LogEvent (logEvent, logEventWithParams, logEventWithMultipleParams)
 import Engineering.Helpers.Suggestions (suggestionsDefinitions, getSuggestions)
 import Engineering.Helpers.Suggestions as EHS
-import Engineering.Helpers.Utils (loaderText, toggleLoader, getAppConfig, reboot, showSplash, (?))
 import Foreign (unsafeToForeign)
+import Engineering.Helpers.Utils (loaderText, toggleLoader, getAppConfig, reboot, showSplash, (?), fetchLanguage, capitalizeFirstChar)
 import Foreign.Class (class Encode, encode, decode)
 import ConfigProvider (stringifyJSON)
 import PaymentPage (checkPPInitiateStatus, consumeBP, initiatePP, paymentPageUI, PayPayload(..), PaymentPagePayload(..), getAvailableUpiApps, getPaymentPageLangKey, initiatePaymentPage)
@@ -879,11 +879,7 @@ driverProfileFlow = do
       let temp = (map (\(Category x) ->
                           { categoryName :
                               if (language == "en")
-                              then
-                                joinWith " " (map (\catName ->
-                                  let { before, after } = splitAt 1 catName
-                                  in (toUpper before <> after)
-                                ) (split (Pattern " ") x.category))
+                              then capitalizeFirstChar x.category
                               else x.category
                           , categoryId       : x.issueCategoryId
                           , categoryAction   : x.label
@@ -1321,11 +1317,7 @@ helpAndSupportFlow = do
       let getOptionsRes' = (mapWithIndex (\index (Option x) ->
         { option : (show (index + 1)) <> ". " <>
                    if (language == "en")
-                   then
-                     joinWith " " (map (\optName ->
-                       let {before, after} = splitAt 1 optName
-                       in (toUpper before <> after)
-                     ) (split (Pattern " ") x.option))
+                   then capitalizeFirstChar x.option
                    else x.option
         , issueOptionId : x.issueOptionId
         , label : x.label
@@ -1460,11 +1452,7 @@ rideSelectionScreenFlow = do
       let getOptionsRes' = (mapWithIndex (\index (Option x) ->
         { option : (show (index + 1)) <> ". " <>
                    if (language == "en")
-                   then
-                     joinWith " " (map (\optName ->
-                       let {before, after} = splitAt 1 optName
-                       in (toUpper before <> after)
-                     ) (split (Pattern " ") x.option))
+                   then capitalizeFirstChar x.option
                    else x.option
           , issueOptionId : x.issueOptionId
           , label : x.label
@@ -1495,11 +1483,7 @@ issueReportChatScreenFlow = do
       let temp = (map (\(Category x) ->
                           { categoryName :
                               if (language == "en")
-                              then
-                                joinWith " " (map (\catName ->
-                                  let { before, after } = splitAt 1 catName
-                                  in (toUpper before <> after)
-                                ) (split (Pattern " ") x.category))
+                              then capitalizeFirstChar x.category
                               else x.category
                           , categoryId       : x.issueCategoryId
                           , categoryAction   : x.label
@@ -1517,16 +1501,17 @@ issueReportChatScreenFlow = do
                                        , optionId    : state.data.selectedOptionId
                                        , description : trim state.data.messageToBeSent
                                        , rideId      : state.data.tripId
+                                       , chats       : []
                                        })
       (PostIssueRes postIssueRes) <- Remote.postIssueBT postIssueReq
       (IssueInfoRes issueInfoRes) <- Remote.issueInfoBT postIssueRes.issueReportId
       _ <- pure $ hideKeyboardOnNavigation true
       let showDescription = STR.length (trim issueInfoRes.description) > 0
-      let descMessages = if showDescription then snoc state.data.chatConfig.messages (makeChatComponent' issueInfoRes.description "Driver" (if (length issueInfoRes.mediaFiles) == 0 then (convertUTCtoISC (getCurrentUTC "") "hh:mm A") else "") "Text" 500) else state.data.chatConfig.messages
+      let descMessages = if showDescription then snoc state.data.chatConfig.messages (makeChatComponent' issueInfoRes.description "Driver" (if (length issueInfoRes.mediaFiles) == 0 then (getCurrentUTC "") else "") "Text" 500) else state.data.chatConfig.messages
       let mediaMessages' = mapWithIndex (\index media -> do
                         if index == length issueInfoRes.mediaFiles - 1
                         then
-                          makeChatComponent' media.url "Driver" (convertUTCtoISC (getCurrentUTC "") "hh:mm A") media._type ((index + if showDescription then 2 else 1) * 500)
+                          makeChatComponent' media.url "Driver" (getCurrentUTC "") media._type ((index + if showDescription then 2 else 1) * 500)
                         else
                           makeChatComponent' media.url "Driver" "" media._type ((index + if showDescription then 2 else 1) * 500)
                     ) (issueInfoRes.mediaFiles)
@@ -1535,11 +1520,11 @@ issueReportChatScreenFlow = do
         let options'  = map (\x -> x.option) state.data.options
         let message = (getString SELECT_OPTION_REVERSED) <> "\n"
                       <> joinWith "\n" options'
-        let messages' = concat [ descMessages, mediaMessages', [ (makeChatComponent' message "Bot" (convertUTCtoISC (getCurrentUTC "") "hh:mm A") "Text" (500 * (length mediaMessages' + 2))) ] ]
+        let messages' = concat [ descMessages, mediaMessages', [ (makeChatComponent' message "Bot" (getCurrentUTC "") "Text" (500 * (length mediaMessages' + 2))) ] ]
         modifyScreenState $ ReportIssueChatScreenStateType (\reportIssueScreen -> state { data { issueId = Just postIssueRes.issueReportId, chatConfig { enableSuggestionClick = false, messages = messages', suggestionsList = options', suggestionDelay = 500 * (length mediaMessages' + 3) } }, props { showSubmitComp = false } })
         issueReportChatScreenFlow
       else do
-        let message = makeChatComponent' (getString ISSUE_SUBMITTED_MESSAGE) "Bot" (convertUTCtoISC (getCurrentUTC "") "hh:mm A") "Text" (500 * (length mediaMessages' + 2))
+        let message = makeChatComponent' (getString ISSUE_SUBMITTED_MESSAGE) "Bot" (getCurrentUTC "") "Text" (500 * (length mediaMessages' + 2))
         let messages' = concat [descMessages, mediaMessages', [message]]
         modifyScreenState $ ReportIssueChatScreenStateType (\reportIssueScreen -> state { data { issueId = Just postIssueRes.issueReportId, chatConfig { messages = messages' } }, props { showSubmitComp = false } })
         issueReportChatScreenFlow
@@ -1550,7 +1535,7 @@ issueReportChatScreenFlow = do
                        void $ lift $ lift $ toggleLoader true
                        resp <- Remote.callCustomerBT tripId
                        void $ lift $ lift $ toggleLoader false
-                       let message = makeChatComponent' (getString ISSUE_SUBMITTED_MESSAGE) "Bot" (convertUTCtoISC (getCurrentUTC "") "hh:mm A") "Text" 500
+                       let message = makeChatComponent' (getString ISSUE_SUBMITTED_MESSAGE) "Bot" (getCurrentUTC "") "Text" 500
                        let messages' = snoc state.data.chatConfig.messages message
                        modifyScreenState $ ReportIssueChatScreenStateType (\reportIssueScreen -> state { data  { chatConfig { messages = messages' } } })
                        issueReportChatScreenFlow
@@ -1620,11 +1605,7 @@ tripDetailsScreenFlow = do
       let temp = (map (\(Category x) ->
                           { categoryName :
                               if (language == "en")
-                              then
-                                joinWith " " (map (\catName ->
-                                  let { before, after } = splitAt 1 catName
-                                  in (toUpper before <> after)
-                                ) (split (Pattern " ") x.category))
+                              then capitalizeFirstChar x.category
                               else x.category
                           , categoryId       : x.issueCategoryId
                           , categoryAction   : x.label
@@ -1849,11 +1830,7 @@ homeScreenFlow = do
       let temp = (map (\(Category x) ->
                           { categoryName :
                               if (language == "en")
-                              then
-                                joinWith " " (map (\catName ->
-                                  let { before, after } = splitAt 1 catName
-                                  in (toUpper before <> after)
-                                ) (split (Pattern " ") x.category))
+                              then capitalizeFirstChar x.category
                               else x.category
                           , categoryId       : x.issueCategoryId
                           , categoryAction   : x.label

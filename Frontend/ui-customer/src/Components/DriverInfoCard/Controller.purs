@@ -90,7 +90,7 @@ type DriverInfoCardData =
   , isSpecialZone :: Boolean
   , isLocationTracking :: Boolean
   , bookingCreatedAt :: String
-  , lastMessage :: ChatView.ChatComponent
+  , lastMessage :: ChatView.ChatComponentConfig
   , config :: AppConfig
   , vehicleVariant :: String
   }

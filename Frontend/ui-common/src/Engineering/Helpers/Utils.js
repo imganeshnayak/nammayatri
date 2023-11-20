@@ -106,3 +106,7 @@ export const getCurrentDay = function (dummy) {
   return { utcDate: date.toISOString(), date: date.getDate(), shortMonth: date.toLocaleString("default", { month: "short" }), year: date.getFullYear(), intMonth : date.getMonth(),
     isInRange : false, isStart: false , isEnd: false }
 }
+
+export const convertNewlinesToBr = (inputString) => {
+  return inputString.split('\\n').join('<br>');
+};

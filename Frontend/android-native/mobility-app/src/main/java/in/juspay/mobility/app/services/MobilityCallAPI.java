@@ -6,7 +6,6 @@ import android.content.SharedPreferences;
 import androidx.appcompat.app.AppCompatActivity;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
@@ -27,18 +26,22 @@ public class MobilityCallAPI extends AppCompatActivity {
 
 
     public static MobilityAPIResponse callAPI(String endpoint) {
-        return callAPI(endpoint, null, null, DEFAULT_API_METHOD);
+        return callAPI(endpoint, null, null, DEFAULT_API_METHOD, true);
     }
 
     public static MobilityAPIResponse callAPI(String endpoint, Map<String, String> headers) {
-        return callAPI(endpoint, headers, null, DEFAULT_API_METHOD);
+        return callAPI(endpoint, headers, null, DEFAULT_API_METHOD, true);
     }
 
     public static MobilityAPIResponse callAPI(String endpoint, Map<String, String> headers, String requestBody) {
-        return callAPI(endpoint, headers, requestBody, DEFAULT_API_METHOD);
+        return callAPI(endpoint, headers, requestBody, DEFAULT_API_METHOD, true);
     }
 
-    public static MobilityAPIResponse callAPI(String endpoint, Map<String, String> headers, String requestBody, String apiMethod) {
+    public static MobilityAPIResponse callAPI(String endpoint, Map<String, String> headers, String requestBody, Boolean doOutput) {
+        return callAPI(endpoint, headers, requestBody, DEFAULT_API_METHOD, doOutput);
+    }
+
+    public static MobilityAPIResponse callAPI(String endpoint, Map<String, String> headers, String requestBody, String apiMethod, Boolean doOutput) {
         MobilityAPIResponse defaultResp = new MobilityAPIResponse();
         defaultResp.setResponseBody("");
         defaultResp.setStatusCode(-1);
@@ -60,7 +63,7 @@ public class MobilityCallAPI extends AppCompatActivity {
                 }
             }
 
-            connection.setDoOutput(true);
+            connection.setDoOutput(doOutput);
 
             if (requestBody != null) {
 

@@ -24,15 +24,18 @@ import Screens.HelpAndSupportScreen.ScreenData (IssueOptions(..))
 import Language.Strings (getString)
 import Services.API (GetRidesHistoryResp,IssueReportDriverListItem(..),Status(..))
 import Language.Types(STR(..))
-import JBridge (showDialer)
-import Helpers.Utils (getTime,getCurrentUTC,differenceBetweenTwoUTC,toStringJSON, contactSupportNumber)
+import Services.Config (getSupportNumber)
+import JBridge (showDialer, differenceBetweenTwoUTC)
+import Helpers.Utils (getTime,getCurrentUTC,toStringJSON, contactSupportNumber)
 import Data.Array (foldr,cons,filter,reverse)
 import Log (trackAppActionClick, trackAppEndScreen, trackAppScreenRender, trackAppBackPress, trackAppScreenEvent)
-import Components.IssueListFlow as IssueListFlow
+import Components.IssueList as IssueList
 import Screens (ScreenName(..), getScreen)
 import Common.Types.App (LazyCheck(..))
 import Prelude ((<>))
 import Effect.Unsafe (unsafePerformEffect)
+import Components.IssueView.Controller as IssueViewController
+import Data.Function.Uncurried (runFn2)
 
 instance showAction :: Show Action where
   show _ = ""
@@ -76,7 +79,7 @@ data Action = NoAction
              | RideHistoryAPIResponse GetRidesHistoryResp
              | AfterRender
              | NoRidesAction
-             | IssueScreenModal IssueListFlow.Action
+             | IssueScreenModal IssueList.Action
              | OnClickOngoingIssues
              | OnClickResolvedIssues
              | FetchIssueListApiCall (Array IssueReportDriverListItem)
@@ -96,10 +99,10 @@ eval (OptionClick optionIndex) state = do
     CallSupportCenter -> do
       void $ pure $ unsafePerformEffect $ contactSupportNumber "" -- TODO: FIX_DIALER -- unsafePerformEffect is temporary fix
       continue state
-eval (IssueScreenModal (IssueListFlow.AfterRender )) state = continue state
-eval (IssueScreenModal (IssueListFlow.BackPressed )) state = exit (GoBack state {data {issueListType =  HELP_AND_SUPPORT_SCREEN_MODAL  }})
-eval (IssueScreenModal  (IssueListFlow.Remove issueId  )) state = exit $ RemoveIssue issueId state
-eval (IssueScreenModal (IssueListFlow.CallSupportCenter )) state = do
+eval (IssueScreenModal (IssueList.AfterRender )) state = continue state
+eval (IssueScreenModal (IssueList.BackPressed )) state = exit (GoBack state {data {issueListType =  HELP_AND_SUPPORT_SCREEN_MODAL  }})
+eval (IssueScreenModal (IssueList.IssueViewAction (IssueViewController.Remove issueId)  )) state = exit $ RemoveIssue issueId state
+eval (IssueScreenModal (IssueList.IssueViewAction (IssueViewController.CallSupportCenter ))) state = do
        void $ pure $ unsafePerformEffect $ contactSupportNumber ""-- TODO: FIX_DIALER -- unsafePerformEffect is temporary fix
        continue state
 eval (FetchIssueListApiCall issueList) state = do
@@ -127,7 +130,7 @@ getApiIssueList issueList = (map (\(IssueReportDriverListItem issue) -> {
                   "fare" -> "Fare Related Issue"
                   _ -> ""
               ),
-   createdAt : (getExactTime (differenceBetweenTwoUTC (getCurrentUTC "") (issue.createdAt)))
+   createdAt : (getExactTime (runFn2 differenceBetweenTwoUTC (getCurrentUTC "") (issue.createdAt)))
 }) issueList)
 
 getExactTime :: Int -> String
