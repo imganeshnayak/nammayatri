@@ -810,8 +810,8 @@ recentSearchesAndFavourites state push hideSavedLocsView hideRecentSearches =
   , cornerRadii $ Corners (4.0) true true false false
   ]([ if (not hideSavedLocsView) then savedLocationsView state push else linearLayout[visibility GONE][]
     , if (not hideRecentSearches) then recentSearchesView state push else linearLayout[visibility GONE][]
-    , if (getValueToLocalStore DISABILITY_UPDATED == "false" && state.data.config.showDisabilityBanner) 
-        then updateDisabilityBanner state push
+    , if true
+        then cancellationFeeBanner state push
         else 
           if (state.data.config.features.enableZooTicketBookingFlow) 
             then zooTicketBookingBanner state push 
@@ -825,6 +825,15 @@ updateDisabilityBanner state push =
     , orientation VERTICAL
     , margin $ MarginVertical 10 10
     ][  Banner.view (push <<< DisabilityBannerAC) (disabilityBannerConfig state)]
+
+cancellationFeeBanner :: forall w. HomeScreenState -> (Action -> Effect Unit) -> PrestoDOM (Effect Unit) w
+cancellationFeeBanner state push = 
+  linearLayout
+    [ height MATCH_PARENT
+    , width MATCH_PARENT
+    , orientation VERTICAL
+    , margin $ MarginVertical 10 10
+    ][  Banner.view (push <<< CancellationFeeBannerAC) (cancellationFeeBannerConfig state)]
 
 zooTicketBookingBanner :: forall w. HomeScreenState -> (Action -> Effect Unit) -> PrestoDOM (Effect Unit) w
 zooTicketBookingBanner state push = 

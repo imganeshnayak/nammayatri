@@ -120,7 +120,8 @@ searchResultsParentView state push =
   , margin $ Margin 16 15 16 0
   , orientation VERTICAL
   , visibility if state.isSearchLocation == SearchLocation && state.isRideServiceable && not state.showLoader then VISIBLE else GONE
-    ][  savedLocationBar state push
+    ][  cancellationFeeBar state push
+      , savedLocationBar state push
       , searchResultsView state push ]
 
 searchLottieLoader :: forall w. (Action -> Effect Unit) -> SearchLocationModelState -> PrestoDOM (Effect Unit) w
@@ -451,6 +452,28 @@ savedLocationBar state push =
      [ width MATCH_PARENT
      , height WRAP_CONTENT
      ][ LocationTagBar.view (push <<< SavedAddressClicked) {savedLocations:state.savedlocationList}]
+    ]
+
+cancellationFeeBar :: forall w. SearchLocationModelState -> (Action -> Effect Unit) -> PrestoDOM (Effect Unit) w
+cancellationFeeBar state push = 
+  linearLayout
+    [ width MATCH_PARENT
+    , height WRAP_CONTENT
+    , margin $ MarginBottom 15 
+    , background "#fff0e6"
+    , padding $ Padding 12 12 12 12
+    , cornerRadius 8.0
+    ][ imageView 
+        [ imageWithFallback $ fetchImage FF_ASSET "ny_ic_chevrons_up"
+        , height $ V 20
+        , width $ V 20
+        ]
+      , textView
+          [ text "₹10 due against (1) previous cancellation will be added to this ride"
+          , color Color.orange900
+          , margin $ MarginLeft 8
+          ]
+
     ]
 
 ---------------------------- primaryButtonView ---------------------------------

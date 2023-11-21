@@ -633,6 +633,7 @@ data Action = NoAction
             | SkipAccessibilityUpdateAC PrimaryButtonController.Action
             | SpecialZoneOTPExpiryAction Int String String String
             | TicketBookingFlowBannerAC Banner.Action
+            | CancellationFeeBannerAC Banner.Action 
 
 
 eval :: Action -> HomeScreenState -> Eval Action ScreenOutput HomeScreenState

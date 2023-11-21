@@ -378,6 +378,22 @@ disabilityBannerConfig state =
       }
   in config'
 
+cancellationFeeBannerConfig :: ST.HomeScreenState -> Banner.Config
+cancellationFeeBannerConfig state =
+  let
+    config = Banner.config
+    config' = config
+      {
+        backgroundColor = "#fff0e6"
+      , title = "You have ₹10 due against (1) previous cancellation"
+      , titleColor = Color.orange900
+      , actionText = "This will be added to your next ride"
+      , actionTextColor = Color.orange900
+      , imageUrl = fetchImage FF_ASSET "ny_ic_cancellation_fee_banner"
+      , stroke = "1,"<> "#ffe0cc"
+      }
+  in config'
+
 ticketBannerConfig :: ST.HomeScreenState -> Banner.Config
 ticketBannerConfig state =
   let
