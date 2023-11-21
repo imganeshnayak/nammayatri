@@ -224,14 +224,16 @@ notifyAndUpdateInvoiceStatusIfPaymentFailed driverId orderId orderStatus eventNa
         QDF.updateAutoPayToManual invoice'.driverFeeId
         QDF.updateAutopayPaymentStageById (Just EXECUTION_FAILED) invoice'.driverFeeId
       Nothing -> pure ()
-    nofityPaymentFailureIfNotNotified paymentMode
+    nofityUltimatePaymentFailureIfNotNotifiedWithoutLimitAndError paymentMode
 
   when (notifyFailure && isJust mbBankErrorCode) $
-    nofityPaymentFailureIfNotNotified paymentMode
+    nofityPaymentFailureIfNotNotified paymentMode mbBankErrorCode
   where
-    nofityPaymentFailureIfNotNotified paymentMode = do
-      let key = "driver-offer:FailedNotif-" <> orderId.getId
-      sendNotificationIfNotSent key 3600 $ fork "Sending payment failure notification" (PaymentNudge.notifyPaymentFailure driverId paymentMode mbBankErrorCode)
+    nofityPaymentFailureIfNotNotified paymentMode bankErrorCode = do
+      sendNotificationIfNotSent orderId 3600 $ fork "Sending payment transaction failure notification" (PaymentNudge.notifyPaymentFailure driverId paymentMode errorCode)
+
+    nofityUltimatePaymentFailureIfNotNotifiedWithoutLimitAndError paymentMode = do
+      fork "Sending payment failure notification" (PaymentNudge.notifyPaymentFailure driverId paymentMode Nothing)
 
     toNotifyFailure isActiveExecutionInvoice_ eventName_ orderStatus_ = do
       let validStatus = orderStatus_ `elem` [Payment.AUTHENTICATION_FAILED, Payment.AUTHORIZATION_FAILED, Payment.JUSPAY_DECLINED]
@@ -239,12 +241,13 @@ notifyAndUpdateInvoiceStatusIfPaymentFailed driverId orderId orderStatus eventNa
         (True, False) -> (validStatus, False)
         (_, _) -> (validStatus, validStatus)
 
-sendNotificationIfNotSent :: (MonadFlow m, CacheFlow m r) => Text -> Int -> m () -> m ()
-sendNotificationIfNotSent key expiry actions = do
-  isNotificationSent <- fromMaybe False <$> Hedis.get key
+sendNotificationIfNotSent :: (MonadFlow m, CacheFlow m r) => Id DOrder.PaymentOrde -> Int -> m () -> m ()
+sendNotificationIfNotSent orderId expiry actions = do
+  isNotificationSent <- fromMaybe False <$> Hedis.get $ "driver-offer:FailedNotif-" <> orderId.getId
   unless isNotificationSent $ do
     Hedis.setExp key True expiry -- 24 hours
-    actions
+    isLimitCrossed <- Hedis.incr ("driver-offer:FailedNotif-Limit-" <> orderId.getId) > 2
+    unless isLimitCrossed actions
 
 pdnNotificationStatus ::
   ( CacheFlow m r,
