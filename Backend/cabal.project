@@ -31,6 +31,7 @@ packages:
   lib/shared-services
   lib/location-updates
   lib/special-zone
+  lib/th
   lib/scheduler
   lib/sessionizer-metrics
   test
