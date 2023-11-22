@@ -819,7 +819,8 @@ recentSearchesAndFavourites state push hideSavedLocsView hideRecentSearches =
         else 
           if (state.data.config.features.enableZooTicketBookingFlow) 
             then zooTicketBookingBanner state push 
-            else linearLayout[visibility GONE][]])
+          else if state.props.showSosBanner then sosSetupBannerView state push 
+          else linearLayout[visibility GONE][]])
 
 updateDisabilityBanner :: forall w. HomeScreenState -> (Action -> Effect Unit) -> PrestoDOM (Effect Unit) w
 updateDisabilityBanner state push = 
@@ -2566,7 +2567,9 @@ homeScreenView push state =
                                   , orientation VERTICAL
                                   ][savedLocationsView state push
                                   , if isHomeScreenView state then mapView push state else emptyTextView state
-                                  , if isBannerVisible state then updateDisabilityBanner state push else emptyTextView state
+                                  , if isBannerVisible state then updateDisabilityBanner state push 
+                                    else if state.props.showSosBanner then sosSetupBannerView state push
+                                    else emptyTextView state
                                   , if (suggestionViewVisibility state) then  suggestionsView push state
                                     else emptySuggestionsBanner state push
                                   , footerView push state
@@ -3173,3 +3176,15 @@ suggestionViewVisibility state =  ((length state.data.tripSuggestions  > 0 || le
 
 isBannerVisible :: HomeScreenState -> Boolean
 isBannerVisible state = getValueToLocalStore DISABILITY_UPDATED == "false" && state.data.config.showDisabilityBanner && isHomeScreenView state
+    
+sosSetupBannerView :: forall w. HomeScreenState -> (Action -> Effect Unit) -> PrestoDOM (Effect Unit) w 
+sosSetupBannerView state push = 
+  linearLayout
+    [ height MATCH_PARENT
+    , width MATCH_PARENT
+    , orientation VERTICAL
+    , margin (Margin 10 10 10 10)
+    , gravity BOTTOM
+    ][     
+        Banner.view (push <<< StartSOSOnBoarding) (sosSetupBannerConfig state)
+    ]

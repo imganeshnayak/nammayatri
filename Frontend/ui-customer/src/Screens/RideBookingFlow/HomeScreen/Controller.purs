@@ -476,6 +476,7 @@ data ScreenOutput = LogoutUser
                   | GoToHelp HomeScreenState
                   | ConfirmRide HomeScreenState
                   | GoToAbout HomeScreenState
+                  | GoToNammaSafety HomeScreenState
                   | PastRides HomeScreenState
                   | GoToMyProfile HomeScreenState Boolean
                   | ChangeLanguage HomeScreenState
@@ -644,6 +645,7 @@ data Action = NoAction
             | StopRepeatRideTimer 
             | OpenLiveDashboard
             | UpdatePeekHeight 
+            | StartSOSOnBoarding Banner.Action
 
 eval :: Action -> HomeScreenState -> Eval Action ScreenOutput HomeScreenState
 
@@ -1073,9 +1075,8 @@ eval (SettingSideBarActionController (SettingSideBarController.GoToAbout)) state
   let _ = unsafePerformEffect $ logEvent state.data.logField "ny_user_about"
   exit $ GoToAbout state { data { settingSideBar { opened = SettingSideBarController.OPEN } } }
 
-eval (SettingSideBarActionController (SettingSideBarController.GoToEmergencyContacts)) state = do
-  let _ = unsafePerformEffect $ logEvent state.data.logField "ny_user_emergency_contacts"
-  exit $ GoToEmergencyContacts state { data{settingSideBar{opened = SettingSideBarController.OPEN}}}
+eval (SettingSideBarActionController (SettingSideBarController.GoToNammaSafety)) state = do
+  exit $ GoToNammaSafety state { data { settingSideBar { opened = SettingSideBarController.OPEN } } }
 
 eval (SettingSideBarActionController (SettingSideBarController.GoToMyTickets)) state = do
   let _ = unsafePerformEffect $ logEvent state.data.logField "ny_user_zoo_tickets"
@@ -1299,7 +1300,7 @@ eval (DriverInfoCardActionController (DriverInfoCardController.LocationTracking)
 
 eval (DriverInfoCardActionController (DriverInfoCardController.OpenEmergencyHelp)) state = do
   _ <- pure $ performHapticFeedback unit
-  continue state{props{emergencyHelpModal = true}}
+  exit $ GoToNammaSafety state
 
 eval (DriverInfoCardActionController (DriverInfoCardController.ExpandBottomSheet)) state = continue state{props{sheetState = if state.props.sheetState == EXPANDED then COLLAPSED else EXPANDED}}
 eval (DriverInfoCardActionController (DriverInfoCardController.ShareRide)) state = do
@@ -1892,6 +1893,8 @@ eval (SkipAccessibilityUpdateAC PrimaryButtonController.OnClick) state = do
 eval (DisabilityPopUpAC PopUpModal.OnButton1Click) state = do 
   _ <- pure $ pauseYoutubeVideo unit
   continue state{props{showDisabilityPopUp = false}}
+
+eval (StartSOSOnBoarding Banner.OnClick) state = exit $ GoToNammaSafety state
 
 eval ShowRateCard state = do
   continue state { props { showRateCard = true } }

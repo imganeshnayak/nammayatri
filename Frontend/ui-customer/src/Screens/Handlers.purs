@@ -34,7 +34,7 @@ import Screens.SelectLanguageScreen.Handler (selectLanguageScreen) as UI
 import Screens.SplashScreen.Handler (splashScreen) as UI
 import Screens.TripDetailsScreen.Handler (tripDetailsScreen) as UI
 import Screens.SuccessScreen.Handler (successScreen) as UI
-import Screens.EmergencyContactsScreen.Handler (emergencyContactsScreen) as UI
 import Screens.OnBoardingFlow.WelcomeScreen.Handler (welcomeScreen) as UI
 import Screens.TicketBookingScreen.Handler (ticketBookingScreen) as UI
 import Screens.TicketInfoScreen.Handler (ticketInfoScreen) as UI
+import Screens.NammaSafetyScreen.Handler (nammaSafetyScreen) as UI

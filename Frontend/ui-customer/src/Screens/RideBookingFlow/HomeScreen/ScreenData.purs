@@ -260,6 +260,8 @@ initData = {
     , repeatRideTimer : ""
     , repeatRideTimerId : ""
     , showShimmer : false
+    , showSosBanner : false
+    , enableLocalPoliceSupport : false
     }
 }
 
