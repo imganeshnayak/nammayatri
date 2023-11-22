@@ -394,7 +394,7 @@ public class WidgetService extends Service {
         widgetLayoutParams.x = 16;
         widgetLayoutParams.y = dm.heightPixels / 4;
 
-        //layout params for close button
+        //ic_cancel_fee_bg params for close button
         WindowManager.LayoutParams closeImageParams = new WindowManager.LayoutParams(WindowManager.LayoutParams.MATCH_PARENT, (int) (50 * scale + 0.5f), LAYOUT_FLAG, WindowManager.LayoutParams.FLAG_NOT_FOCUSABLE, PixelFormat.TRANSLUCENT);
         closeImageParams.gravity = Gravity.BOTTOM | Gravity.CENTER;
 

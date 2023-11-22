@@ -479,7 +479,7 @@ public class MobilityAppBridge extends HyperBridge {
                 }
                 viewPager2.setAdapter(vpAdapter);
 
-                // setting the dots layout
+                // setting the dots ic_cancel_fee_bg
                 int dotsCount;
                 ImageView[] dots;
                 dotsCount = vpAdapter.getItemCount();
@@ -568,7 +568,7 @@ public class MobilityAppBridge extends HyperBridge {
             VPAdapter vpAdapter = new VPAdapter(viewPagerItemArrayList);
             viewPager2.setAdapter(vpAdapter);
 
-            // setting the dots layout
+            // setting the dots ic_cancel_fee_bg
             int dotsCount;
             ImageView[] dots;
             dotsCount = vpAdapter.getItemCount();

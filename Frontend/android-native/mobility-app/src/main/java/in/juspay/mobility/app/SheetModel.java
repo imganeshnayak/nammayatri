@@ -21,6 +21,7 @@ public class SheetModel {
     private final int driverMaxExtraFee;
     private final int rideRequestPopupDelayDuration;
     private final int negotiationUnit;
+    private final int customerCancellationDues;
 
     private final Boolean disabilityTag;
     private float buttonIncreasePriceAlpha , buttonDecreasePriceAlpha;
@@ -49,6 +50,7 @@ public class SheetModel {
                       String requestedVehicleVariant,
                       Boolean disabilityTag,
                       Boolean isTranslated,
+                      int customerCancellationDues,
                       Boolean gotoTag){
 
         this.pickUpDistance = pickUpDistance;
@@ -78,6 +80,7 @@ public class SheetModel {
         this.destinationPinCode = destinationPinCode;
         this.requestedVehicleVariant = requestedVehicleVariant;
         this.disabilityTag = disabilityTag;
+        this.customerCancellationDues = customerCancellationDues;
         this.durationToPickup = durationToPickup;
         this.gotoTag = gotoTag;
         this.isTranslated = isTranslated;
@@ -102,6 +105,8 @@ public class SheetModel {
     public int getCustomerTip() {return customerExtraFee;}
 
     public Boolean getDisabilityTag() {return disabilityTag; }
+
+    public int getCustomerCancellationDues() {return customerCancellationDues;}
 
     public void setOfferedPrice(double offeredPrice) {
         this.offeredPrice = offeredPrice;

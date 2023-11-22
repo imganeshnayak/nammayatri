@@ -997,3 +997,13 @@ getTicketStatus shortId = do
   withAPIResult (EP.ticketStatus shortId) unwrapResponse $ callAPI headers (GetTicketStatusReq shortId)
   where
   unwrapResponse x = x
+
+---------------------------------------------------------------------- GetCancellationDues --------------------------------------------------------------------------------
+
+getCancellationDuesBT :: String -> FlowBT String GetCancellationDuesResp
+getCancellationDuesBT shortId = do
+    headers <- getHeaders' "" false
+    withAPIResultBT (EP.cancellationDueDetails "") (\x -> x) errorHandler (lift $ lift $ callAPI headers (GetCancellationDuesReq))
+    where
+    errorHandler errorPayload = do
+            BackT $ pure GoBack

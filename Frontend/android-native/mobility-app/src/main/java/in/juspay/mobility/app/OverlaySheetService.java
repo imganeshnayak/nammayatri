@@ -553,6 +553,7 @@ public class OverlaySheetService extends Service implements View.OnTouchListener
                     int negotiationUnit = Integer.parseInt(sharedPref.getString( "NEGOTIATION_UNIT", "10"));
                     int rideRequestedBuffer = Integer.parseInt(sharedPref.getString("RIDE_REQUEST_BUFFER", "2"));
                     int customerExtraFee = rideRequestBundle.getInt("customerExtraFee");
+                    int customerCancellationDues = rideRequestBundle.getInt("customerCancellationDues");
                     boolean gotoTag = rideRequestBundle.getBoolean("gotoTag");
                     if (calculatedTime > rideRequestedBuffer) {
                         calculatedTime -= rideRequestedBuffer;
@@ -581,6 +582,7 @@ public class OverlaySheetService extends Service implements View.OnTouchListener
                             requestedVehicleVariant,
                             disabilityTag,
                             isTranslated,
+                            customerCancellationDues,
                             gotoTag);
 
                     if (floatyView == null) {

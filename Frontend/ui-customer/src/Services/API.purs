@@ -2336,3 +2336,31 @@ instance standardEncodeTicketPlaceResponse :: StandardEncode TicketPlaceResponse
 instance showTicketPlaceResponse :: Show TicketPlaceResponse where show = genericShow
 instance decodeTicketPlaceResponse :: Decode TicketPlaceResponse where decode = defaultDecode
 instance encodeTicketPlaceResponse  :: Encode TicketPlaceResponse where encode = defaultEncode
+
+
+-- =========================================== CancellationDues APIs ================================================================
+
+data GetCancellationDuesReq = GetCancellationDuesReq
+
+newtype GetCancellationDuesResp = GetCancellationDuesResp
+  { cancellationDues :: String
+  , disputeChancesUsed :: Int
+  }
+
+instance makeGetCancellationDuesReq :: RestEndpoint GetCancellationDuesReq GetCancellationDuesResp where
+  makeRequest reqBody headers = defaultMakeRequest GET (EP.cancellationDueDetails "") headers reqBody Nothing
+  decodeResponse = decodeJSON
+  encodeRequest req = standardEncode req
+
+derive instance genericGetCancellationDuesReq :: Generic GetCancellationDuesReq _
+instance standardEncodeGetCancellationDuesReq :: StandardEncode GetCancellationDuesReq where standardEncode (GetCancellationDuesReq) = standardEncode {}
+instance showGetCancellationDuesReq :: Show GetCancellationDuesReq where show = genericShow
+instance decodeGetCancellationDuesReq :: Decode GetCancellationDuesReq where decode = defaultDecode
+instance encodeGetCancellationDuesReq  :: Encode GetCancellationDuesReq where encode = defaultEncode
+
+derive instance genericGetCancellationDuesResp :: Generic GetCancellationDuesResp _
+derive instance newtypeGetCancellationDuesResp :: Newtype GetCancellationDuesResp _
+instance standardEncodeGetCancellationDuesResp :: StandardEncode GetCancellationDuesResp where standardEncode (GetCancellationDuesResp res) = standardEncode res
+instance showGetCancellationDuesResp :: Show GetCancellationDuesResp where show = genericShow
+instance decodeGetCancellationDuesResp :: Decode GetCancellationDuesResp where decode = defaultDecode
+instance encodeGetCancellationDuesResp  :: Encode GetCancellationDuesResp where encode = defaultEncode
