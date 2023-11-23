@@ -103,7 +103,10 @@ data TransporterConfigT f = TransporterConfigT
     driverSmsReceivingLimit :: B.C f (Maybe A.Value),
     languagesToBeTranslated :: B.C f [Language],
     createdAt :: B.C f UTCTime,
-    updatedAt :: B.C f UTCTime
+    updatedAt :: B.C f UTCTime,
+    notificationRetryEligibleErrorCodes :: B.C f [Text],
+    notificationRetryCountThreshold :: B.C f Int,
+    notificationRetryTimeGap :: B.C f Seconds
   }
   deriving (Generic, B.Beamable)
 

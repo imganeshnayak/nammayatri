@@ -177,7 +177,7 @@ calculateDriverFeeForDrivers Job {id, jobInfo} = withLogTag ("JobId-" <> id.getI
 
           let paymentMode = maybe MANUAL (.planType) mbDriverPlan
           unless (totalFee == 0) $ do
-            driverFeeUpdateWithPlanAndOffer <- QDF.findById driverFee.id >>= fromMaybeM (InternalError $ "driverFee not found with driverFee id : " <> driverFee.id.getId)
+            driverFeeUpdateWithPlanAndOffer <- QDF.findById driverFee.id >>= fromMaybeM (DriverFeeNotFound driverFee.id.getId)
             driverFeeSplitter paymentMode plan feeWithoutDiscount totalFee driverFeeUpdateWithPlanAndOffer mandateId now
             updatePendingPayment True (cast driverFee.driverId)
 
@@ -400,7 +400,8 @@ scheduleJobs transporterConfig startTime endTime merchantId merchantOpCityId max
       { merchantId = merchantId,
         merchantOperatingCityId = Just merchantOpCityId,
         startTime = startTime,
-        endTime = endTime
+        endTime = endTime,
+        retryCount = Just 0
       }
   createJobIn @_ @'SendOverlay (dfCalculationJobTs + 5400) maxShards $
     SendOverlayJobData

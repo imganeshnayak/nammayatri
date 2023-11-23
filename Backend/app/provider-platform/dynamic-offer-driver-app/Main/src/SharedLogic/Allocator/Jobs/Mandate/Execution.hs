@@ -1,5 +1,6 @@
 module SharedLogic.Allocator.Jobs.Mandate.Execution where
 
+import Data.List (nubBy)
 import qualified Data.Map.Strict as Map
 import Domain.Types.DriverFee as DF
 import Domain.Types.DriverInformation as DI
@@ -62,7 +63,7 @@ startMandateExecutionForDriver Job {id, jobInfo} = withLogTag ("JobId-" <> id.ge
         let driverIdsWithPendingFee = driverFees <&> (.driverId)
         activeSubscribedDrivers <- QDI.findAllByAutoPayStatusAndMerchantIdInDriverIds merchantId (Just DI.ACTIVE) driverIdsWithPendingFee
         driverIdsAndDriverPlanToNotify <- driverIdAndDriverPlanTuple <$> QDP.findAllByDriverIdsAndPaymentMode (DI.driverId <$> activeSubscribedDrivers) AUTOPAY
-        successfulNotifications <- QNTF.findAllByDriverFeeIdAndStatus (driverFees <&> (.id)) JuspayTypes.SUCCESS --- notification_success instead of success in shared kernel---
+        successfulNotifications <- nubBy (\x y -> x.driverFeeId == y.driverFeeId) <$> QNTF.findAllByDriverFeeIdAndStatus (driverFees <&> (.id)) JuspayTypes.SUCCESS --- notification_success instead of success in shared kernel---
         let mapDriverFeeById_ = Map.fromList (map (\driverFee_ -> (driverFee_.id, driverFee_)) driverFees)
             mapDriverPlanByDriverId = Map.fromList driverIdsAndDriverPlanToNotify
         driverExecutionRequests <- mapMaybe identity <$> sequence (mapExecutionRequestAndInvoice mapDriverFeeById_ mapDriverPlanByDriverId executionDate' successfulNotifications)

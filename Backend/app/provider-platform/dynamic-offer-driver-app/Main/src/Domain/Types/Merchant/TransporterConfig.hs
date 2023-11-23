@@ -127,7 +127,10 @@ data TransporterConfigD u = TransporterConfig
     volunteerSmsSendingLimit :: Maybe DashboardMediaSendingLimit,
     driverSmsReceivingLimit :: Maybe DashboardMediaSendingLimit,
     createdAt :: UTCTime,
-    updatedAt :: UTCTime
+    updatedAt :: UTCTime,
+    notificationRetryEligibleErrorCodes :: [Text],
+    notificationRetryCountThreshold :: Int,
+    notificationRetryTimeGap :: NominalDiffTime
   }
   deriving (Generic, Show)
 

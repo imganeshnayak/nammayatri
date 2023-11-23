@@ -126,6 +126,7 @@ instance FromTType' BeamTC.TransporterConfig TransporterConfig where
             orderAndNotificationStatusCheckTimeLimit = secondsToNominalDiffTime orderAndNotificationStatusCheckTimeLimit,
             volunteerSmsSendingLimit = valueToMaybe =<< volunteerSmsSendingLimit,
             driverSmsReceivingLimit = valueToMaybe =<< driverSmsReceivingLimit,
+            notificationRetryTimeGap = secondsToNominalDiffTime notificationRetryTimeGap,
             ..
           }
     where
@@ -216,5 +217,8 @@ instance ToTType' BeamTC.TransporterConfig TransporterConfig where
         BeamTC.snapToRoadConfidenceThreshold = snapToRoadConfidenceThreshold,
         BeamTC.useWithSnapToRoadFallback = useWithSnapToRoadFallback,
         BeamTC.createdAt = createdAt,
-        BeamTC.updatedAt = updatedAt
+        BeamTC.updatedAt = updatedAt,
+        BeamTC.notificationRetryEligibleErrorCodes = notificationRetryEligibleErrorCodes,
+        BeamTC.notificationRetryCountThreshold = notificationRetryCountThreshold,
+        BeamTC.notificationRetryTimeGap = nominalDiffTimeToSeconds notificationRetryTimeGap
       }

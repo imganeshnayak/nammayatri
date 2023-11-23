@@ -440,6 +440,7 @@ createMandateInvoiceAndOrder driverId merchantId merchantOpCityId plan = do
             feeWithoutDiscount = Nothing,
             schedulerTryCount = 0,
             collectedAt = Nothing,
+            notificationRetryCount = 0,
             overlaySent = False
           }
     calculateDues driverFees = sum $ map (\dueInvoice -> roundToHalf (fromIntegral dueInvoice.govtCharges + dueInvoice.platformFee.fee + dueInvoice.platformFee.cgst + dueInvoice.platformFee.sgst)) driverFees
