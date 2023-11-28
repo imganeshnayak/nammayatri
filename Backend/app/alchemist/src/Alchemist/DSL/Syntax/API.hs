@@ -5,6 +5,8 @@ module Alchemist.DSL.Syntax.API where
 import Control.Lens hiding (noneOf)
 import Kernel.Prelude
 
+-- import Data.Map (Map)
+
 data UrlParts
   = UnitPath Text
   | Capture Text Text
@@ -21,11 +23,14 @@ data ApiReq = ApiReq Text Text deriving (Show)
 
 data ApiRes = ApiRes Text Text deriving (Show)
 
-type Apis = [ApiTT]
+data Apis = Apis
+  { _apis :: [ApiTT],
+    _moduleName :: Text
+  }
+  deriving (Show)
 
 data ApiTT = ApiTT
-  { _moduleName :: Text,
-    _urlParts :: [UrlParts],
+  { _urlParts :: [UrlParts],
     _apiType :: ApiType,
     _authType :: Maybe AuthType,
     _header :: [HeaderType],
@@ -37,3 +42,12 @@ data ApiTT = ApiTT
 $(makeLenses ''ApiTT)
 
 data ApiParts = ApiTU ApiType [UrlParts] | HeaderT HeaderType | Auth (Maybe AuthType) | Req Text Text | Res Text Text | ModuleName Text deriving (Show)
+
+-- data YamlObj = YamlObj {
+--   _yamlModuleName :: String,
+--   _yamlApi :: [(String, Map String String)]
+-- } deriving (Show)
+
+-- data YamlApi = YamlApi {
+
+-- } deriving (Show)

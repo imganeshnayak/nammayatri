@@ -21,7 +21,7 @@ generateServantAPI input =
     <> T.unpack (head (map _moduleName input))
     <> T.unpack
       ( ("\n\ntype API = \n " <> T.intercalate "\n :<|> " (map apiTTToText input))
-          <> "\n \nhandler  :: App.Flowserver API\nhandler = "
+          <> "\n \nhandler  :: App.FlowServer API\nhandler = "
           <> T.intercalate "\n  :<|> " (map handlerFunctionText input)
           <> "\n\n"
           <> T.intercalate "\n" (map handlerFunctionDef input)
@@ -34,7 +34,7 @@ generateServantAPI input =
     makeImport x = "import " <> x
 
     defaultImports :: [String]
-    defaultImports = ["Servant", "Tools.Auth", "Environment"] ++ ["Kernel.Types.Common" | containsMandatoryQueryParam input]
+    defaultImports = ["Servant", "Tools.Auth", "qualified Environment as App", "Kernel.Types.Id", "Domain.Types.Person as Person", "Domain.Types.Merchant as Merchant", "EulerHS.Prelude"] ++ ["Kernel.Types.Common" | containsMandatoryQueryParam input]
 
     containsMandatoryQueryParam :: Apis -> Bool
     containsMandatoryQueryParam apis = any apiHasMandatoryQueryParam apis

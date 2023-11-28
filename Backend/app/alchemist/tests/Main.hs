@@ -33,24 +33,24 @@ dslInput =
   ---
   POST /ticket/places/book
   AUTH TokenAuth
-  REQJ {Domain.Types.Tickets.TicketBookingReq}
+  REQJ {Domain.Action.UI.Tickets.TicketBookingReq}
   RESPJ {Kernel.External.Payment.Interface.CreateOrderResp}
   ---
-  GET /ticket/places/bookings?*status:Domain.Types.Tickets.BookingStatus&limit:Int&offset:Int
+  GET /ticket/places/bookings?*status:Domain.Types.Tickets.TicketBooking.BookingStatus&limit:Int&offset:Int
   AUTH TokenAuth
-  RESPJ {[Domain.Types.Tickets.TicketBookingAPIEntity]}
+  RESPJ {[Domain.Action.UI.Tickets.TicketBookingAPIEntity]}
   ---
-  GET /ticket/places/bookings/{personServiceId:(Id Domain.Types.Tickets.TicketService)}/{ticketServiceShortId:(Id Domain.Types.Tickets.TicketBooking)}/details
+  GET /ticket/places/bookings/{personServiceId:(Id Domain.Types.Tickets.TicketService)}/{ticketServiceShortId:(Id Domain.Types.Tickets.TicketBooking.TicketBooking)}/details
   AUTH TokenAuth
-  RESPJ {Domain.Types.Tickets.TicketBookingDetails}
+  RESPJ {Domain.Action.UI.Tickets.TicketBookingDetails}
   ---
-  POST /ticket/places/bookings/{personServiceId:(Id Domain.Types.Tickets.TicketService)}/{ticketServiceShortId:(Id Domain.Types.Tickets.TicketBooking)}/verify
+  POST /ticket/places/bookings/{personServiceId:(Id Domain.Types.Tickets.TicketService)}/{ticketServiceShortId:(Id Domain.Types.Tickets.TicketBooking.TicketBooking)}/verify
   AUTH TokenAuth
-  RESPJ {Domain.Types.Tickets.TicketServiceVerificationResp}
+  RESPJ {Domain.Action.UI.Tickets.TicketServiceVerificationResp}
   ---
-  GET /ticket/places/bookings/{ticketServiceShortId:(Id Domain.Types.Tickets.TicketBooking)}/status
+  GET /ticket/places/bookings/{ticketServiceShortId:(Id Domain.Types.Tickets.TicketBooking.TicketBooking)}/status
   AUTH TokenAuth
-  RESPJ {Domain.Types.Tickets.BookingStatus}
+  RESPJ {Domain.Types.Tickets.TicketBooking.BookingStatus}
 |]
 
 generateAllExample :: IO ()

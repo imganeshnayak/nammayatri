@@ -2,16 +2,26 @@
 
 module Alchemist.App where
 
-import Alchemist.DSL.Parser.API (apiParser)
+import Alchemist.DSL.Parser.API
 import Alchemist.DSL.Parser.Storage
 import Alchemist.DSL.Syntax.API
 import Alchemist.DSL.Syntax.Storage
 import Alchemist.Generator.Haskell
 import Alchemist.Generator.SQL
 import Alchemist.Utils
+-- import Data.Aeson
+import qualified Data.ByteString as BS
 import qualified Data.Text as T
+import qualified Data.Yaml as Yaml
 import Kernel.Prelude
 import Text.Parsec
+
+yamlToValue :: FilePath -> IO [ApiParts] -- IO [[ApiParts]]
+yamlToValue filePath = do
+  contents <- BS.readFile filePath
+  case Yaml.decodeEither' contents of
+    Left _ -> error $ "Error parsing YAML"
+    Right val -> return (parseAll val)
 
 parseStorageDSL :: String -> TableDef
 parseStorageDSL dsl = do
@@ -53,3 +63,9 @@ mkDomainHandler :: FilePath -> String -> IO ()
 mkDomainHandler filePath dsl = do
   let apiDef = processAPIDSL dsl
   writeToFile (filePath ++ "/" ++ T.unpack (head (map _moduleName apiDef)) ++ ".hs") (generateDomainHandler apiDef)
+
+-- decodeYAML :: FilePath -> IO YamlTT
+-- decodeYAML filePath = (\case
+--     Left err -> error $ T.pack $ "Parsing error: " ++ show err
+--     Right yamlDef ->pure yamlDef
+--   ) <$> decodeFileEither filePath

@@ -1,0 +1,27 @@
+imports:
+ Text: Data.Text
+ Id: Kernel.Utils.Id
+module: TicketService
+api:
+  - GET:
+      endpoint: /ticket/places/bookings/{personServiceId}/{ticketServiceShortId:(Id Domain.Types.Tickets.TicketBooking.TicketBooking)}/details
+      auth: NoAuth
+      request: TicketBookingDetails
+      response: TicketBookingDetails
+      params:
+        personServiceId: Id TicketService
+        ticketServiceShortId: Id TicketBooking
+      query:
+        status: Id TicketService
+        limit: Id TicketBooking
+      headers:
+        name: bla
+        type: Text
+
+  - POST:
+      endpoint: ticket/places/book
+      request:
+        type: TicketBookingReq
+      response:
+        type: Kernel.External.Payment.Interface.CreateOrderResp
+        format: JSON

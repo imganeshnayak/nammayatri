@@ -1,15 +1,69 @@
 {-# OPTIONS_GHC -Wno-missing-fields #-}
+{-# OPTIONS_GHC -Wunused-imports #-}
 
 module Alchemist.DSL.Parser.API where
 
 import Alchemist.DSL.Syntax.API
 import Control.Lens hiding (noneOf)
+import Data.Aeson
+import Data.Aeson.Key
+import Data.Aeson.KeyMap (toList)
 import Data.Bool
+import qualified Data.Foldable as DT
 import Data.Text (Text)
 import qualified Data.Text as T
+-- import Data.Yaml ((.:), Value, Object)
+import qualified Data.Yaml as DA
 import Text.Parsec
 import Text.Parsec.Text
 import Prelude
+
+-- import qualified Data.Vector as V
+-- import Data.Map (Map)
+
+parseValue :: DA.Value -> Maybe Object
+parseValue (DA.Object apiObj) = Just apiObj
+parseValue _ = Nothing
+
+parseAll :: DA.Value -> [ApiParts]
+parseAll obj = concatMap (\x -> parseModuleName x) (mkList obj)
+
+parseModuleName :: (Text, DA.Value) -> [ApiParts]
+parseModuleName obj = case obj of
+  ("Module", String moduleObj) -> [ModuleName moduleObj]
+  ("API", Array apiObj) -> concatMap (apiParseYaml <$> mkList) (DT.toList apiObj)
+  _ -> [ModuleName "Module Name Not Found"]
+
+apiParseYaml :: [(Text, DA.Value)] -> [ApiParts]
+apiParseYaml [(method, methodObj)] = map (\x -> apiTParserYaml method x) (mkList methodObj)
+apiParseYaml _ = [ModuleName "Outside Case"]
+
+apiTParserYaml :: Text -> (Text, DA.Value) -> ApiParts
+apiTParserYaml methodName ("endpoint", String urlVal) = endPointParser methodName urlVal
+apiTParserYaml _ ("auth", String authValue) = case authValue of
+  "AdminTokenAuth" -> Auth (Just AdminTokenAuth)
+  _ -> Auth (Just TokenAuth)
+apiTParserYaml _ ("request", String reqTypeVal) = Req "JSON" reqTypeVal
+apiTParserYaml _ ("response", String resTypeVal) = Res "JSON" resTypeVal
+apiTParserYaml _ _ = ModuleName "Case not Working"
+
+endPointParser :: Text -> Text -> ApiParts
+endPointParser method urlVal =
+  let apiTyp = apiTypeParserYaml method
+   in case (urlParser urlVal) of
+        Left _ -> ModuleName "Url Parsing Error"
+        Right urlParsed -> (ApiTU apiTyp urlParsed)
+
+apiTypeParserYaml :: Text -> ApiType
+apiTypeParserYaml method = case method of
+  "POST" -> POST
+  "PUT" -> PUT
+  "DELETE" -> DELETE
+  _ -> GET
+
+mkList :: DA.Value -> [(Text, DA.Value)]
+mkList (Object obj) = toList obj >>= \(k, v) -> [(toText k, v)]
+mkList _ = []
 
 apiParser :: String -> Either ParseError Apis
 apiParser input = do
