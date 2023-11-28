@@ -203,7 +203,7 @@ oneWaySearch personId req bundleVersion clientVersion device = do
             gatewayUrl = merchant.gatewayUrl,
             searchRequestExpiry = searchRequest.validTill,
             customerLanguage = searchRequest.language,
-            city = originCity,
+            city = merchantOperatingCity.contextCity,
             disabilityTag = tag,
             device,
             shortestRouteInfo,
