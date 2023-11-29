@@ -13,6 +13,11 @@ let kafkaConsumerCfgs =
         }
       }
 
+let priority =
+      { getCriticalPriorityAPIList = [ "/beckn/:merchantId/search/" ]
+      , getNonCriticalPriorityAPIList = [ "" ]
+      }
+
 in  { esqDBCfg = main.esqDBCfg
     , migrationPath = main.migrationPath
     , autoMigrate = main.autoMigrate
@@ -29,4 +34,5 @@ in  { esqDBCfg = main.esqDBCfg
     , longDurationRetryCfg = main.longDurationRetryCfg
     , authEntity = main.authEntity
     , kafkaConsumerCfgs
+    , priority
     }

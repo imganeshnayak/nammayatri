@@ -60,7 +60,8 @@ data SchedulerConfig = SchedulerConfig
     tasksPerIteration :: Int,
     graceTerminationPeriod :: Seconds,
     enableRedisLatencyLogging :: Bool,
-    enablePrometheusMetricLogging :: Bool
+    enablePrometheusMetricLogging :: Bool,
+    priority :: Metrics.PriorityLabel
   }
   deriving (Generic, FromDhall)
 
@@ -95,7 +96,8 @@ data SchedulerEnv = SchedulerEnv
     enablePrometheusMetricLogging :: Bool,
     maxThreads :: Int,
     jobInfoMap :: JobInfoMap,
-    tables :: Tables
+    tables :: Tables,
+    priority :: Metrics.PriorityLabel
   }
   deriving (Generic)
 

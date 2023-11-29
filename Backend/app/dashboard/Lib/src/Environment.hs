@@ -19,7 +19,6 @@ import Kernel.External.Encryption (EncTools)
 import Kernel.Prelude
 import Kernel.Storage.Esqueleto.Config
 import Kernel.Storage.Hedis (HedisCfg, HedisEnv, connectHedis, connectHedisCluster, disconnectHedis)
-import qualified Kernel.Tools.Metrics.CoreMetrics as Metrics
 import Kernel.Types.Common
 import Kernel.Types.Flow
 import Kernel.Types.SlidingWindowLimiter
@@ -55,7 +54,8 @@ data AppCfg = AppCfg
     exotelToken :: Text,
     dataServers :: [DataServer],
     enableRedisLatencyLogging :: Bool,
-    enablePrometheusMetricLogging :: Bool
+    enablePrometheusMetricLogging :: Bool,
+    priority :: PriorityLabel
   }
   deriving (Generic, FromDhall)
 
@@ -80,12 +80,13 @@ data AppEnv = AppEnv
     authTokenCacheExpiry :: Seconds,
     registrationTokenExpiry :: Days,
     encTools :: EncTools,
-    coreMetrics :: Metrics.CoreMetricsContainer,
+    coreMetrics :: CoreMetricsContainer,
     isShuttingDown :: Shutdown,
     authTokenCacheKeyPrefix :: Text,
     exotelToken :: Text,
     dataServers :: [DataServer],
     version :: DeploymentVersion,
+    priority :: PriorityLabel,
     enableRedisLatencyLogging :: Bool,
     enablePrometheusMetricLogging :: Bool
   }

@@ -78,6 +78,19 @@ let specialZone =
       , token = sec.specialZoneToken
       }
 
+let priority =
+      { getCriticalPriorityAPIList =
+        [ "/dashboard/:merchantId/booking/sync"
+        , "/dashboard/:merchantId/ride/sync/"
+        , "/dashboard/:merchantId/ride/rideinfo/:rideId/"
+        , "/dashboard/:merchantId/volunteer/:bookingOtp/booking/"
+        ]
+      , getNonCriticalPriorityAPIList =
+        [ "/dashboard/:merchantId/rideBooking/maps/getPlaceName/:customerId/"
+        , "/dashboard/:merchantId/rideBooking/maps/getPlaceDetails/:customerId/"
+        ]
+      }
+
 in  { esqDBCfg
     , esqDBReplicaCfg
     , hedisCfg = rcfg
@@ -108,4 +121,5 @@ in  { esqDBCfg
       [ driverOfferBpp, driverOfferBppManagement, appBackend, specialZone ]
     , enableRedisLatencyLogging = True
     , enablePrometheusMetricLogging = True
+    , priority
     }

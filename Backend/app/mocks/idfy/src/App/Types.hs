@@ -38,7 +38,8 @@ data AppCfg = AppCfg
     webhookUrl :: BaseUrl,
     secret :: Text,
     accountId :: AccountId,
-    apiKey :: ApiKey
+    apiKey :: ApiKey,
+    priority :: PriorityLabel
   }
   deriving (Generic)
 
@@ -57,7 +58,8 @@ data AppEnv = AppEnv
     longDurationRetryCfg :: RetryCfg,
     accountId :: AccountId,
     apiKey :: ApiKey,
-    version :: DeploymentVersion
+    version :: DeploymentVersion,
+    priority :: PriorityLabel
   }
   deriving (Generic)
 

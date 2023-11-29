@@ -25,6 +25,7 @@ import Kernel.Storage.Esqueleto.Config (EsqDBConfig (..))
 import Kernel.Types.Logging
 import Kernel.Utils.Servant.Server (runServer)
 import Servant (Context (..))
+import Tools.Metrics (PriorityLabel (PriorityLabel))
 
 runService :: (AppCfg -> AppCfg) -> IO ()
 runService configModifier = do
@@ -45,6 +46,7 @@ defaultConfig =
             connectionPoolCount = 25
           },
       port = 1111,
+      priority = PriorityLabel [] [],
       loggerConfig =
         LoggerConfig
           { level = DEBUG,

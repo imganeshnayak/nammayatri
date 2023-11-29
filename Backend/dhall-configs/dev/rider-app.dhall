@@ -154,6 +154,49 @@ let tables =
       , kafkaNonKVTables = [] : List Text
       }
 
+let priority =
+      { getCriticalPriorityAPIList =
+        [ "/v2/auth/"
+        , "/v2/auth/signature/"
+        , "/v2/auth/:authId/verify/"
+        , "/v2/profile/"
+        , "/v2/serviceability/origin/"
+        , "/v2/serviceability/destination/"
+        , "/v2/rideSearch/"
+        , "/v2/rideSearch/:searchId/results/"
+        , "/v2/estimate/:estimateId/results/"
+        , "/v2/estimate/:estimateId/select2/"
+        , "/v2/estimate/:estimateId/quotes/"
+        , "/v2/estimate/:estimateId/cancel/"
+        , "/v2/rideSearch/quotes/:quoteId/confirm/"
+        , "/v2/rideBooking/:rideBookingId/"
+        , "/v2/rideBooking/:rideBookingId/cancel/"
+        , "/v2/ride/:rideId/driver/location/"
+        , "/beckn/cab/v1/:merchantId/on_select/"
+        , "/beckn/cab/v1/:merchantId/on_init/"
+        , "/beckn/cab/v1/:merchantId/on_confirm/"
+        , "/beckn/cab/v1/:merchantId/on_track/"
+        , "/beckn/cab/v1/:merchantId/on_status/"
+        , "/v2/ride/:rideId/call/driver/"
+        , "/v2/exotel/call/"
+        , "/v2/sos/"
+        ]
+      , getNonCriticalPriorityAPIList =
+        [ "/v2/support/sendIssue/"
+        , "/v2/rideBooking/list/"
+        , "/v2/savedLocation/"
+        , "/v2/profile/defaultEmergencyNumbers/"
+        , "/v2/disability/list/"
+        , "/v2/personStats/"
+        , "/v2/profileStats/"
+        , "/v2/feedback/rateRide/"
+        , "/v2/feedback/submit/"
+        , "/v2/frontend/notifyEvent/"
+        , "/v2/pickup/route/"
+        , "/v2/trip/route/"
+        ]
+      }
+
 let dontEnableForDb = [] : List Text
 
 let maxMessages
@@ -220,4 +263,5 @@ in  { esqDBCfg
     , dontEnableForDb
     , maxMessages
     , incomingAPIResponseTimeout = +15
+    , priority
     }

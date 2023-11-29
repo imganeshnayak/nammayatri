@@ -28,7 +28,6 @@ import Kernel.Storage.Clickhouse.Config
 import Kernel.Storage.Esqueleto.Config
 import Kernel.Storage.Hedis as Redis
 import Kernel.Streaming.Kafka.Producer.Types
-import qualified Kernel.Tools.Metrics.CoreMetrics as Metrics
 import Kernel.Types.App
 import Kernel.Types.Cache
 import Kernel.Types.Common (HighPrecMeters, Seconds, Tables)
@@ -85,6 +84,7 @@ data AppCfg = AppCfg
     coreVersion :: Text,
     loggerConfig :: LoggerConfig,
     graceTerminationPeriod :: Seconds,
+    priority :: PriorityLabel,
     encTools :: EncTools,
     authTokenCacheExpiry :: Seconds,
     disableSignatureAuth :: Bool,
@@ -157,7 +157,7 @@ data AppEnv = AppEnv
     encTools :: EncTools,
     authTokenCacheExpiry :: Seconds,
     port :: Int,
-    coreMetrics :: Metrics.CoreMetricsContainer,
+    coreMetrics :: CoreMetricsContainer,
     httpClientOptions :: HttpClientOptions,
     shortDurationRetryCfg :: RetryCfg,
     longDurationRetryCfg :: RetryCfg,
@@ -186,7 +186,8 @@ data AppEnv = AppEnv
     snapToRoadSnippetThreshold :: HighPrecMeters,
     minTripDistanceForReferralCfg :: Maybe HighPrecMeters,
     maxShards :: Int,
-    version :: Metrics.DeploymentVersion,
+    version :: DeploymentVersion,
+    priority :: PriorityLabel,
     enableRedisLatencyLogging :: Bool,
     enablePrometheusMetricLogging :: Bool,
     enableAPILatencyLogging :: Bool,
@@ -231,7 +232,7 @@ buildAppEnv cfg@AppCfg {..} = do
       else connectHedisCluster hedisNonCriticalClusterCfg modifierFunc
   bppMetrics <- registerBPPMetricsContainer metricsSearchDurationTimeout
   ssrMetrics <- registerSendSearchRequestToDriverMetricsContainer
-  coreMetrics <- Metrics.registerCoreMetricsContainer
+  coreMetrics <- registerCoreMetricsContainer
   clickhouseEnv <- createConn clickhouseCfg
   let jobInfoMap :: (M.Map Text Bool) = M.mapKeys show jobInfoMapx
   let searchRequestExpirationSeconds = fromIntegral cfg.searchRequestExpirationSeconds

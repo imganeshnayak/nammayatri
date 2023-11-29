@@ -48,7 +48,8 @@ data AppCfg = AppCfg
     streamName :: Text,
     schedulerType :: SchedulerType,
     enableRedisLatencyLogging :: Bool,
-    groupName :: Text
+    groupName :: Text,
+    priority :: PriorityLabel
   }
   deriving (Generic, FromDhall)
 
@@ -64,6 +65,7 @@ data AppEnv = AppEnv
     schedulerType :: SchedulerType,
     coreMetrics :: CoreMetricsContainer,
     version :: DeploymentVersion,
+    priority :: PriorityLabel,
     hedisMigrationStage :: Bool,
     hedisEnv :: HedisEnv,
     hedisClusterEnv :: HedisEnv,

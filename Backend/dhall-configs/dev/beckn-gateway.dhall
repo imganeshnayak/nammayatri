@@ -22,6 +22,12 @@ let rccfg =
       , connectTimeout = None Integer
       }
 
+let priority =
+      { getCriticalPriorityAPIList =
+        [ "/beckn/cab/v1/:merchantId/on_search/", "/beckn/:merchantId/search/" ]
+      , getNonCriticalPriorityAPIList = [ "" ]
+      }
+
 in  { hedisCfg = rcfg
     , hedisClusterCfg = rccfg
     , hedisNonCriticalCfg = rcfg
@@ -47,4 +53,5 @@ in  { hedisCfg = rcfg
     , disableSignatureAuth = False
     , enableRedisLatencyLogging = True
     , enablePrometheusMetricLogging = True
+    , priority
     }

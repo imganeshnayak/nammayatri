@@ -30,7 +30,8 @@ import System.Environment (lookupEnv)
 data AppCfg = AppCfg
   { port :: Int,
     loggerConfig :: LoggerConfig,
-    graceTerminationPeriod :: Seconds
+    graceTerminationPeriod :: Seconds,
+    priority :: Metrics.PriorityLabel
   }
   deriving (Generic, FromDhall)
 
@@ -43,7 +44,8 @@ data AppEnv = AppEnv
     smsMap :: MVar (Map.Map MobileNumber [Text]),
     isShuttingDown :: Shutdown,
     loggerEnv :: LoggerEnv,
-    version :: Metrics.DeploymentVersion
+    version :: Metrics.DeploymentVersion,
+    priority :: Metrics.PriorityLabel
   }
   deriving (Generic)
 
