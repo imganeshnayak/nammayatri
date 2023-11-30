@@ -78,6 +78,8 @@ let specialZone =
       , token = sec.specialZoneToken
       }
 
+let cacheConfig = { configsExpTime = +86400 }
+
 in  { esqDBCfg
     , esqDBReplicaCfg
     , hedisCfg = rcfg
@@ -108,4 +110,6 @@ in  { esqDBCfg
       [ driverOfferBpp, driverOfferBppManagement, appBackend, specialZone ]
     , enableRedisLatencyLogging = True
     , enablePrometheusMetricLogging = True
+    , cacheConfig
+    , aclEndPointMap = common.aclEndPointMap
     }

@@ -280,4 +280,5 @@ in  { esqDBCfg
     , maxMessages
     , modelNamesMap
     , incomingAPIResponseTimeout = +15
+    , aclEndPointMap = common.aclEndPointMap
     }

@@ -27,6 +27,9 @@ where
 -- import qualified Beckn.ACL.Metro.Search as MetroACL
 import qualified Beckn.ACL.Search as TaxiACL
 import Data.Aeson
+-- import qualified SharedLogic.MerchantConfig as SMC
+
+import qualified Data.HashMap as HM
 import Data.OpenApi hiding (Header)
 import qualified Data.OpenApi as OpenApi hiding (Header)
 import qualified Data.Text as T
@@ -54,7 +57,6 @@ import Kernel.Utils.SlidingWindowLimiter
 import Lib.SessionizerMetrics.Types.Event
 import Servant hiding (throwError)
 import qualified SharedLogic.CallBPP as CallBPP
--- import qualified SharedLogic.MerchantConfig as SMC
 import qualified SharedLogic.PublicTransport as PublicTransport
 import qualified Storage.Queries.Person as Person
 import Tools.Auth
@@ -132,6 +134,7 @@ oneWaySearch ::
     HasHttpClientOptions r c,
     HasShortDurationRetryCfg r c,
     HasFlowEnv m r ["searchRequestExpiry" ::: Maybe Seconds, "nwAddress" ::: BaseUrl],
+    HasField "aclEndPointHashMap" r (HM.Map Text Text),
     HasBAPMetrics m r,
     MonadProducer PublicTransportSearch m,
     EventStreamFlow m r
@@ -160,6 +163,7 @@ rentalSearch ::
     HasHttpClientOptions r c,
     HasShortDurationRetryCfg r c,
     HasFlowEnv m r ["searchRequestExpiry" ::: Maybe Seconds, "nwAddress" ::: BaseUrl],
+    HasField "aclEndPointHashMap" r (HM.Map Text Text),
     HasBAPMetrics m r
   ) =>
   Id Person.Person ->

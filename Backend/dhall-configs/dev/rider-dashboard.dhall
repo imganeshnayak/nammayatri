@@ -60,6 +60,8 @@ let rccfg =
       , connectTimeout = None Integer
       }
 
+let cacheConfig = { configsExpTime = +86400 }
+
 in  { esqDBCfg
     , esqDBReplicaCfg
     , hedisCfg = rcfg
@@ -89,4 +91,6 @@ in  { esqDBCfg
     , dataServers = [ appBackend, appBackendManagement ]
     , enableRedisLatencyLogging = True
     , enablePrometheusMetricLogging = True
+    , cacheConfig
+    , aclEndPointMap = common.aclEndPointMap
     }

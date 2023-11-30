@@ -20,6 +20,7 @@ module Domain.Action.UI.Ride
   )
 where
 
+import qualified Data.HashMap as HM
 import qualified Domain.Types.Booking.Type as DB
 import Domain.Types.Location (LocationAPIEntity, makeLocationAPIEntity)
 import qualified Domain.Types.Person as SPerson
@@ -65,7 +66,8 @@ getDriverLoc ::
     EncFlow m r,
     EsqDBFlow m r,
     EsqDBReplicaFlow m r,
-    HasField "rideCfg" r RideConfig
+    HasField "rideCfg" r RideConfig,
+    HasField "aclEndPointHashMap" r (HM.Map Text Text)
   ) =>
   Id SRide.Ride ->
   Id SPerson.Person ->
@@ -110,7 +112,8 @@ getRideStatus ::
     EncFlow m r,
     EsqDBFlow m r,
     EsqDBReplicaFlow m r,
-    HasField "rideCfg" r RideConfig
+    HasField "rideCfg" r RideConfig,
+    HasField "aclEndPointHashMap" r (HM.Map Text Text)
   ) =>
   Id SRide.Ride ->
   Id SPerson.Person ->

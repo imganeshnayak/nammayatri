@@ -14,6 +14,8 @@
 
 module Environment where
 
+import qualified Data.HashMap as HM
+import qualified Data.Map as M
 import Domain.Types.ServerName
 import Kernel.External.Encryption (EncTools)
 import Kernel.Prelude
@@ -24,6 +26,7 @@ import Kernel.Types.Common
 import Kernel.Types.Flow
 import Kernel.Types.SlidingWindowLimiter
 import Kernel.Utils.App (getPodName, lookupDeploymentVersion)
+import Kernel.Utils.Common (CacheConfig)
 import Kernel.Utils.Dhall (FromDhall)
 import Kernel.Utils.IOLogging
 import Kernel.Utils.Servant.Client
@@ -55,7 +58,9 @@ data AppCfg = AppCfg
     exotelToken :: Text,
     dataServers :: [DataServer],
     enableRedisLatencyLogging :: Bool,
-    enablePrometheusMetricLogging :: Bool
+    enablePrometheusMetricLogging :: Bool,
+    cacheConfig :: CacheConfig,
+    aclEndPointMap :: M.Map Text Text
   }
   deriving (Generic, FromDhall)
 
@@ -87,7 +92,9 @@ data AppEnv = AppEnv
     dataServers :: [DataServer],
     version :: DeploymentVersion,
     enableRedisLatencyLogging :: Bool,
-    enablePrometheusMetricLogging :: Bool
+    enablePrometheusMetricLogging :: Bool,
+    cacheConfig :: CacheConfig,
+    aclEndPointHashMap :: HM.Map Text Text
   }
   deriving (Generic)
 
@@ -112,7 +119,7 @@ buildAppEnv authTokenCacheKeyPrefix AppCfg {..} = do
       then pure hedisNonCriticalEnv
       else connectHedisCluster hedisNonCriticalClusterCfg modifierFunc
   isShuttingDown <- mkShutdown
-  return $ AppEnv {..}
+  return $ AppEnv {aclEndPointHashMap = HM.fromList $ M.toList aclEndPointMap, ..}
 
 releaseAppEnv :: AppEnv -> IO ()
 releaseAppEnv AppEnv {..} = do

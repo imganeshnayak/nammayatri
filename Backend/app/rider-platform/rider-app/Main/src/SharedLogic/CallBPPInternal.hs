@@ -1,5 +1,6 @@
 module SharedLogic.CallBPPInternal where
 
+import qualified Data.HashMap as HM
 import Domain.Types.FeedbackForm
 import EulerHS.Types (EulerClient, client)
 import Kernel.External.Slack.Types
@@ -33,7 +34,9 @@ likeRefereeApi = Proxy
 
 linkReferee ::
   ( MonadFlow m,
-    CoreMetrics m
+    CoreMetrics m,
+    CacheFlow m r,
+    HasField "aclEndPointHashMap" r (HM.Map Text Text)
   ) =>
   Text ->
   BaseUrl ->
@@ -43,7 +46,8 @@ linkReferee ::
   Text ->
   m APISuccess
 linkReferee apiKey internalUrl merchantId referralCode phoneNumber countryCode = do
-  EC.callApiUnwrappingApiError (identity @Error) Nothing (Just "BPP_INTERNAL_API_ERROR") internalUrl (linkRefereeClient merchantId (Just apiKey) (RefereeLinkInfoReq referralCode phoneNumber countryCode)) "LinkReferee" likeRefereeApi
+  aclEndPointHashMap <- asks (.aclEndPointHashMap)
+  EC.callApiUnwrappingApiError (identity @Error) Nothing (Just "BPP_INTERNAL_API_ERROR") (Just aclEndPointHashMap) internalUrl (linkRefereeClient merchantId (Just apiKey) (RefereeLinkInfoReq referralCode phoneNumber countryCode)) "LinkReferee" likeRefereeApi
 
 type FeedbackFormAPI =
   "internal"
@@ -62,10 +66,13 @@ feedbackFormApi = Proxy
 
 feedbackForm ::
   ( MonadFlow m,
-    CoreMetrics m
+    CoreMetrics m,
+    CacheFlow m r,
+    HasField "aclEndPointHashMap" r (HM.Map Text Text)
   ) =>
   BaseUrl ->
   FeedbackFormReq ->
   m APISuccess
 feedbackForm internalUrl request = do
-  EC.callApiUnwrappingApiError (identity @Error) Nothing (Just "BPP_INTERNAL_API_ERROR") internalUrl (feedbackFormClient request) "FeedbackForm" feedbackFormApi
+  aclEndPointHashMap <- asks (.aclEndPointHashMap)
+  EC.callApiUnwrappingApiError (identity @Error) Nothing (Just "BPP_INTERNAL_API_ERROR") (Just aclEndPointHashMap) internalUrl (feedbackFormClient request) "FeedbackForm" feedbackFormApi
