@@ -1835,17 +1835,25 @@ export const getExtendedPath = function (path) {
   }
 };
 
-export const startTimerWithTime = function (time) {
+export const startTimerWithTimeV2 = function (time) {
   return function (qouteId) {
     return function (interval) {
-      return function (cb) {
-        return function (action) {
-          return function () {
-            const callback = callbackMapper.map(function (seconds, quoteID, timerStatus, timerID) {
-              cb(action(seconds)(quoteID)(timerStatus)(timerID))();
-            });
-            if (JBridge.startCountDownTimerWithTime) {
-              return JBridge.startCountDownTimerWithTime(time, interval, qouteId, callback);
+      return function (cdTimerId) {
+        return function (cb) {
+          return function (action) {
+            return function () {
+              if (JBridge.startCountDownTimerWithTimeV2) {
+                const callback = callbackMapper.map(function (seconds, timerStatus, timerID) {
+                  cb(action(seconds)(timerStatus)(timerID))();
+                });
+                return JBridge.startCountDownTimerWithTimeV2(time, interval, cdTimerId, callback);
+              }
+              else if (JBridge.startCountDownTimerWithTime) {
+                const callback = callbackMapper.map(function (seconds, qouteID, timerStatus, timerID) {
+                  cb(action(seconds)(qouteID)(timerStatus)(timerID))();
+                });
+                return JBridge.startCountDownTimerWithTime(time, interval, qouteId, callback);
+              }
             }
           }
         }
@@ -1979,42 +1987,55 @@ function getTwoDigitsNumber(number) {
 
 let driverWaitingTimerId = null;
 
-export const waitingCountdownTimer = function (startingTime) {
-  return function (cb) {
-    return function (action) {
-      return function () {
-        if (window.__OS == "IOS") {
-          if (window.JBridge.startCountUpTimer) {
-            const callbackIOS = callbackMapper.map(function (timerId, sec) {
-              const minutes = getTwoDigitsNumber(Math.floor(sec / 60));
-              const seconds = getTwoDigitsNumber(sec - minutes * 60);
-              const timeInMinutesFormat = minutes + " : " + seconds;
-              cb(action(timerId)(timeInMinutesFormat)(sec))();
-            });
-            window.JBridge.startCountUpTimer(startingTime.toString(), callbackIOS);
-          }
-        } else {
-          const callback = callbackMapper.map(function () {
-            let sec = startingTime;
-
-            function convertInMinutesFromat() {
-              sec++;
-              const minutes = getTwoDigitsNumber(Math.floor(sec / 60));
-              const seconds = getTwoDigitsNumber(sec - minutes * 60);
-              const timeInMinutesFormat = minutes + " : " + seconds;
-              cb(action(driverWaitingTimerId)(timeInMinutesFormat)(sec))();
+export const waitingCountdownTimerV2 = function (startingTime) {
+  return function (interval) {
+    return function (timerId) {
+      return function (cb) {
+        return function (action) {
+          return function () {
+            if (window.__OS == "IOS") {
+              if (window.JBridge.startCountUpTimerV2) {
+                const callbackIOS = callbackMapper.map(function (timerID, sec) {
+                  const minutes = getTwoDigitsNumber(Math.floor(sec / 60));
+                  const seconds = getTwoDigitsNumber(sec - minutes * 60);
+                  const timeInMinutesFormat = minutes + " : " + seconds;
+                  cb(action(timerID)(timeInMinutesFormat)(sec))();
+                });
+                window.JBridge.startCountUpTimerV2(startingTime.toString(), interval, timerId, callbackIOS);
+              }
+              else if (window.JBridge.startCountUpTimer) {
+                const callbackIOS = callbackMapper.map(function (timerID, sec) {
+                  const minutes = getTwoDigitsNumber(Math.floor(sec / 60));
+                  const seconds = getTwoDigitsNumber(sec - minutes * 60);
+                  const timeInMinutesFormat = minutes + " : " + seconds;
+                  cb(action(timerID)(timeInMinutesFormat)(sec))();
+                });
+                window.JBridge.startCountUpTimer(startingTime.toString(), callbackIOS);
+              }
+            } else {
+              const callback = callbackMapper.map(function () {
+                let sec = startingTime;
+    
+                function convertInMinutesFromat() {
+                  sec++;
+                  const minutes = getTwoDigitsNumber(Math.floor(sec / 60));
+                  const seconds = getTwoDigitsNumber(sec - minutes * 60);
+                  const timeInMinutesFormat = minutes + " : " + seconds;
+                  cb(action(driverWaitingTimerId)(timeInMinutesFormat)(sec))();
+                }
+                if (driverWaitingTimerId) clearInterval(driverWaitingTimerId);
+                driverWaitingTimerId = setInterval(
+                  convertInMinutesFromat,
+                  1000
+                );
+              });
+              window.callUICallback(callback);
             }
-            if (driverWaitingTimerId) clearInterval(driverWaitingTimerId);
-            driverWaitingTimerId = setInterval(
-              convertInMinutesFromat,
-              1000
-            );
-          });
-          window.callUICallback(callback);
+          }
         }
-      };
-    };
-  };
+      }
+    }
+  }
 };
 
 export const cleverTapEvent = function (_event) {

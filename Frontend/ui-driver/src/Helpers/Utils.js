@@ -115,40 +115,6 @@ export const getTimer = function (valType) {
   }
 }
 
-export const countDown = function (countDownTime) {
-  return function (id) {
-    return function (cb) {
-      return function (action) {
-        return function () {
-          const callback = callbackMapper.map(function () {
-            let countDownCounter = countDownTime;
-            const timerIID = instantGetTimer(function () {
-              countDownCounter -= 1;
-              if (countDownCounter <= 0) {
-                //clearInterval(window.timerId);
-                cb(action(0)(id)("EXPIRED")(timerIID))();
-              } else {
-                cb(action(countDownCounter)(id)("INPROGRESS")(timerIID))();
-              }
-            }, 1000);
-            // let timerId = setInterval(function () {
-            //     countDown -= 1;
-            //     if (countDown < 0) {
-            //       cb(action(0)(id)("EXPIRED"))();
-            //     } else {
-            //       cb(action(countDown)(id)("INPROGRESS"))();
-            //     }
-            //   }, 1000);
-            // setTimeout(() => { clearInterval(timerId); }, countDownTime*1000 + 1000);
-          });
-          window.callUICallback(callback);
-        }
-      }
-    }
-  }
-}
-
-
 export const clampNumber = function (number) {
   return function(originalMax) {
     return function(newMax) {
@@ -308,9 +274,6 @@ if(window.timerId){
 }
 };
 
-export const clearPopUpTimer = function (a) {
-  clearInterval(parseInt(a));
-};
 
 export const clearAllTimer = function(a) {
   console.log("allTimerIID");

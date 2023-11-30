@@ -215,17 +215,6 @@ export const clearWaitingTimer = function (id) {
   }
 }
 
-export const clearCountDownTimer = function (id) {
-  if (window.__OS == "IOS") {
-    if (window.JBridge.clearCountDownTimer) {
-      window.JBridge.clearCountDownTimer();
-    }
-  }
-  else {
-    clearInterval(parseInt(id));
-  }
-}
-
 export const setRefreshing = function (id) {
   return function (bool) {
     if (window.__OS == "ANDROID") {

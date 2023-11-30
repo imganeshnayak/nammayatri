@@ -66,12 +66,12 @@ import Engineering.Helpers.Utils (showAndHideLoader)
 import Font.Size as FontSize
 import Font.Style as FontStyle
 import Helpers.Utils (fetchImage, FetchImageFrom(..), decodeError, fetchAndUpdateCurrentLocation, getAssetsBaseUrl, getCurrentLocationMarker, getLocationName, getNewTrackingId, getSearchType, parseFloat, storeCallBackCustomer)
-import JBridge (addMarker, animateCamera, drawRoute, enableMyLocation, firebaseLogEvent, getCurrentPosition, getHeightFromPercent, isCoordOnPath, isInternetAvailable, removeAllPolylines, removeMarker, requestKeyboardShow, showMap, startLottieProcess, toast, updateRoute, getExtendedPath, generateSessionId, initialWebViewSetUp, stopChatListenerService, startChatListenerService, startTimerWithTime, storeCallBackMessageUpdated, isMockLocation, storeCallBackOpenChatScreen, scrollOnResume, waitingCountdownTimer, lottieAnimationConfig, storeKeyBoardCallback, getLayoutBounds, clearChatMessages, startTimerWithTime, addCarousel, updateRouteConfig, addCarouselWithVideoExists, storeCallBackLocateOnMap, storeOnResumeCallback)
+import JBridge (addMarker, animateCamera, drawRoute, enableMyLocation, firebaseLogEvent, getCurrentPosition, getHeightFromPercent, isCoordOnPath, isInternetAvailable, removeAllPolylines, removeMarker, requestKeyboardShow, showMap, startLottieProcess, toast, updateRoute, getExtendedPath, generateSessionId, initialWebViewSetUp, stopChatListenerService, startChatListenerService, storeCallBackMessageUpdated, isMockLocation, storeCallBackOpenChatScreen, scrollOnResume, waitingCountdownTimerV2, lottieAnimationConfig, storeKeyBoardCallback, getLayoutBounds, clearChatMessages, startTimerWithTimeV2, addCarousel, updateRouteConfig, addCarouselWithVideoExists, storeCallBackLocateOnMap, storeOnResumeCallback)
 import Language.Strings (getString)
 import Language.Types (STR(..))
 import Log (printLog)
 import MerchantConfig.Utils (Merchant(..), getMerchant, getValueFromConfig)
-import Prelude (Unit, bind, const, discard, map, negate, not, pure, show, unit, void, when, ($), (&&), (*), (+), (-), (/), (/=), (<), (<<<), (<=), (<>), (==), (>), (||))
+import Prelude (Unit, bind, const, discard, map, negate, not, pure, show, unit, void, when, ($), (&&), (*), (+), (-), (/), (/=), (<), (<<<), (<=), (<>), (==), (>), (||), (<$>))
 import Presto.Core.Types.API (ErrorResponse)
 import Presto.Core.Types.Language.Flow (Flow, doAff, delay)
 import PrestoDOM (BottomSheetState(..), Gradient(..), Gravity(..), Length(..), Accessiblity(..), Margin(..), Accessiblity(..), Orientation(..), Padding(..), PrestoDOM, Screen, Visibility(..), Shadow(..),layoutGravity, adjustViewWithKeyboard, afterRender, alignParentBottom, background, clickable, color, scrollBarY,cornerRadius, disableClickFeedback, ellipsize, fontStyle, frameLayout, gradient, gravity, halfExpandedRatio, height, id, imageView, imageWithFallback, lineHeight, linearLayout, lottieAnimationView, margin, maxLines, onBackPressed, onClick, orientation, padding, peakHeight, relativeLayout, singleLine, stroke, text, textFromHtml, textSize, textView, url, visibility, webView, weight, width, layoutGravity, accessibilityHint, accessibility, accessibilityFocusable, focusable, scrollView, onSlide,onStateChanged, shadow, clipChildren, topShift, bottomShift, onAnimationEnd, enableShift)
@@ -145,7 +145,10 @@ screen initialState =
               FindingQuotes -> do
                 when ((getValueToLocalStore FINDING_QUOTES_POLLING) == "false") $ do
                   _ <- pure $ setValueToLocalStore FINDING_QUOTES_POLLING "true"
-                  _ <- countDown initialState.props.searchExpire "findingQuotes" push SearchExpireCountDown
+                  _ <- if os == "IOS" then do
+                        let id = getNewIDWithTag("findingQuotes")
+                        startTimerWithTimeV2 (show initialState.props.searchExpire) "findingQuotes" "1" id push SearchExpireCountDown 
+                       else countDown initialState.props.searchExpire "findingQuotes" push SearchExpireCountDown
                   _ <- pure $ setValueToLocalStore GOT_ONE_QUOTE "FALSE"
                   _ <- pure $ setValueToLocalStore TRACKING_ID (getNewTrackingId unit)
                   let pollingCount = ceil ((toNumber initialState.props.searchExpire)/((fromMaybe 0.0 (NUM.fromString (getValueToLocalStore TEST_POLLING_INTERVAL))) / 1000.0))
@@ -162,23 +165,30 @@ screen initialState =
               SettingPrice -> do
                 _ <- pure $ removeMarker (getCurrentLocationMarker (getValueToLocalStore VERSION_NAME))
                 when (initialState.props.isRepeatRide && initialState.data.config.estimateAndQuoteConfig.enableOnlyAuto) $ do 
-                  if (os == "IOS") 
-                  then startTimerWithTime (show 5) "repeatRide" "1" push RepeatRideCountDown
+                  if (os == "IOS") then do
+                    let id = getNewIDWithTag("repeatRide")
+                    startTimerWithTimeV2 (show 5) "repeatRide" "1" id push RepeatRideCountDown
                   else countDown 5 "repeatRide" push RepeatRideCountDown
                 pure unit
               PickUpFarFromCurrentLocation -> 
                 void $ pure $ removeMarker (getCurrentLocationMarker (getValueToLocalStore VERSION_NAME))
               RideAccepted -> do
                 if ( initialState.data.config.notifyRideConfirmationConfig.notify && any (_ == getValueToLocalStore NOTIFIED_CUSTOMER) ["false" , "__failed" , "(null)"] ) then 
-                  if (os == "IOS") then liftEffect $ startTimerWithTime (show 5) "notifyCustomer" "1" push NotifyDriverStatusCountDown
+                  if (os == "IOS") then do
+                    let id = getNewIDWithTag("notifyCustomer")
+                    liftEffect $ startTimerWithTimeV2 (show 5) "notifyCustomer" "1" id push NotifyDriverStatusCountDown
                     else liftEffect $ countDown 5 "notifyCustomer" push NotifyDriverStatusCountDown
                   else pure unit
                 _ <- pure $ enableMyLocation true
-                if ((getValueToLocalStore DRIVER_ARRIVAL_ACTION) == "TRIGGER_WAITING_ACTION") then 
-                  waitingCountdownTimer initialState.data.driverInfoCardState.driverArrivalTime push WaitingTimeAction
+                if ((getValueToLocalStore DRIVER_ARRIVAL_ACTION) == "TRIGGER_WAITING_ACTION") then do
+                  let id = getNewIDWithTag("countUpTimerId")
+                  waitingCountdownTimerV2 initialState.data.driverInfoCardState.driverArrivalTime "1" id push WaitingTimeAction
                 else if initialState.data.currentSearchResultType == QUOTES then do
                   let secondsLeft = initialState.data.config.driverInfoConfig.specialZoneQuoteExpirySeconds - (getExpiryTime initialState.data.driverInfoCardState.createdAt true)
-                  liftEffect $ countDown secondsLeft "SpecialZoneOTPExpiry" push SpecialZoneOTPExpiryAction
+                  if (os == "IOS") then do
+                    let id = getNewIDWithTag("SpecialZoneOTPExpiry")
+                    liftEffect $ startTimerWithTimeV2 (show secondsLeft) "SpecialZoneOTPExpiry" "1" id push SpecialZoneOTPExpiryAction
+                  else liftEffect $ countDown secondsLeft "SpecialZoneOTPExpiry" push SpecialZoneOTPExpiryAction
                 else pure unit
                 if ((getValueToLocalStore TRACKING_DRIVER) == "False") then do
                   _ <- pure $ removeMarker (getCurrentLocationMarker (getValueToLocalStore VERSION_NAME))
@@ -207,7 +217,11 @@ screen initialState =
                   pure unit
                 _ <- push RemoveChat
                 pure unit
-              ChatWithDriver -> if ((getValueToLocalStore DRIVER_ARRIVAL_ACTION) == "TRIGGER_WAITING_ACTION") then waitingCountdownTimer initialState.data.driverInfoCardState.driverArrivalTime push WaitingTimeAction else pure unit
+              ChatWithDriver -> do
+                if ((getValueToLocalStore DRIVER_ARRIVAL_ACTION) == "TRIGGER_WAITING_ACTION") then do
+                  let id = getNewIDWithTag("countUpTimerId")
+                  waitingCountdownTimerV2 initialState.data.driverInfoCardState.driverArrivalTime "1" id push WaitingTimeAction 
+                  else pure unit
               ConfirmingLocation -> do
                 _ <- pure $ enableMyLocation true
                 _ <- pure $ removeMarker (getCurrentLocationMarker (getValueToLocalStore VERSION_NAME))
@@ -2135,7 +2149,7 @@ driverLocationTracking push action driverArrivedAction updateState duration trac
               Just (RideAPIEntity res) -> do
                 let rideStatus = res.status
                 doAff do liftEffect $ push $ action rideStatus
-                if (os /= "IOS" && res.driverArrivalTime /= Nothing  && (getValueToLocalStore DRIVER_ARRIVAL_ACTION) == "TRIGGER_DRIVER_ARRIVAL" ) then doAff do liftEffect $ push $ driverArrivedAction (fromMaybe "" res.driverArrivalTime)
+                if (res.driverArrivalTime /= Nothing  && (getValueToLocalStore DRIVER_ARRIVAL_ACTION) == "TRIGGER_DRIVER_ARRIVAL" ) then doAff do liftEffect $ push $ driverArrivedAction (fromMaybe "" res.driverArrivalTime)
                   else pure unit
               Nothing -> pure unit
           else

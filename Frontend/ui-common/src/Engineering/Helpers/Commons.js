@@ -197,14 +197,13 @@ export const countDown = function (countDownTime) {
           const callback = PrestoCallbackMapper.map(function () {
             let countDownCounter = countDownTime;
             countDownTimers[id] = instantGetTimer(function () {
-              const timerIID = countDownTimers[id];
-              if (timerIID != undefined) {
+              if (countDownTimers[id] != undefined) {
                 countDownCounter -= 1;
                 if (countDownCounter <= 0) {
                   delete countDownTimers[id];
-                  cb(action(0)(id)("EXPIRED")(timerIID))();
+                  cb(action(0)("EXPIRED")(id))();
                 } else {
-                  cb(action(countDownCounter)(id)("INPROGRESS")(timerIID))();
+                  cb(action(countDownCounter)("INPROGRESS")(id))();
                 }
               }
             }, 1000);
@@ -218,8 +217,22 @@ export const countDown = function (countDownTime) {
 
 export const clearTimer = function (a)
 {
-  clearInterval(parseInt(a));
+  clearInterval(parseInt(countDownTimers[a]));
 };
+
+export const clearTimerWithId = function (id) {
+  if (window.__OS == "IOS") {
+    if (window.JBridge.clearTimerWithId) {
+      window.JBridge.clearTimerWithId(id);
+    }
+    else if (window.JBridge.clearCountDownTimer) {
+      window.JBridge.clearCountDownTimer();
+    }
+  }
+  else {
+    clearInterval(parseInt(countDownTimers[id]));
+  }
+}
 
 export const getExpiryTime = function (str1) {
   return function (reverse) {

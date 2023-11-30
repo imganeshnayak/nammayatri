@@ -157,7 +157,6 @@ foreign import seperateByWhiteSpaces :: String -> String
 
 foreign import getKeyInSharedPrefKeysConfigEff :: String -> Effect String
 foreign import clearWaitingTimer :: String -> Unit
-foreign import clearCountDownTimer :: String -> Unit
 foreign import contactPermission :: Unit -> Effect Unit
 foreign import performHapticFeedback :: Unit -> Effect Unit
 foreign import adjustViewWithKeyboard :: String -> Effect Unit

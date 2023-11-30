@@ -138,11 +138,14 @@ screen initialState =
                                     startingTime = (HU.differenceBetweenTwoUTC (HU.getCurrentUTC "") (fromMaybe "" (waitTime DA.!! 1)))
                                 if (getValueToLocalStore WAITING_TIME_STATUS == show ST.Triggered) then do
                                   void $ pure $ setValueToLocalStore WAITING_TIME_STATUS (show ST.PostTriggered)
-                                  void $ JB.waitingCountdownTimer startingTime push WaitTimerCallback
+                                  let id = getNewIDWithTag("countUpTimerId")
+                                  void $ JB.waitingCountdownTimerV2 startingTime "1" id push WaitTimerCallback
                                   push $ UpdateWaitTime ST.PostTriggered
                                   pure unit
                                 else if (getValueToLocalStore WAITING_TIME_STATUS == (show ST.PostTriggered) && initialState.data.activeRide.waitTimeSeconds == -1) then do
-                                  if isTimerValid then void $ JB.waitingCountdownTimer startingTime push WaitTimerCallback
+                                  if isTimerValid then do
+                                    let id = getNewIDWithTag("countUpTimerId")
+                                    void $ JB.waitingCountdownTimerV2 startingTime "1" id push WaitTimerCallback
                                   else push $ UpdateWaitTime ST.NoStatus
                                   pure unit
                                 else pure unit

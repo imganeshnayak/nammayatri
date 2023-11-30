@@ -23,10 +23,10 @@ import Font.Style as FontStyle
 import Styles.Colors as Color
 import Font.Size as FontSize
 import PrestoDOM.Properties (background, color, cornerRadius, fontStyle, gravity, height, imageUrl, margin, orientation, stroke, text, textSize, width, padding, ellipsize, alignParentLeft, alignParentRight)
-import Engineering.Helpers.Commons (screenWidth, screenHeight, flowRunner)
+import Engineering.Helpers.Commons (screenWidth, screenHeight, flowRunner, countDown)
 import Language.Strings (getString)
 import Language.Types (STR(..))
-import Helpers.Utils (countDown, toStringJSON, parseFloat)
+import Helpers.Utils (toStringJSON, parseFloat)
 import Effect.Class (liftEffect)
 import Effect.Aff (launchAff_)
 import Control.Monad.Trans.Class (lift)

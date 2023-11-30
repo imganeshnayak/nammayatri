@@ -66,14 +66,16 @@ import Effect (Effect)
 import Effect.Aff (launchAff)
 import Effect.Unsafe (unsafePerformEffect)
 import Effect.Uncurried (runEffectFn1)
-import Engineering.Helpers.Commons (clearTimer, flowRunner, getNewIDWithTag, os, getExpiryTime, convertUTCtoISC, getCurrentUTC, isPreviousVersion, getDeviceHeight, screenHeight)
+import Engineering.Helpers.Commons (clearTimerWithId, flowRunner, getNewIDWithTag, os, getExpiryTime, convertUTCtoISC, getCurrentUTC, isPreviousVersion, getDeviceHeight, screenHeight)
 import Engineering.Helpers.LogEvent (logEvent, logEventWithTwoParams, logEventWithMultipleParams)
 import Engineering.Helpers.Suggestions (getMessageFromKey, getSuggestionsfromKey)
 import Foreign (unsafeToForeign)
 import Foreign.Class (encode)
+import Helpers.Utils (addToRecentSearches, getCurrentLocationMarker, getDistanceBwCordinates, getLocationName, getScreenFromStage, getSearchType, parseNewContacts, performHapticFeedback, setText, terminateApp, withinTimeRange, toStringJSON, secondsToHms, recentDistance)
+import JBridge (addMarker, animateCamera, currentPosition, exitLocateOnMap, firebaseLogEvent, firebaseLogEventWithParams, firebaseLogEventWithTwoParams, getCurrentPosition, hideKeyboardOnNavigation, isLocationEnabled, isLocationPermissionEnabled, locateOnMap, minimizeApp, openNavigation, openUrlInApp, removeAllPolylines, removeMarker, requestKeyboardShow, requestLocation, shareTextMessage, showDialer, toast, toggleBtnLoader, goBackPrevWebPage, stopChatListenerService, sendMessage, getCurrentLatLong, isInternetAvailable, emitJOSEvent, startLottieProcess, getSuggestionfromKey, scrollToEnd, lottieAnimationConfig, methodArgumentCount, getChatMessages, scrollViewFocus, updateInputString, checkAndAskNotificationPermission, locateOnMapConfig, addCarouselWithVideoExists, pauseYoutubeVideo)
 import Language.Strings (getString)
 import JBridge (addMarker, animateCamera, currentPosition, exitLocateOnMap, firebaseLogEvent, firebaseLogEventWithParams, firebaseLogEventWithTwoParams, getCurrentPosition, hideKeyboardOnNavigation, isLocationEnabled, isLocationPermissionEnabled, locateOnMap, minimizeApp, openNavigation, openUrlInApp, removeAllPolylines, removeMarker, requestKeyboardShow, requestLocation, shareTextMessage, showDialer, toast, toggleBtnLoader, goBackPrevWebPage, stopChatListenerService, sendMessage, getCurrentLatLong, isInternetAvailable, emitJOSEvent, startLottieProcess, getSuggestionfromKey, scrollToEnd, lottieAnimationConfig, methodArgumentCount, getChatMessages, scrollViewFocus, updateInputString, checkAndAskNotificationPermission, locateOnMapConfig, addCarouselWithVideoExists, pauseYoutubeVideo, getLayoutBounds)
-import Helpers.Utils (addToRecentSearches, getCurrentLocationMarker, clearCountDownTimer, getDistanceBwCordinates, getLocationName, getScreenFromStage, getSearchType, parseNewContacts, performHapticFeedback, setText, terminateApp, withinTimeRange, toStringJSON, secondsToHms, recentDistance, getDeviceDefaultDensity, getPixels, getDefaultPixels)
+import Helpers.Utils (addToRecentSearches, getCurrentLocationMarker, getDistanceBwCordinates, getLocationName, getScreenFromStage, getSearchType, parseNewContacts, performHapticFeedback, setText, terminateApp, withinTimeRange, toStringJSON, secondsToHms, recentDistance, getDeviceDefaultDensity, getPixels, getDefaultPixels)
 import Language.Types (STR(..))
 import Log (trackAppActionClick, trackAppEndScreen, trackAppScreenRender, trackAppBackPress, printLog, trackAppTextInput, trackAppScreenEvent)
 import MerchantConfig.DefaultConfig as DC
@@ -565,7 +567,7 @@ data Action = NoAction
             | UpdateCurrentStage String
             | GoBackToSearchLocationModal
             | SkipButtonActionController PrimaryButtonController.Action
-            | SearchExpireCountDown Int String String String
+            | SearchExpireCountDown Int String String
             | EstimatesTryAgain GetQuotesRes
             | EstimateChangedPopUpController PopUpModal.Action
             | RateCardAction RateCard.Action
@@ -630,17 +632,17 @@ data Action = NoAction
             | RideCompletedAC RideCompletedCard.Action
             | LoadMessages
             | KeyboardCallback String
-            | NotifyDriverStatusCountDown Int String String String
+            | NotifyDriverStatusCountDown Int String String
             | UpdateProfileButtonAC PrimaryButtonController.Action 
             | SkipAccessibilityUpdateAC PrimaryButtonController.Action
-            | SpecialZoneOTPExpiryAction Int String String String
+            | SpecialZoneOTPExpiryAction Int String String
             | TicketBookingFlowBannerAC Banner.Action
             | RepeatRide Int Trip
             | Scroll Number
             | WhereToClick 
             | ShowMoreSuggestions 
             | SuggestedDestinationClicked LocationListItemState
-            | RepeatRideCountDown Int String String String
+            | RepeatRideCountDown Int String String
             | StopRepeatRideTimer 
             | OpenLiveDashboard
             | UpdatePeekHeight 
@@ -677,18 +679,18 @@ eval (KeyboardCallback keyBoardState) state = do
   else pure unit
   continue state
 
-eval (NotifyDriverStatusCountDown seconds id status timerID) state = do 
+eval (NotifyDriverStatusCountDown seconds status timerID) state = do 
   if status == "EXPIRED" then do
-    _ <- pure $ clearCountDownTimer timerID
+    _ <- pure $ clearTimerWithId timerID
     _ <- pure $ setValueToLocalStore NOTIFIED_CUSTOMER "true"
     if isLocalStageOn RideAccepted && (secondsToHms state.data.driverInfoCardState.eta) /= "" then 
       continue state{data{lastMessage = state.data.lastMessage{message = state.data.config.notifyRideConfirmationConfig.autoGeneratedText <> (secondsToHms state.data.driverInfoCardState.eta), sentBy = "Driver"}},props{unReadMessages = true, showChatNotification = true}}
       else continue state
     else continue state
 
-eval (RepeatRideCountDown seconds id status timerID) state = do
+eval (RepeatRideCountDown seconds status timerID) state = do
   if status == "EXPIRED" then do
-    void $ pure $ clearCountDownTimer timerID
+    void $ pure $ clearTimerWithId timerID
     void $ pure $ performHapticFeedback unit
     void $ pure $ updateLocalStage FindingQuotes
     let updatedState = state{data{rideHistoryTrip = Nothing}, props{repeatRideTimerId = "", currentStage = FindingQuotes, searchExpire = (getSearchExpiryTime "LazyCheck")}}
@@ -696,7 +698,7 @@ eval (RepeatRideCountDown seconds id status timerID) state = do
   else continue state{props{repeatRideTimer = (show seconds), repeatRideTimerId = timerID}}
 
 eval StopRepeatRideTimer state =  do
-  void $ pure $ clearCountDownTimer state.props.repeatRideTimerId
+  void $ pure $ clearTimerWithId state.props.repeatRideTimerId
   continue state{props{repeatRideTimer = "", repeatRideTimerId = ""}}
 
 eval (IsMockLocation isMock) state = do
@@ -893,7 +895,7 @@ eval BackPressed state = do
                                     updateAndExit state{props{currentStage = HomeScreen}} $ GoToHome
     SettingPrice    -> do
                       _ <- pure $ performHapticFeedback unit
-                      void $ pure $ clearCountDownTimer state.props.repeatRideTimerId
+                      void $ pure $ clearTimerWithId state.props.repeatRideTimerId
                       let updatedState = state{props{repeatRideTimer = "", repeatRideTimerId = ""}}
                       if updatedState.props.showRateCard then do
                         if (updatedState.data.rateCard.currentRateCardType /= DefaultRateCard) then
@@ -1203,9 +1205,9 @@ eval OpenSettings state = do
   let _ = unsafePerformEffect $ logEvent state.data.logField "ny_user_burger_menu"
   continue state { data { settingSideBar { opened = SettingSideBarController.OPEN } } }
 
-eval (SearchExpireCountDown seconds id status timerID) state = do
+eval (SearchExpireCountDown seconds status timerID) state = do
   if status == "EXPIRED" then do
-    _ <- pure $ clearTimer timerID
+    _ <- pure $ clearTimerWithId timerID
     let tipViewData = HomeScreenData.initData.props.tipViewProps
     _ <- pure $ setTipViewData (TipViewData { stage : tipViewData.stage , activeIndex : tipViewData.activeIndex , isVisible : tipViewData.isVisible })
     continue state { props { searchExpire = seconds } }
@@ -1213,7 +1215,7 @@ eval (SearchExpireCountDown seconds id status timerID) state = do
     let enableTips = isTipEnabled state
     if any ( _ == state.props.currentStage) [FindingQuotes , QuoteList] then continue state { props { searchExpire = seconds ,timerId = timerID , tipViewProps {isVisible = enableTips && (seconds <= (getSearchExpiryTime "LazyCheck")-30 || state.props.tipViewProps.isVisible) && (state.props.customerTip.tipActiveIndex >0) }, customerTip{enableTips = enableTips}} }
       else do
-        _ <- pure $ clearTimer timerID
+        _ <- pure $ clearTimerWithId timerID
         let tipViewData = HomeScreenData.initData.props.tipViewProps
         _ <- pure $ setTipViewData (TipViewData { stage : tipViewData.stage , activeIndex : tipViewData.activeIndex , isVisible : tipViewData.isVisible })
         continue state { props { searchExpire = (getSearchExpiryTime "LazyCheck") ,timerId = timerID , tipViewProps {isVisible = false}} }
@@ -1253,10 +1255,10 @@ eval (WaitingTimeAction timerID timeInMinutes seconds) state = do
                 else pure unit
   continue state { data { driverInfoCardState { waitingTime = timeInMinutes} }, props { waitingTimeTimerIds = union state.props.waitingTimeTimerIds [timerID] } }
 
-eval (SpecialZoneOTPExpiryAction seconds id status timerID) state = do
+eval (SpecialZoneOTPExpiryAction seconds status timerID) state = do
   if status == "EXPIRED" then do
     _ <- pure $ toast $ getString $ OTP_FOR_THE_JATRI_SATHI_ZONE_HAS_BEEN_EXPIRED_PLEASE_TRY_LOOKING_AGAIN "OTP_FOR_THE_JATRI_SATHI_ZONE_HAS_BEEN_EXPIRED_PLEASE_TRY_LOOKING_AGAIN"
-    _ <- pure $ clearTimer timerID
+    _ <- pure $ clearTimerWithId timerID
     exit $ NotificationHandler "CANCELLED_PRODUCT" state
   else do
     let timeInMinutes = formatDigits $ seconds/60
@@ -1585,7 +1587,7 @@ eval (QuoteListModelActionController (QuoteListModelController.CancelAutoAssigni
 
 
 eval (QuoteListModelActionController (QuoteListModelController.TipViewPrimaryButtonClick PrimaryButtonController.OnClick)) state = do
-  _ <- pure $ clearTimer state.props.timerId
+  _ <- pure $ clearTimerWithId state.props.timerId
   void $ pure $ startLottieProcess lottieAnimationConfig {rawJson = "progress_loader_line", lottieId = (getNewIDWithTag "lottieLoaderAnimProgress"), scaleType="CENTER_CROP"}
   let tipViewData = state.props.tipViewProps{stage = TIP_ADDED_TO_SEARCH }
   let newState = state{ props{findingRidesAgain = true ,searchExpire = (getSearchExpiryTime "LazyCheck"), currentStage = TryAgain, sourceSelectedOnMap = true, isPopUp = NoPopUp ,tipViewProps = tipViewData ,customerTip {tipForDriver = (fromMaybe 10 (state.props.tipViewProps.customerTipArrayWithValues !! state.props.tipViewProps.activeIndex)) , tipActiveIndex = state.props.tipViewProps.activeIndex+1 , isTipSelected = true } }, data{nearByDrivers = Nothing}}
@@ -1601,9 +1603,9 @@ eval (QuoteListModelActionController (QuoteListModelController.QuoteListItemActi
   let _ = unsafePerformEffect $ logEvent state.data.logField "ny_user_quote_confirm"
   exit $ ConfirmRide state
 
-eval (QuoteListModelActionController (QuoteListModelController.QuoteListItemActionController (QuoteListItemController.CountDown seconds id status timerID))) state = do
+eval (QuoteListModelActionController (QuoteListModelController.QuoteListItemActionController (QuoteListItemController.CountDown seconds status id))) state = do
   if status == "EXPIRED" then do
-    _ <- pure $ clearTimer timerID
+    _ <- pure $ clearTimerWithId id
     let
       autoSelecting = (getValueToLocalStore AUTO_SELECTING) == id
     if (id == fromMaybe "" state.props.selectedQuote && autoSelecting && state.props.currentStage == QuoteList) then do
@@ -1644,7 +1646,7 @@ eval (PopUpModalAction (PopUpModal.OnButton1Click)) state =   case state.props.i
   TipsPopUp -> do
     _ <- pure $ performHapticFeedback unit
     let _ = unsafePerformEffect $ logEvent state.data.logField if state.props.customerTip.isTipSelected then ("ny_added_tip_for_" <> (show state.props.currentStage)) else "ny_no_tip_added"
-    _ <- pure $ clearTimer state.props.timerId
+    _ <- pure $ clearTimerWithId state.props.timerId
     let tipViewData = state.props.tipViewProps{stage = RETRY_SEARCH_WITH_TIP , isVisible = not (state.props.customerTip.tipActiveIndex == 0) , activeIndex = state.props.customerTip.tipActiveIndex-1 }
     let newState = state{ props{findingRidesAgain = true ,searchExpire = (getSearchExpiryTime "LazyCheck"), currentStage = RetryFindingQuote, sourceSelectedOnMap = true, isPopUp = NoPopUp ,tipViewProps = tipViewData }}
     _ <- pure $ setTipViewData (TipViewData { stage : tipViewData.stage , activeIndex : tipViewData.activeIndex , isVisible : tipViewData.isVisible })
@@ -1654,12 +1656,12 @@ eval (PopUpModalAction (PopUpModal.OnButton1Click)) state =   case state.props.i
     _ <- pure $ performHapticFeedback unit
     _ <- pure $ firebaseLogEvent "ny_tip_not_applicable"
     if (isLocalStageOn FindingQuotes ) then do
-        _ <- pure $ clearTimer state.props.timerId
+        _ <- pure $ clearTimerWithId state.props.timerId
         let tipViewData = HomeScreenData.initData.props.tipViewProps
         _ <- pure $ setTipViewData (TipViewData { stage : tipViewData.stage , activeIndex : tipViewData.activeIndex , isVisible : tipViewData.isVisible })
         exit $ CheckCurrentStatus
       else do
-      _ <- pure $ clearTimer state.props.timerId
+      _ <- pure $ clearTimerWithId state.props.timerId
       let newState = state{props{findingRidesAgain = true , searchExpire = (getSearchExpiryTime "LazyCheck"), currentStage = RetryFindingQuote, sourceSelectedOnMap = true, isPopUp = NoPopUp}}
       updateAndExit newState $ RetryFindingQuotes true newState
 

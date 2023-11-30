@@ -40,7 +40,7 @@ import Effect (Effect)
 import Effect.Class (liftEffect)
 import Effect.Uncurried (runEffectFn1, runEffectFn2)
 import Engineering.Helpers.BackTrack (getState, liftFlowBT)
-import Engineering.Helpers.Commons (liftFlow, os, getNewIDWithTag, getExpiryTime, convertUTCtoISC, getCurrentUTC, getWindowVariable, flowRunner)
+import Engineering.Helpers.Commons (clearTimerWithId, liftFlow, os, getNewIDWithTag, getExpiryTime, convertUTCtoISC, getCurrentUTC, getWindowVariable, flowRunner)
 import Engineering.Helpers.Commons as EHC
 import Engineering.Helpers.Suggestions (suggestionsDefinitions, getSuggestions)
 import Engineering.Helpers.Utils (loaderText, toggleLoader, getAppConfig, saveObject, reboot, showSplash)
@@ -270,7 +270,7 @@ currentFlowStatus = do
 enterMobileNumberScreenFlow :: FlowBT String Unit
 enterMobileNumberScreenFlow = do
   hideLoaderFlow -- Removed initial choose langauge screen
-  if(getValueToLocalStore LANGUAGE_KEY == "__failed") then setValueToLocalStore LANGUAGE_KEY $ getValueFromConfig "defaultLanguage" else pure unit
+  if( any (_ == getValueToLocalStore LANGUAGE_KEY) ["__failed", "(null)"]) then setValueToLocalStore LANGUAGE_KEY $ getValueFromConfig "defaultLanguage" else pure unit
   if ( any (_ == getValueToLocalStore REGISTERATION_TOKEN) ["__failed", "(null)"]) && ( any (_ == getValueToLocalStore REFERRER_URL) ["__failed", "(null)"]) then do
     _ <- pure $ extractReferrerUrl unit
     pure unit
@@ -714,7 +714,7 @@ homeScreenFlow = do
                                                                                                       {key : "Night Ride", value : unsafeToForeign state.data.rateCard.nightCharges}]
       _ <- Remote.cancelRideBT (Remote.makeCancelRequest state) (state.props.bookingId)
       lift $ lift $ triggerRideStatusEvent "CANCELLED_PRODUCT" Nothing (Just state.props.bookingId) $ getScreenFromStage state.props.currentStage
-      _ <- pure $ clearWaitingTimer <$> state.props.waitingTimeTimerIds
+      _ <- pure $ clearTimerWithId <$> state.props.waitingTimeTimerIds
       liftFlowBT $ logEvent logField_ "ny_user_ride_cancelled_by_user"
       liftFlowBT $ logEvent logField_ $ "ny_user_cancellation_reason: " <> state.props.cancelReasonCode
       removeChatService ""
@@ -747,7 +747,7 @@ homeScreenFlow = do
                                         else if shareAppCount /= "-1" then do
                                           setValueToLocalStore SHARE_APP_COUNT (show ((INT.round $ (fromMaybe 0.0 (fromString (shareAppCount))))+1))
                                         else pure unit
-                                        _ <- pure $ clearWaitingTimer <$> state.props.waitingTimeTimerIds
+                                        _ <- pure $ clearTimerWithId <$> state.props.waitingTimeTimerIds
                                         let newState = homeScreenState{data{route = Nothing},props{isCancelRide = false,waitingTimeTimerIds = [], showShareAppPopUp = (INT.round $ (fromMaybe 0.0 (fromString (getValueToLocalStore SHARE_APP_COUNT)))) `mod` 4 == 0, showChatNotification = false, cancelSearchCallDriver = false  }}
                                             currTrip = {sourceLat : srcLat, 
                                                         sourceLong : srcLon, 
@@ -799,7 +799,7 @@ homeScreenFlow = do
                                       setValueToLocalStore PICKUP_DISTANCE "0"
                                       lift $ lift $ triggerRideStatusEvent notification Nothing (Just state.props.bookingId) $ getScreenFromStage state.props.currentStage
                                       updateUserInfoToState state
-                                      _ <- pure $ clearWaitingTimer <$> state.props.waitingTimeTimerIds
+                                      _ <- pure $ clearTimerWithId <$> state.props.waitingTimeTimerIds
                                       permissionConditionA <- lift $ lift $ liftFlow $ isLocationPermissionEnabled unit
                                       permissionConditionB <- lift $ lift $ liftFlow $ isLocationEnabled unit
                                       if not (permissionConditionA && permissionConditionB) then do

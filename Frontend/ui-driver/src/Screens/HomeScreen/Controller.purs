@@ -48,7 +48,7 @@ import Effect.Class (liftEffect)
 import Effect.Uncurried (runEffectFn4)
 import Effect.Unsafe (unsafePerformEffect)
 import Engineering.Helpers.Commons (clearTimer, getCurrentUTC, getNewIDWithTag, convertUTCtoISC, isPreviousVersion)
-import JBridge (animateCamera, enableMyLocation, firebaseLogEvent, getCurrentPosition, getHeightFromPercent, hideKeyboardOnNavigation, isLocationEnabled, isLocationPermissionEnabled, minimizeApp, openNavigation, removeAllPolylines, requestLocation, showDialer, showMarker, toast, firebaseLogEventWithTwoParams,sendMessage, stopChatListenerService, getSuggestionfromKey, scrollToEnd, waitingCountdownTimer, getChatMessages, cleverTapCustomEvent, metaLogEvent, toggleBtnLoader, openUrlInApp, pauseYoutubeVideo)
+import JBridge (animateCamera, enableMyLocation, firebaseLogEvent, getCurrentPosition, getHeightFromPercent, hideKeyboardOnNavigation, isLocationEnabled, isLocationPermissionEnabled, minimizeApp, openNavigation, removeAllPolylines, requestLocation, showDialer, showMarker, toast, firebaseLogEventWithTwoParams,sendMessage, stopChatListenerService, getSuggestionfromKey, scrollToEnd, getChatMessages, cleverTapCustomEvent, metaLogEvent, toggleBtnLoader, openUrlInApp, pauseYoutubeVideo)
 import Engineering.Helpers.LogEvent (logEvent, logEventWithTwoParams)
 import Engineering.Helpers.Suggestions (getMessageFromKey, getSuggestionsfromKey)
 import Engineering.Helpers.Utils (saveObject)
@@ -733,7 +733,7 @@ eval (PopUpModalCancelConfirmationAction (PopUpModal.OnButton2Click)) state = do
 
 eval (PopUpModalCancelConfirmationAction (PopUpModal.OnButton1Click)) state = continue state {props {cancelRideModalShow = true, cancelConfirmationPopup = false},data {cancelRideConfirmationPopUp{enableTimer = false}, cancelRideModal {activeIndex=Nothing, selectedReasonCode="", selectionOptions = cancellationReasons "" }}}
 
-eval (PopUpModalCancelConfirmationAction (PopUpModal.CountDown seconds id status timerID)) state = do
+eval (PopUpModalCancelConfirmationAction (PopUpModal.CountDown seconds status timerID)) state = do
   if status == "EXPIRED" && seconds == 0 then do
     _ <- pure $ clearTimer timerID
     continue state { data { cancelRideConfirmationPopUp{delayInSeconds = 0, timerID = "", continueEnabled = true}}}

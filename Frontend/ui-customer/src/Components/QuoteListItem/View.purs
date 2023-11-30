@@ -28,11 +28,11 @@ import Data.Number (ceil)
 import Effect (Effect)
 import Effect.Aff (launchAff)
 import Effect.Class (liftEffect)
-import Engineering.Helpers.Commons (flowRunner, os, countDown)
+import Engineering.Helpers.Commons (flowRunner, os, countDown, getNewIDWithTag)
 import Font.Size as FontSize
 import Font.Style as FontStyle
 import Helpers.Utils (fetchImage, FetchImageFrom(..))
-import JBridge (startTimerWithTime)
+import JBridge (startTimerWithTimeV2)
 import Language.Strings (getString)
 import Language.Types (STR(..))
 import Prelude (Unit, bind, const, discard, pure, show, unit, ($), (/=), (<>), (==))
@@ -42,6 +42,7 @@ import PrestoDOM.Animation as PrestoAnim
 import Storage (getValueToLocalStore, KeyStore(..))
 import Styles.Colors as Color
 import Types.App (defaultGlobalState)
+import Debug
 
 view :: forall w . (Action  -> Effect Unit) -> QuoteListItemState -> PrestoDOM (Effect Unit) w
 view push state =
@@ -58,7 +59,8 @@ view push state =
           , afterRender (\action -> do
                           _ <- push action
                           _ <- launchAff $ flowRunner defaultGlobalState $ runExceptT $ runBackT $ lift $ lift $ doAff do
-                            if (os == "IOS") then liftEffect $ startTimerWithTime (show state.seconds) state.id "1" push CountDown
+                            if (os == "IOS") then
+                              liftEffect $ startTimerWithTimeV2 (show state.seconds) state.id "1" state.id push CountDown
                               else liftEffect $ countDown state.seconds state.id push CountDown
                           pure unit
                         ) (const NoAction)
