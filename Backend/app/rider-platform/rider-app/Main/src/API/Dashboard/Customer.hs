@@ -20,6 +20,7 @@ import qualified Domain.Types.Merchant as DM
 import Environment
 import Kernel.Prelude
 import Kernel.Types.APISuccess
+import Kernel.Types.Beckn.Context as Context
 import Kernel.Types.Id
 import Kernel.Utils.Common
 import Servant hiding (throwError)
@@ -33,45 +34,50 @@ type API =
            :<|> Common.CustomerInfoAPI
        )
 
-handler :: ShortId DM.Merchant -> FlowServer API
-handler merchantId =
-  listCustomers merchantId
-    :<|> deleteCustomer merchantId
-    :<|> blockCustomer merchantId
-    :<|> unblockCustomer merchantId
-    :<|> customerInfo merchantId
+handler :: ShortId DM.Merchant -> Context.City -> FlowServer API
+handler merchantId city =
+  listCustomers merchantId city
+    :<|> deleteCustomer merchantId city
+    :<|> blockCustomer merchantId city
+    :<|> unblockCustomer merchantId city
+    :<|> customerInfo merchantId city
 
 listCustomers ::
   ShortId DM.Merchant ->
+  Context.City ->
   Maybe Int ->
   Maybe Int ->
   Maybe Bool ->
   Maybe Bool ->
   Maybe Text ->
   FlowHandler Common.CustomerListRes
-listCustomers merchantShortId mbLimit mbOffset enabled blocked =
-  withFlowHandlerAPI . DCustomer.listCustomers merchantShortId mbLimit mbOffset enabled blocked
+listCustomers merchantShortId opCity mbLimit mbOffset enabled blocked =
+  withFlowHandlerAPI . DCustomer.listCustomers merchantShortId opCity mbLimit mbOffset enabled blocked
 
 deleteCustomer ::
   ShortId DM.Merchant ->
+  Context.City ->
   Id Common.Customer ->
   FlowHandler APISuccess
-deleteCustomer merchantShortId personId = withFlowHandlerAPI $ DCustomer.deleteCustomer merchantShortId personId
+deleteCustomer merchantShortId opCity personId = withFlowHandlerAPI $ DCustomer.deleteCustomer merchantShortId opCity personId
 
 blockCustomer ::
   ShortId DM.Merchant ->
+  Context.City ->
   Id Common.Customer ->
   FlowHandler APISuccess
-blockCustomer merchantShortId personId = withFlowHandlerAPI $ DCustomer.blockCustomer merchantShortId personId
+blockCustomer merchantShortId opCity personId = withFlowHandlerAPI $ DCustomer.blockCustomer merchantShortId opCity personId
 
 unblockCustomer ::
   ShortId DM.Merchant ->
+  Context.City ->
   Id Common.Customer ->
   FlowHandler APISuccess
-unblockCustomer merchantShortId personId = withFlowHandlerAPI $ DCustomer.unblockCustomer merchantShortId personId
+unblockCustomer merchantShortId opCity personId = withFlowHandlerAPI $ DCustomer.unblockCustomer merchantShortId opCity personId
 
 customerInfo ::
   ShortId DM.Merchant ->
+  Context.City ->
   Id Common.Customer ->
   FlowHandler Common.CustomerInfoRes
-customerInfo merchantShortId personId = withFlowHandlerAPI $ DCustomer.customerInfo merchantShortId personId
+customerInfo merchantShortId opCity personId = withFlowHandlerAPI $ DCustomer.customerInfo merchantShortId opCity personId

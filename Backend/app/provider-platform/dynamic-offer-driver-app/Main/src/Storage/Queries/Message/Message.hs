@@ -17,6 +17,7 @@ module Storage.Queries.Message.Message where
 
 import qualified Data.Time as T
 import Domain.Types.Merchant (Merchant)
+import qualified Domain.Types.Merchant.MerchantOperatingCity as DMOC
 import Domain.Types.Message.Message
 import Domain.Types.Message.MessageTranslation as DomainMT
 import Kernel.Beam.Functions
@@ -26,7 +27,10 @@ import Kernel.Types.Id
 import Kernel.Utils.Common
 import qualified Sequelize as Se
 import qualified Storage.Beam.Message.Message as BeamM
+import qualified Storage.CachedQueries.Merchant as CQM
+import qualified Storage.CachedQueries.Merchant.MerchantOperatingCity as CQMOC
 import qualified Storage.Queries.Message.MessageTranslation as MT
+import Tools.Error
 
 createMessage :: (MonadFlow m, EsqDBFlow m r, CacheFlow m r) => Message -> m ()
 createMessage msg = do
@@ -58,9 +62,11 @@ findById (Id messageId) = do
     )
       <$> message
 
-findAllWithLimitOffset :: (MonadFlow m, EsqDBFlow m r, CacheFlow m r) => Maybe Int -> Maybe Int -> Id Merchant -> m [RawMessage]
-findAllWithLimitOffset mbLimit mbOffset merchantIdParam = do
-  messages <- findAllWithOptionsDb [Se.Is BeamM.merchantId $ Se.Eq (getId merchantIdParam)] (Se.Desc BeamM.createdAt) (Just limitVal) (Just offsetVal)
+findAllWithLimitOffset :: (MonadFlow m, EsqDBFlow m r, CacheFlow m r) => Maybe Int -> Maybe Int -> Id Merchant -> Id DMOC.MerchantOperatingCity -> m [RawMessage]
+findAllWithLimitOffset mbLimit mbOffset merchantIdParam merchantOpCityId = do
+  messages <- do
+    result <- findAllWithOptionsDb [Se.Is BeamM.merchantId $ Se.Eq (getId merchantIdParam)] (Se.Desc BeamM.createdAt) (Just limitVal) (Just offsetVal)
+    pure $ filter (\x -> merchantOpCityId == x.merchantOperatingCityId) result
   pure $
     map
       ( \Message {..} ->
@@ -107,6 +113,8 @@ instance FromTType' BeamM.Message Message where
   fromTType' BeamM.MessageT {..} = do
     mT' <- MT.findByMessageId (Id id)
     let mT = (\(DomainMT.MessageTranslation _ language_ title_ label_ description_ shortDescription_ createdAt_) -> Domain.Types.Message.Message.MessageTranslation language_ title_ description_ shortDescription_ label_ createdAt_) <$> mT'
+    merchant <- CQM.findById (Id merchantId) >>= fromMaybeM (MerchantNotFound merchantId)
+    merchantOpCityId <- CQMOC.getMerchantOpCityId Nothing merchant Nothing
     pure $
       Just
         Message
@@ -121,6 +129,7 @@ instance FromTType' BeamM.Message Message where
             mediaFiles = Id <$> mediaFiles,
             messageTranslations = mT,
             merchantId = Id merchantId,
+            merchantOperatingCityId = merchantOpCityId,
             createdAt = T.localTimeToUTC T.utc createdAt
           }
 
@@ -137,5 +146,6 @@ instance ToTType' BeamM.Message Message where
         BeamM.viewCount = viewCount,
         BeamM.mediaFiles = getId <$> mediaFiles,
         BeamM.merchantId = getId merchantId,
+        BeamM.merchantOperatingCityId = Just $ getId merchantOperatingCityId,
         BeamM.createdAt = T.utcToLocalTime T.utc createdAt
       }

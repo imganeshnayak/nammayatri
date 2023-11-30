@@ -56,13 +56,12 @@ stuckBookingsCancel ::
   Flow Common.StuckBookingsCancelRes
 stuckBookingsCancel merchantShortId opCity req = do
   merchant <- findMerchantByShortId merchantShortId
-  -- merchantOpCityId <- CQMOC.getMerchantOpCityId Nothing merchant (Just opCity)
-  merchantOpCity <- CQMOC.findByMerchantIdAndCity merchant.id opCity >>= fromMaybeM (MerchantOperatingCityNotFound $ "merchant-Id-" <> merchant.id.getId <> "-city-" <> show opCity)
+  merchantOpCityId <- CQMOC.getMerchantOpCityId Nothing merchant (Just opCity)
   let reqBookingIds = cast @Common.Booking @DBooking.Booking <$> req.bookingIds
 
   now <- getCurrentTime
-  stuckBookingIds <- B.runInReplica $ QBooking.findStuckBookings merchant merchantOpCity reqBookingIds now
-  stuckRideItems <- B.runInReplica $ QRide.findStuckRideItems merchant merchantOpCity reqBookingIds now
+  stuckBookingIds <- B.runInReplica $ QBooking.findStuckBookings merchant merchantOpCityId reqBookingIds now
+  stuckRideItems <- B.runInReplica $ QRide.findStuckRideItems merchant merchantOpCityId reqBookingIds now
   let bcReasons = mkBookingCancellationReason (merchant.id) Common.bookingStuckCode Nothing <$> stuckBookingIds
   let bcReasonsWithRides = (\item -> mkBookingCancellationReason merchant.id Common.rideStuckCode (Just item.rideId) item.bookingId) <$> stuckRideItems
   let allStuckBookingIds = stuckBookingIds <> (stuckRideItems <&> (.bookingId))
@@ -112,11 +111,12 @@ multipleBookingSync ::
   Context.City ->
   Common.MultipleBookingSyncReq ->
   Flow Common.MultipleBookingSyncResp
-multipleBookingSync merchantShortId _ req = do
+multipleBookingSync merchantShortId opCity req = do
   runRequestValidation Common.validateMultipleBookingSyncReq req
   merchant <- findMerchantByShortId merchantShortId
+  merchantOpCityId <- CQMOC.getMerchantOpCityId Nothing merchant (Just opCity)
   let reqBookingIds = cast @Common.Booking @DBooking.Booking . (.bookingId) <$> req.bookings
-  rideBookingsMap <- B.runInReplica $ QRide.findRideBookingsById merchant.id reqBookingIds
+  rideBookingsMap <- B.runInReplica $ QRide.findRideBookingsById merchantOpCityId reqBookingIds
   respItems <- forM req.bookings $ \reqItem -> do
     info <- handle Common.listItemErrHandler $ do
       let bookingId = cast @Common.Booking @DBooking.Booking reqItem.bookingId

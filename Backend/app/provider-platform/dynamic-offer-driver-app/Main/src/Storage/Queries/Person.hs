@@ -30,6 +30,7 @@ import Domain.Types.DriverLocation as DriverLocation
 import qualified Domain.Types.DriverLocation as DDL
 import Domain.Types.DriverQuote as DriverQuote
 import Domain.Types.Merchant hiding (MerchantAPIEntity)
+import qualified Domain.Types.Merchant.MerchantOperatingCity as DMOC
 import Domain.Types.Person as Person
 import qualified Domain.Types.Ride as Ride
 import Domain.Types.Vehicle as DV
@@ -82,6 +83,7 @@ findById (Id personId) = findOneWithKV [Se.Is BeamP.id $ Se.Eq personId]
 findAllDriversWithInfoAndVehicle ::
   (MonadFlow m, EsqDBFlow m r, CacheFlow m r) =>
   Id Merchant ->
+  Id DMOC.MerchantOperatingCity ->
   Int ->
   Int ->
   Maybe Bool ->
@@ -91,7 +93,7 @@ findAllDriversWithInfoAndVehicle ::
   Maybe DbHash ->
   Maybe Text ->
   m [(Person, DriverInformation, Maybe Vehicle)]
-findAllDriversWithInfoAndVehicle merchantId limitVal offsetVal mbVerified mbEnabled mbBlocked mbSubscribed mbSearchPhoneDBHash mbVehicleNumberSearchString = do
+findAllDriversWithInfoAndVehicle merchantId moCityId limitVal offsetVal mbVerified mbEnabled mbBlocked mbSubscribed mbSearchPhoneDBHash mbVehicleNumberSearchString = do
   dbConf <- getMasterBeamConfig
   result <- L.runDB dbConf $
     L.findRows $
@@ -121,7 +123,7 @@ findAllDriversWithInfoAndVehicle merchantId limitVal offsetVal mbVerified mbEnab
       p <- catMaybes <$> mapM fromTType' persons
       di <- catMaybes <$> mapM fromTType' driverInfos
       v <- mapM (maybe (pure Nothing) fromTType') vehicles
-      pure $ zip3 p di v
+      pure $ filter (\(person, _, _) -> person.merchantOperatingCityId == moCityId) $ zip3 p di v
     Left _ -> pure []
   where
     fst' (x, _, _) = x
@@ -349,8 +351,8 @@ findByRoleAndMobileNumberAndMerchantId role_ countryCode mobileNumber (Id mercha
         ]
     ]
 
-findAllDriverIdExceptProvided :: (MonadFlow m, EsqDBFlow m r, CacheFlow m r) => Id Merchant -> [Id Driver] -> m [Id Driver]
-findAllDriverIdExceptProvided (Id merchantId) driverIdsToBeExcluded = do
+findAllDriverIdExceptProvided :: (MonadFlow m, EsqDBFlow m r, CacheFlow m r) => Id Merchant -> Id DMOC.MerchantOperatingCity -> [Id Driver] -> m [Id Driver]
+findAllDriverIdExceptProvided (Id merchantId) moCityId driverIdsToBeExcluded = do
   dbConf <- getMasterBeamConfig
   result <- L.runDB dbConf $
     L.findRows $
@@ -370,11 +372,12 @@ findAllDriverIdExceptProvided (Id merchantId) driverIdsToBeExcluded = do
   case result of
     Right x -> do
       let persons = fmap fst x
-      p <- catMaybes <$> mapM fromTType' persons
+      p <- filter (\y -> y.merchantOperatingCityId == moCityId) <$> catMaybes <$> mapM fromTType' persons
       pure (personIdToDrivrId . (Person.id :: PersonE e -> Id Person) <$> p)
     Left _ -> pure []
   where
     personIdToDrivrId :: Id Person -> Id Driver
+
     personIdToDrivrId = cast
 
 updateMerchantIdAndMakeAdmin :: (MonadFlow m, EsqDBFlow m r, CacheFlow m r) => Id Person -> Id Merchant -> m ()

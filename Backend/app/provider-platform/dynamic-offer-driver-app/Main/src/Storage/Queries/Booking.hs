@@ -95,38 +95,22 @@ updateSpecialZoneOtpCode bookingId specialZoneOtpCode = do
 findStuckBookings ::
   (MonadFlow m, EsqDBFlow m r, CacheFlow m r) =>
   Merchant ->
-  DMOC.MerchantOperatingCity ->
+  Id DMOC.MerchantOperatingCity ->
   [Id Booking] ->
   UTCTime ->
   m [Id Booking]
-findStuckBookings merchant opCity bookingIds now = do
+findStuckBookings merchant moCityId bookingIds now = do
   let updatedTimestamp = addUTCTime (- (6 * 60 * 60)) now
-  bookingWithCity <-
-    (Domain.Types.Booking.id <$>)
-      <$> findAllWithDb
-        [ Se.And
-            [ Se.Is BeamB.providerId (Se.Eq merchant.id.getId),
-              Se.Is BeamB.merchantOperatingCityId (Se.Eq $ Just opCity.id.getId),
-              Se.Is BeamB.id (Se.In (getId <$> bookingIds)),
-              Se.Is BeamB.status (Se.In [NEW, TRIP_ASSIGNED]),
-              Se.Is BeamB.createdAt (Se.LessThanOrEq updatedTimestamp)
-            ]
-        ]
-  bookingWithoutCity <-
-    if merchant.city == opCity.city
-      then
-        (Domain.Types.Booking.id <$>)
-          <$> findAllWithDb
-            [ Se.And
-                [ Se.Is BeamB.providerId (Se.Eq merchant.id.getId),
-                  Se.Is BeamB.merchantOperatingCityId (Se.Eq Nothing),
-                  Se.Is BeamB.id (Se.In (getId <$> bookingIds)),
-                  Se.Is BeamB.status (Se.In [NEW, TRIP_ASSIGNED]),
-                  Se.Is BeamB.createdAt (Se.LessThanOrEq updatedTimestamp)
-                ]
-            ]
-      else pure []
-  pure (bookingWithCity <> bookingWithoutCity)
+  bookings <-
+    findAllWithDb
+      [ Se.And
+          [ Se.Is BeamB.providerId (Se.Eq merchant.id.getId),
+            Se.Is BeamB.id (Se.In (getId <$> bookingIds)),
+            Se.Is BeamB.status (Se.In [NEW, TRIP_ASSIGNED]),
+            Se.Is BeamB.createdAt (Se.LessThanOrEq updatedTimestamp)
+          ]
+      ]
+  pure $ foldr (\x acc -> if x.merchantOperatingCityId == moCityId then x.id : acc else acc) [] bookings
 
 findBookingBySpecialZoneOTP :: (MonadFlow m, EsqDBFlow m r, CacheFlow m r) => Id Merchant -> Text -> UTCTime -> Int -> m (Maybe Booking)
 findBookingBySpecialZoneOTP merchantId otpCode now specialZoneBookingOtpExpiry = do

@@ -27,6 +27,7 @@ import qualified Domain.Types.FarePolicy.FareProductType as DQuote
 import qualified Domain.Types.Location as DL
 import qualified Domain.Types.LocationMapping as DLM
 import Domain.Types.Merchant
+import qualified Domain.Types.Merchant.MerchantOperatingCity as DMOC
 import Domain.Types.Person (Person)
 import qualified EulerHS.Language as L
 import EulerHS.Prelude (whenNothingM_)
@@ -197,19 +198,20 @@ findAllByPersonIdLimitOffset (Id personId) mlimit moffset = do
       offset' = fmap fromIntegral $ moffset <|> Just 0
   findAllWithOptionsKV [Se.Is BeamB.riderId $ Se.Eq personId] (Se.Desc BeamB.createdAt) limit' offset'
 
-findStuckBookings :: (MonadFlow m, CacheFlow m r, EsqDBFlow m r) => Id Merchant -> [Id Booking] -> UTCTime -> m [Id Booking]
-findStuckBookings (Id merchantId) bookingIds now =
+findStuckBookings :: (MonadFlow m, CacheFlow m r, EsqDBFlow m r) => Id Merchant -> Id DMOC.MerchantOperatingCity -> [Id Booking] -> UTCTime -> m [Id Booking]
+findStuckBookings (Id merchantId) moCityId bookingIds now =
   do
     let updatedTimestamp = addUTCTime (- (6 * 60 * 60) :: NominalDiffTime) now
-    findAllWithDb
-      [ Se.And
-          [ Se.Is BeamB.merchantId $ Se.Eq merchantId,
-            Se.Is BeamB.id (Se.In $ getId <$> bookingIds),
-            Se.Is BeamB.status $ Se.In [NEW, CONFIRMED, TRIP_ASSIGNED],
-            Se.Is BeamB.createdAt $ Se.LessThanOrEq updatedTimestamp
-          ]
-      ]
-    <&> (Domain.id <$>)
+    result <-
+      findAllWithDb
+        [ Se.And
+            [ Se.Is BeamB.merchantId $ Se.Eq merchantId,
+              Se.Is BeamB.id (Se.In $ getId <$> bookingIds),
+              Se.Is BeamB.status $ Se.In [NEW, CONFIRMED, TRIP_ASSIGNED],
+              Se.Is BeamB.createdAt $ Se.LessThanOrEq updatedTimestamp
+            ]
+        ]
+    pure $ foldr (\x acc -> if moCityId == x.merchantOperatingCityId then x.id : acc else acc) [] result
 
 findAllCancelledBookingIdsByRider :: (MonadFlow m, CacheFlow m r, EsqDBFlow m r) => Id Person -> m [Id Booking]
 findAllCancelledBookingIdsByRider (Id riderId) =

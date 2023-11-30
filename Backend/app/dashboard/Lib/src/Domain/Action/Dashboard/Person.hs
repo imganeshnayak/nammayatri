@@ -218,7 +218,7 @@ listPerson _ mbSearchString mbLimit mbOffset mbPersonId = do
 
 makeAvailableCitiesForMerchant :: [ShortId DMerchant.Merchant] -> [City.City] -> [DP.AvailableCitiesForMerchant]
 makeAvailableCitiesForMerchant merchantAccessList merchantCityAccessList = do
-  let merchantCityList = zip merchantAccessList merchantCityAccessList
+  let merchantCityList = sortOn fst $ zip merchantAccessList merchantCityAccessList
   let groupedByMerchant = groupBy ((==) `on` fst) merchantCityList
   if null groupedByMerchant
     then []
