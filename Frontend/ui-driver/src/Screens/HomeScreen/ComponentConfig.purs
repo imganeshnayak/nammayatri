@@ -16,7 +16,7 @@
 module Screens.HomeScreen.ComponentConfig where
 
 import Language.Strings
-
+import Common.Types.Config
 import Common.Types.App (LazyCheck(..), PolylineAnimationConfig)
 import Common.Types.App as CommonTypes
 import Components.Banner as Banner
@@ -1025,7 +1025,7 @@ getAccessibilityPopupData state pwdtype isDriverArrived =
       _ , _-> accessibilityConfig' 
 
   where 
-    getUpdatedAssets :: CommonTypes.CityConfig -> String 
+    getUpdatedAssets :: CityConfig -> String 
     getUpdatedAssets cityConfig = 
       if cityConfig.cityCode == "std:040" then 
         case pwdtype, isDriverArrived of 
