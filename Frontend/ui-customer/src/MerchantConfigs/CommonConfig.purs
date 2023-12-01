@@ -85,6 +85,10 @@ commonConfig =
                     },
                   apiTriggerRadius: 10.0,
                   pickUpToSourceThreshold : 1.0
+                , hotSpotConfig :
+                    { goToNearestPointWithinRadius : 8.0
+                    , showHotSpotsWithinRadius : 100.0
+                    }
                 }
             , labelTextSize : 30
             , animationDuration : 500

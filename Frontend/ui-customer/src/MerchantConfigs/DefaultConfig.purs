@@ -164,7 +164,11 @@ config =
               , color : "#323643"
               },
             apiTriggerRadius : 10.0,
-            pickUpToSourceThreshold : 1.0
+            pickUpToSourceThreshold : 1.0,
+            hotSpotConfig :
+              { goToNearestPointWithinRadius : 50.0
+              , showHotSpotsWithinRadius : 110.0
+              }
           }
       , labelTextSize : 30
       , animationDuration : 500

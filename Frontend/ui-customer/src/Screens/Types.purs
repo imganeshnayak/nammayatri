@@ -604,6 +604,7 @@ type HomeScreenStateData =
   , nearByDrivers :: Maybe Int
   , disability :: Maybe DisabilityT
   , searchLocationModelData :: SearchLocationModelData
+  , hotSpotInfo :: Array HotSpotData
   }
 
 type DisabilityT = 
@@ -710,6 +711,7 @@ type HomeScreenStateProps =
   , currentLocation :: Location
   , isShorterTrip :: Boolean
   , city :: Maybe String
+  , hotSpot :: HotSpotProps
   }
 
 type SearchLocationModelProps = {
@@ -1469,3 +1471,12 @@ data TicketBookingScreenStage = DescriptionStage
 derive instance genericTicketBookingScreenStage :: Generic TicketBookingScreenStage _
 instance showTicketBookingScreenStage :: Show TicketBookingScreenStage where show = genericShow
 instance eqTicketBookingScreenStage :: Eq TicketBookingScreenStage where eq = genericEq
+
+type HotSpotProps = {
+  manuallyMoved :: Boolean
+}
+
+type HotSpotData = {
+    lat :: Number
+  , lon :: Number
+}

@@ -128,6 +128,7 @@ initData = {
     , nearByDrivers : Nothing
     , disability : Nothing
     , searchLocationModelData : dummySearchLocationModelData
+    , hotSpotInfo : []
     },
     props: {
       rideRequestFlow : false
@@ -247,6 +248,7 @@ initData = {
         , destinationAddress : dummyAddress
       }
     , city : Nothing
+    , hotSpot : { manuallyMoved : false }
     }
 }
 

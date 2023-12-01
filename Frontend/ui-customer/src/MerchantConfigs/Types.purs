@@ -116,8 +116,8 @@ type DriverInfoConfig = {
 }
 
 type SearchLocationConfig = {
-  searchLocationTheme :: String, 
-  setLocationOnMapColor :: String, 
+  searchLocationTheme :: String,
+  setLocationOnMapColor :: String,
   strokeColor :: String,
   enableLocationTagbar :: String,
   resultsCardCornerRadius :: Number,
@@ -164,7 +164,7 @@ type BannerViewState = {
   imageUrl :: String
 }
 type TerminateBtnConfig = {
-    visibility :: Boolean, 
+    visibility :: Boolean,
     title :: String,
     imageUrl :: String
 }
@@ -203,6 +203,7 @@ type LocateOnMapConfigs = {
   dottedLineConfig :: DottedLineConfig
 , apiTriggerRadius :: Number
 , pickUpToSourceThreshold :: Number
+, hotSpotConfig :: HotSpotConfig
 }
 
 type DottedLineConfig = {
@@ -216,4 +217,9 @@ type PurpleRideConfig = {
   visualImpairmentVideo :: String,
   physicalImpairmentVideo :: String,
   hearingImpairmentVideo :: String
+}
+
+type HotSpotConfig = {
+  goToNearestPointWithinRadius :: Number,
+  showHotSpotsWithinRadius :: Number
 }
