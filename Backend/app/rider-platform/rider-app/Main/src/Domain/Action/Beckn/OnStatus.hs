@@ -236,7 +236,6 @@ buildNewRide booking NewRideInfo {..} = do
       rideRating = Nothing
   pure $ DRide.Ride {..}
 
--- TODO reuse code from on_update
 mkBookingCancellationReason ::
   Id DB.Booking ->
   Maybe (Id DRide.Ride) ->
@@ -256,7 +255,6 @@ mkBookingCancellationReason bookingId mbRideId cancellationSource merchantId = d
       driverDistToPickup = Nothing
     }
 
--- TODO reuse code from on_update
 buildFareBreakup :: MonadGuid m => Id DB.Booking -> OnStatusFareBreakup -> m DFareBreakup.FareBreakup
 buildFareBreakup bookingId OnStatusFareBreakup {..} = do
   guid <- generateGUID

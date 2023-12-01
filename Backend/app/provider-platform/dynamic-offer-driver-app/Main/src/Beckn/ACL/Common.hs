@@ -106,7 +106,6 @@ castCancellationSource = \case
   DBCR.ByAllocator -> Common.ByAllocator
   DBCR.ByApplication -> Common.ByApplication
 
--- FIXME - is it the same for all apis??
 filterRequiredBreakups :: DFParams.FareParametersType -> Common.BreakupItem -> Bool
 filterRequiredBreakups fParamsType breakup = do
   let title = breakup.title
@@ -114,11 +113,14 @@ filterRequiredBreakups fParamsType breakup = do
     DFParams.Progressive ->
       title
         `elem` [ "BASE_FARE",
+                 "SERVICE_CHARGE",
                  "DEAD_KILOMETER_FARE",
                  "EXTRA_DISTANCE_FARE",
                  "DRIVER_SELECTED_FARE",
                  "CUSTOMER_SELECTED_FARE",
-                 "TOTAL_FARE"
+                 "TOTAL_FARE",
+                 "WAITING_OR_PICKUP_CHARGES",
+                 "EXTRA_TIME_FARE"
                ]
     DFParams.Slab ->
       title
@@ -129,31 +131,8 @@ filterRequiredBreakups fParamsType breakup = do
                  "SGST",
                  "CGST",
                  "FIXED_GOVERNMENT_RATE",
-                 "TOTAL_FARE"
+                 "CUSTOMER_SELECTED_FARE",
+                 "TOTAL_FARE",
+                 "NIGHT_SHIFT_CHARGE",
+                 "EXTRA_TIME_FARE"
                ]
-
--- FIXME - is it the same for all apis??
--- filterRequiredBreakups fParamsType breakup = do
---   case fParamsType of
---     DFParams.Progressive ->
---       breakup.title == "BASE_FARE"
---         || breakup.title == "SERVICE_CHARGE"
---         || breakup.title == "DEAD_KILOMETER_FARE"
---         || breakup.title == "EXTRA_DISTANCE_FARE"
---         || breakup.title == "DRIVER_SELECTED_FARE"
---         || breakup.title == "CUSTOMER_SELECTED_FARE"
---         || breakup.title == "TOTAL_FARE"
---         || breakup.title == "WAITING_OR_PICKUP_CHARGES"
---         || breakup.title == "EXTRA_TIME_FARE"
---     DFParams.Slab ->
---       breakup.title == "BASE_FARE"
---         || breakup.title == "SERVICE_CHARGE"
---         || breakup.title == "WAITING_OR_PICKUP_CHARGES"
---         || breakup.title == "PLATFORM_FEE"
---         || breakup.title == "SGST"
---         || breakup.title == "CGST"
---         || breakup.title == "FIXED_GOVERNMENT_RATE"
---         || breakup.title == "CUSTOMER_SELECTED_FARE"
---         || breakup.title == "TOTAL_FARE"
---         || breakup.title == "NIGHT_SHIFT_CHARGE"
---         || breakup.title == "EXTRA_TIME_FARE"
