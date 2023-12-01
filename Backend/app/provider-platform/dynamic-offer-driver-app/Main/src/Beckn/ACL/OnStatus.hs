@@ -18,7 +18,7 @@ module Beckn.ACL.OnStatus
 where
 
 import qualified Beckn.ACL.Common as Common
-import qualified Beckn.Types.Core.Taxi.Common.FulfillmentInfo as RideFulfillment
+import Beckn.ACL.Common.Fulfillment (mkFulfillment)
 import qualified Beckn.Types.Core.Taxi.Common.Tags as Tags
 import qualified Beckn.Types.Core.Taxi.OnStatus as OnStatus
 import qualified Beckn.Types.Core.Taxi.OnStatus.Order.BookingCancelledOrder as BookingCancelledOS
@@ -27,93 +27,14 @@ import qualified Beckn.Types.Core.Taxi.OnStatus.Order.RideAssignedOrder as RideA
 import qualified Beckn.Types.Core.Taxi.OnStatus.Order.RideCompletedOrder as RideCompletedOS
 import qualified Beckn.Types.Core.Taxi.OnStatus.Order.RideStartedOrder as RideStartedOS
 import qualified Domain.Action.Beckn.Status as DStatus
-import qualified Domain.Types.Booking as DRB
 import qualified Domain.Types.BookingCancellationReason as SBCR
 import qualified Domain.Types.FareParameters as DFParams
-import qualified Domain.Types.Person as SP
-import Domain.Types.Ride as DRide
-import qualified Domain.Types.Vehicle as SVeh
 import Kernel.Prelude
 import Kernel.Types.Common
 import Kernel.Utils.Common
 import SharedLogic.FareCalculator
 import qualified SharedLogic.SyncRide as SyncRide
 import Tools.Error
-
-mkFullfillment ::
-  (EsqDBFlow m r, EncFlow m r) =>
-  Maybe SP.Person ->
-  DRide.Ride ->
-  DRB.Booking ->
-  Maybe SVeh.Vehicle ->
-  Maybe Text ->
-  Maybe Tags.TagGroups ->
-  m RideFulfillment.FulfillmentInfo
-mkFullfillment mbDriver ride booking mbVehicle mbImage tags = do
-  agent <-
-    forM mbDriver $ \driver -> do
-      let agentTags =
-            [ Tags.TagGroup
-                { display = False,
-                  code = "driver_details",
-                  name = "Driver Details",
-                  list =
-                    [ Tags.Tag (Just False) (Just "registered_at") (Just "Registered At") (Just $ show driver.createdAt),
-                      Tags.Tag (Just False) (Just "rating") (Just "rating") (show <$> driver.rating)
-                    ]
-                }
-            ]
-      mobileNumber <- SP.getPersonNumber driver >>= fromMaybeM (InternalError "Driver mobile number is not present.")
-      name <- SP.getPersonFullName driver & fromMaybeM (PersonFieldNotPresent "firstName")
-      pure $
-        RideAssignedOS.Agent
-          { name = name,
-            rateable = True,
-            phone = Just mobileNumber,
-            image = mbImage,
-            tags = Just $ Tags.TG agentTags
-          }
-  let veh =
-        mbVehicle <&> \vehicle ->
-          RideAssignedOS.Vehicle
-            { model = vehicle.model,
-              variant = show vehicle.variant,
-              color = vehicle.color,
-              registration = vehicle.registrationNo
-            }
-  let authorization =
-        RideAssignedOS.Authorization
-          { _type = "OTP",
-            token = ride.otp
-          }
-  pure $
-    RideAssignedOS.FulfillmentInfo
-      { id = ride.id.getId,
-        start =
-          RideAssignedOS.StartInfo
-            { authorization =
-                case booking.bookingType of
-                  DRB.SpecialZoneBooking -> Just authorization
-                  DRB.NormalBooking -> Just authorization, -- TODO :: Remove authorization for NormalBooking once Customer side code is decoupled.
-              location =
-                RideAssignedOS.Location
-                  { gps = RideAssignedOS.Gps {lat = booking.fromLocation.lat, lon = booking.fromLocation.lon}
-                  },
-              time = Nothing
-            },
-        end =
-          RideAssignedOS.EndInfo
-            { location =
-                RideAssignedOS.Location
-                  { gps = RideAssignedOS.Gps {lat = booking.toLocation.lat, lon = booking.toLocation.lon} -- assuming locations will always be in correct order in list
-                  },
-              time = Nothing
-            },
-        agent,
-        _type = if booking.bookingType == DRB.NormalBooking then RideAssignedOS.RIDE else RideAssignedOS.RIDE_OTP,
-        vehicle = veh,
-        ..
-      }
 
 buildOnStatusMessage ::
   (EsqDBFlow m r, EncFlow m r) =>
@@ -133,7 +54,7 @@ buildOnStatusMessage (DStatus.NewBookingBuildReq {bookingId}) = do
 buildOnStatusMessage (DStatus.RideAssignedBuildReq {newRideInfo}) = do
   let SyncRide.NewRideInfo {driver, image, vehicle, ride, booking} = newRideInfo
   let arrivalTimeTagGroup = mkArrivalTimeTagGroup ride.driverArrivalTime
-  fulfillment <- mkFullfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup) -- TODO reuse the same from on_update
+  fulfillment <- mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup) -- TODO reuse the same from on_update
   return $
     OnStatus.OnStatusMessage
       { order =
@@ -147,7 +68,7 @@ buildOnStatusMessage (DStatus.RideAssignedBuildReq {newRideInfo}) = do
 buildOnStatusMessage (DStatus.RideStartedBuildReq {newRideInfo}) = do
   let SyncRide.NewRideInfo {driver, image, vehicle, ride, booking} = newRideInfo
   let arrivalTimeTagGroup = mkArrivalTimeTagGroup ride.driverArrivalTime
-  fulfillment <- mkFullfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup)
+  fulfillment <- mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup)
   return $
     OnStatus.OnStatusMessage
       { order =
@@ -177,7 +98,7 @@ buildOnStatusMessage (DStatus.RideCompletedBuildReq {newRideInfo, rideCompletedI
                 ]
             }
         ]
-  fulfillment <- mkFullfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG (tagGroups <> arrivalTimeTagGroup))
+  fulfillment <- mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG (tagGroups <> arrivalTimeTagGroup))
   fare <- realToFrac <$> ride.fare & fromMaybeM (InternalError "Ride fare is not present.")
   let currency = "INR"
       price =
@@ -222,7 +143,7 @@ buildOnStatusMessage DStatus.BookingCancelledBuildReq {bookingCancelledInfo, mbN
   fulfillment <- forM mbNewRideInfo $ \newRideInfo -> do
     let SyncRide.NewRideInfo {driver, image, vehicle, ride} = newRideInfo
     let arrivalTimeTagGroup = mkArrivalTimeTagGroup ride.driverArrivalTime
-    mkFullfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup)
+    mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup)
   pure
     OnStatus.OnStatusMessage
       { order =

@@ -173,7 +173,6 @@ mkQuote driverQuote now = do
       breakup = breakup_
     }
   where
-    -- TODO check version in ACL.Common
     filterRequiredBreakups' breakup =
       breakup.title == "BASE_FARE"
         || breakup.title == "SERVICE_CHARGE"
