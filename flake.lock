@@ -533,16 +533,16 @@
         "sequelize": "sequelize"
       },
       "locked": {
-        "lastModified": 1698304522,
-        "narHash": "sha256-s/Eoc9vay9aQj9xbKXtxTPWGUbcUHc9Aq7i6/EXJqi8=",
-        "owner": "vijaygupta18",
+        "lastModified": 1700223005,
+        "narHash": "sha256-D7EWBRQXlho39s6R3HAb49Lrr8qkV4nvxFn+VGYG9K8=",
+        "owner": "roman-bodavskiy",
         "repo": "euler-hs",
-        "rev": "51f2794c04ed089b4e90e5b6c450c000d38c421c",
+        "rev": "55b202e1c8c4eed9013b39338b1acac97cebcf70",
         "type": "github"
       },
       "original": {
-        "owner": "vijaygupta18",
-        "ref": "backend/adding-class-for-column-mapping",
+        "owner": "roman-bodavskiy",
+        "ref": "backend/db-object-contents-v2",
         "repo": "euler-hs",
         "type": "github"
       }
@@ -2732,11 +2732,11 @@
         "prometheus-haskell": "prometheus-haskell_2"
       },
       "locked": {
-        "lastModified": 1699254881,
-        "narHash": "sha256-B4yybagBh/XP4T/w93oA359zxSVT8g257JdzinpXGNk=",
+        "lastModified": 1701706550,
+        "narHash": "sha256-ibVHRvIwFl/JiQ4Zaqn/Gvqa+mMfaH0E0I3bUrdGllo=",
         "owner": "nammayatri",
         "repo": "shared-kernel",
-        "rev": "37fb3bf7c7dc4f90b99a092eb2db879ac5d6bfae",
+        "rev": "2091dfb46040fa63e14bd7cb63c25930e789563f",
         "type": "github"
       },
       "original": {

@@ -21,6 +21,7 @@ module SharedLogic.Allocator.Jobs.SendSearchRequestToDrivers.Handle.Internal.Dri
   )
 where
 
+import Database.Beam.Backend
 import EulerHS.Prelude hiding (id)
 import Kernel.Utils.Common
 import Kernel.Utils.Dhall (FromDhall)
@@ -32,6 +33,10 @@ data BatchSplitByPickupDistance = BatchSplitByPickupDistance
   }
   deriving stock (Show, Eq, Read, Ord, Generic)
   deriving anyclass (FromJSON, ToJSON)
+
+-- TODO test this
+instance HasSqlValueSyntax be String => HasSqlValueSyntax be BatchSplitByPickupDistance where
+  sqlValueSyntax = autoSqlValueSyntax
 
 $(mkBeamInstancesForList ''BatchSplitByPickupDistance)
 
