@@ -20,9 +20,6 @@ where
 
 import Beckn.Types.Core.Taxi.Common.Agent as Reexport
 import Beckn.Types.Core.Taxi.Common.CancellationSource as Reexport
--- import Beckn.Types.Core.Taxi.Common.StartInfo as Reexport
--- import Beckn.Types.Core.Taxi.Common.Vehicle as Reexport
-
 import Beckn.Types.Core.Taxi.Common.FulfillmentInfo as Reexport
 import Beckn.Types.Core.Taxi.OnStatus.Order.OrderState (RideBookingCancelledOrderCode (RIDE_BOOKING_CANCELLED))
 import Data.Aeson as A
@@ -57,14 +54,3 @@ bookingCancelledOrderJSONOptions =
         "cancellation_reason" -> "./komn/cancellation_reason"
         a -> a
     }
-
--- data FulfillmentInfo = FulfillmentInfo
---   { id :: Text, -- bppRideId
---     start :: StartInfo,
---     agent :: Agent,
---     vehicle :: Vehicle
---   }
---   deriving (Generic, Show, FromJSON, ToJSON)
-
--- instance ToSchema FulfillmentInfo where
---   declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions

@@ -14,7 +14,6 @@
 
 module Beckn.Types.Core.Taxi.Common.Authorization where
 
-import Data.Aeson as A
 import Data.OpenApi hiding (Example, example, name, tags)
 import Kernel.Prelude
 import Kernel.Utils.JSON (stripPrefixUnderscoreIfAny)

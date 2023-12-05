@@ -33,7 +33,13 @@ data StartInfo = StartInfo
     location :: Location,
     time :: Maybe TimeTimestamp
   }
-  deriving (Generic, Show, FromJSON, ToJSON)
+  deriving (Generic, Show)
+
+instance ToJSON StartInfo where
+  toJSON = genericToJSON removeNullFields
+
+instance FromJSON StartInfo where
+  parseJSON = genericParseJSON removeNullFields
 
 instance ToSchema StartInfo where
   declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions

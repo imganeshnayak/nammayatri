@@ -24,8 +24,6 @@ module SharedLogic.SyncRide
 where
 
 import qualified "dashboard-helper-api" Dashboard.ProviderPlatform.Ride as Common
--- import Kernel.Storage.Esqueleto.Transactionable (runInReplica)
-
 import Data.Either.Extra (eitherToMaybe)
 import qualified Domain.Action.UI.DriverOnboarding.AadhaarVerification as Aadhaar
 import qualified Domain.Types.Booking as DB
@@ -166,8 +164,6 @@ fetchRideCompletedInfo ride booking = do
   let paymentUrl = DMPM.getPostpaidPaymentUrl =<< mbPaymentMethod
   let paymentMethodInfo = DMPM.mkPaymentMethodInfo <$> mbPaymentMethod
   pure RideCompletedInfo {..}
-
--- error handler --
 
 errHandler :: Maybe DRide.RideStatus -> DB.BookingStatus -> Text -> SomeException -> Flow ()
 errHandler mbRideStatus bookingStatus desc exc

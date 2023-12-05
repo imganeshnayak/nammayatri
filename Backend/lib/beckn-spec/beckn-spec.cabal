@@ -99,9 +99,7 @@ library
       Beckn.Types.Core.Taxi.Common.Price
       Beckn.Types.Core.Taxi.Common.Provider
       Beckn.Types.Core.Taxi.Common.Quote
-      Beckn.Types.Core.Taxi.Common.RideCompletedPayment
       Beckn.Types.Core.Taxi.Common.RideCompletedQuote
-      Beckn.Types.Core.Taxi.Common.RideStartedStartInfo
       Beckn.Types.Core.Taxi.Common.StartInfo
       Beckn.Types.Core.Taxi.Common.StopInfo
       Beckn.Types.Core.Taxi.Common.Tags

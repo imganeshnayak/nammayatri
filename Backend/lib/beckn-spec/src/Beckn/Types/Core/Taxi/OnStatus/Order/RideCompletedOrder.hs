@@ -19,16 +19,8 @@ module Beckn.Types.Core.Taxi.OnStatus.Order.RideCompletedOrder
 where
 
 import Beckn.Types.Core.Taxi.Common.Agent as Reexport
--- import Beckn.Types.Core.Taxi.Common.Authorization as Reexport
-
--- TODO remove unused
--- import Beckn.Types.Core.Taxi.Common.RideStartedStartInfo as Reexport
--- import Beckn.Types.Core.Taxi.Common.Vehicle as Reexport
-
--- import Kernel.Utils.Schema
 import Beckn.Types.Core.Taxi.Common.FulfillmentInfo as Reexport
 import Beckn.Types.Core.Taxi.Common.Payment as Reexport
-import Beckn.Types.Core.Taxi.Common.RideCompletedPayment as Reexport
 import Beckn.Types.Core.Taxi.Common.RideCompletedQuote as Reexport
 import Beckn.Types.Core.Taxi.OnStatus.Order.OrderState (RideCompletedOrderCode (RIDE_COMPLETED))
 import Data.Aeson as A
@@ -42,45 +34,8 @@ data RideCompletedOrder = RideCompletedOrder
     quote :: RideCompletedQuote,
     fulfillment :: FulfillmentInfo,
     payment :: Maybe Payment
-    -- arrival_time :: Maybe UTCTime -- tag in fulfillment?
   }
   deriving (Generic, Show, FromJSON, ToJSON, ToSchema)
 
 orderState :: RideCompletedOrderCode
 orderState = RIDE_COMPLETED
-
--- data FulfillmentInfo = FulfillmentInfo
---   { id :: Text, -- bppRideId
---     start :: RideStartedStartInfo,
---     end :: EndInfo,
---     agent :: Agent,
---     vehicle :: Vehicle,
---     chargeable_distance :: DecimalValue,
---     traveled_distance :: DecimalValue
---   }
---   deriving (Generic, Show)
-
--- instance ToSchema FulfillmentInfo where
---   declareNamedSchema = genericDeclareUnNamedSchema $ fromAesonOptions fulfillmentInfoJSONOptions
-
--- instance FromJSON FulfillmentInfo where
---   parseJSON = genericParseJSON fulfillmentInfoJSONOptions
-
--- instance ToJSON FulfillmentInfo where
---   toJSON = genericToJSON fulfillmentInfoJSONOptions
-
--- fulfillmentInfoJSONOptions :: A.Options
--- fulfillmentInfoJSONOptions =
---   defaultOptions
---     { fieldLabelModifier = \case
---         "chargeable_distance" -> "./komn/chargeable_distance"
---         a -> a
---     }
-
--- newtype EndInfo = EndInfo
---   { time :: TimeTimestamp
---   }
---   deriving (Generic, Show, FromJSON, ToJSON)
-
--- instance ToSchema EndInfo where
---   declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions

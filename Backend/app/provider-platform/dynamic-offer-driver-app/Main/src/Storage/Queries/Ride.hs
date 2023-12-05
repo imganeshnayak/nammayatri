@@ -149,16 +149,6 @@ findAllRidesBookingsByRideId (Id merchantId) rideIds = do
 findOneByBookingId :: (MonadFlow m, EsqDBFlow m r, CacheFlow m r) => Id Booking -> m (Maybe Ride)
 findOneByBookingId (Id bookingId) = findAllWithOptionsKV [Se.Is BeamR.bookingId $ Se.Eq bookingId] (Se.Desc BeamR.createdAt) (Just 1) Nothing <&> listToMaybe
 
--- FIXME
--- findOneByBookingId :: Transactionable m => Id Booking -> m (Maybe Ride)
--- findOneByBookingId bookingId = Esq.findOne $ do
---   ride <- from $ table @RideT
---   where_ $
---     ride ^. Ride.RideBookingId ==. val (toKey bookingId)
---   orderBy [desc $ ride ^. RideCreatedAt]
---   limit 1
---   pure ride
-
 findAllByDriverId :: (MonadFlow m, EsqDBFlow m r, CacheFlow m r) => Id Person -> Maybe Integer -> Maybe Integer -> Maybe Bool -> Maybe Ride.RideStatus -> Maybe Day -> m [(Ride, Booking)]
 findAllByDriverId (Id driverId) mbLimit mbOffset mbOnlyActive mbRideStatus mbDay = do
   let limitVal = maybe 10 fromInteger mbLimit

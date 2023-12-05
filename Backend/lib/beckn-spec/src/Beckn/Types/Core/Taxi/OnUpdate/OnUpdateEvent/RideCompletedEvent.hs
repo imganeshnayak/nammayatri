@@ -30,8 +30,6 @@ import Data.OpenApi hiding (Example, example, tags, title, value)
 import EulerHS.Prelude hiding (fromList, id)
 import GHC.Exts (fromList)
 
--- import Beckn.Types.Core.Taxi.Common.BreakupItem as Reexport
-
 data RideCompletedEvent = RideCompletedEvent
   { id :: Text,
     -- update_target :: Text,
@@ -106,27 +104,3 @@ instance ToSchema RideCompletedEvent where
                    "fulfillment",
                    "payment"
                  ]
-
--- data RideCompletedQuote = RideCompletedQuote
---   { price :: QuotePrice,
---     breakup :: [BreakupItem]
---   }
---   deriving (Generic, FromJSON, ToJSON, Show)
-
--- instance ToSchema RideCompletedQuote where
---   declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions
-
--- data QuotePrice = QuotePrice
---   { currency :: Text,
---     value :: DecimalValue,
---     computed_value :: DecimalValue
---   }
--- deriving (Generic, FromJSON, ToJSON, Show)
-
--- instance ToSchema QuotePrice where
---   declareNamedSchema = genericDeclareUnNamedSchema defaultSchemaOptions
-
-data DistanceRelatedTags = DistanceRelatedTags
-  { chargeable_distance :: DecimalValue,
-    traveled_distance :: DecimalValue
-  }

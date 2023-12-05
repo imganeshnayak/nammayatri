@@ -21,12 +21,9 @@ import EulerHS.Prelude hiding (id)
 import Kernel.Utils.JSON (removeNullFields)
 import Kernel.Utils.Schema (genericDeclareUnNamedSchema)
 
--- import Beckn.Types.Core.Taxi.Common.TimeTimestamp
-
 data StartInfo = StartInfo
   { location :: Location,
     authorization :: Maybe Authorization
-    -- time :: Maybe TimeTimestamp
   }
   deriving (Generic, Show)
 

@@ -99,7 +99,7 @@ mkFulfillment mbDriver ride booking mbVehicle mbImage tags = do
                 RideFulfillment.Location
                   { gps = RideFulfillment.Gps {lat = booking.fromLocation.lat, lon = booking.fromLocation.lon}
                   },
-              time = Nothing
+              time = ride.tripStartTime <&> \tripStartTime -> RideFulfillment.TimeTimestamp {timestamp = tripStartTime}
             },
         end =
           RideFulfillment.EndInfo
@@ -107,7 +107,7 @@ mkFulfillment mbDriver ride booking mbVehicle mbImage tags = do
                 RideFulfillment.Location
                   { gps = RideFulfillment.Gps {lat = booking.toLocation.lat, lon = booking.toLocation.lon} -- assuming locations will always be in correct order in list
                   },
-              time = Nothing
+              time = ride.tripEndTime <&> \tripEndTime -> RideFulfillment.TimeTimestamp {timestamp = tripEndTime}
             },
         agent,
         _type = if booking.bookingType == DRB.NormalBooking then RideFulfillment.RIDE else RideFulfillment.RIDE_OTP,
@@ -149,7 +149,6 @@ currency = "INR"
 buildRideCompletedQuote :: MonadFlow m => DRide.Ride -> DFParams.FareParameters -> m Quote.RideCompletedQuote
 buildRideCompletedQuote ride fareParams = do
   fare <- realToFrac <$> ride.fare & fromMaybeM (InternalError "Ride fare is not present.")
-  -- let currency = "INR"
   let price =
         Quote.QuotePrice
           { currency,
