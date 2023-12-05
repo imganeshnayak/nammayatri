@@ -18,7 +18,7 @@ module Beckn.ACL.OnStatus
 where
 
 import qualified Beckn.ACL.Common as Common
-import Beckn.ACL.Common.Fulfillment (mkFulfillment)
+import qualified Beckn.ACL.Common.Fulfillment as Common
 import qualified Beckn.Types.Core.Taxi.Common.Tags as Tags
 import qualified Beckn.Types.Core.Taxi.OnStatus as OnStatus
 import qualified Beckn.Types.Core.Taxi.OnStatus.Order.BookingCancelledOrder as BookingCancelledOS
@@ -27,7 +27,6 @@ import qualified Beckn.Types.Core.Taxi.OnStatus.Order.RideAssignedOrder as RideA
 import qualified Beckn.Types.Core.Taxi.OnStatus.Order.RideCompletedOrder as RideCompletedOS
 import qualified Beckn.Types.Core.Taxi.OnStatus.Order.RideStartedOrder as RideStartedOS
 import qualified Domain.Action.Beckn.Status as DStatus
-import qualified Domain.Types.BookingCancellationReason as SBCR
 import qualified Domain.Types.FareParameters as DFParams
 import Kernel.Prelude
 import Kernel.Types.Common
@@ -53,8 +52,8 @@ buildOnStatusMessage (DStatus.NewBookingBuildReq {bookingId}) = do
       }
 buildOnStatusMessage (DStatus.RideAssignedBuildReq {newRideInfo}) = do
   let SyncRide.NewRideInfo {driver, image, vehicle, ride, booking} = newRideInfo
-  let arrivalTimeTagGroup = mkArrivalTimeTagGroup ride.driverArrivalTime
-  fulfillment <- mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup) -- TODO reuse the same from on_update
+  let arrivalTimeTagGroup = Common.mkArrivalTimeTagGroup ride.driverArrivalTime
+  fulfillment <- Common.mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup)
   return $
     OnStatus.OnStatusMessage
       { order =
@@ -67,8 +66,8 @@ buildOnStatusMessage (DStatus.RideAssignedBuildReq {newRideInfo}) = do
       }
 buildOnStatusMessage (DStatus.RideStartedBuildReq {newRideInfo}) = do
   let SyncRide.NewRideInfo {driver, image, vehicle, ride, booking} = newRideInfo
-  let arrivalTimeTagGroup = mkArrivalTimeTagGroup ride.driverArrivalTime
-  fulfillment <- mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup)
+  let arrivalTimeTagGroup = Common.mkArrivalTimeTagGroup ride.driverArrivalTime
+  fulfillment <- Common.mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup)
   return $
     OnStatus.OnStatusMessage
       { order =
@@ -82,23 +81,9 @@ buildOnStatusMessage (DStatus.RideStartedBuildReq {newRideInfo}) = do
 buildOnStatusMessage (DStatus.RideCompletedBuildReq {newRideInfo, rideCompletedInfo}) = do
   let SyncRide.NewRideInfo {driver, image, vehicle, ride, booking} = newRideInfo
   let SyncRide.RideCompletedInfo {fareParams, paymentMethodInfo, paymentUrl} = rideCompletedInfo
-  let arrivalTimeTagGroup = mkArrivalTimeTagGroup ride.driverArrivalTime
-  chargeableDistance :: HighPrecMeters <-
-    realToFrac <$> ride.chargeableDistance
-      & fromMaybeM (InternalError "Ride chargeable distance is not present.")
-  let traveledDistance :: HighPrecMeters = ride.traveledDistance
-  let tagGroups =
-        [ Tags.TagGroup
-            { display = False,
-              code = "ride_distance_details",
-              name = "Ride Distance Details",
-              list =
-                [ Tags.Tag (Just False) (Just "chargeable_distance") (Just "Chargeable Distance") (Just $ show chargeableDistance),
-                  Tags.Tag (Just False) (Just "traveled_distance") (Just "Traveled Distance") (Just $ show traveledDistance)
-                ]
-            }
-        ]
-  fulfillment <- mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG (tagGroups <> arrivalTimeTagGroup))
+  let arrivalTimeTagGroup = Common.mkArrivalTimeTagGroup ride.driverArrivalTime
+  distanceTagGroup <- Common.buildDistanceTagGroup ride
+  fulfillment <- Common.mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG (distanceTagGroup <> arrivalTimeTagGroup))
   fare <- realToFrac <$> ride.fare & fromMaybeM (InternalError "Ride fare is not present.")
   let currency = "INR"
       price =
@@ -142,8 +127,8 @@ buildOnStatusMessage DStatus.BookingCancelledBuildReq {bookingCancelledInfo, mbN
   let SyncRide.BookingCancelledInfo {booking, cancellationSource} = bookingCancelledInfo
   fulfillment <- forM mbNewRideInfo $ \newRideInfo -> do
     let SyncRide.NewRideInfo {driver, image, vehicle, ride} = newRideInfo
-    let arrivalTimeTagGroup = mkArrivalTimeTagGroup ride.driverArrivalTime
-    mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup)
+    let arrivalTimeTagGroup = Common.mkArrivalTimeTagGroup ride.driverArrivalTime
+    Common.mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG arrivalTimeTagGroup)
   pure
     OnStatus.OnStatusMessage
       { order =
@@ -151,52 +136,7 @@ buildOnStatusMessage DStatus.BookingCancelledBuildReq {bookingCancelledInfo, mbN
             BookingCancelledOS.BookingCancelledOrder
               { id = booking.id.getId,
                 state = BookingCancelledOS.orderState,
-                cancellation_reason = castCancellationSource cancellationSource,
+                cancellation_reason = Common.castCancellationSource cancellationSource,
                 fulfillment
               }
       }
-
-castCancellationSource :: SBCR.CancellationSource -> BookingCancelledOS.CancellationSource
-castCancellationSource = \case
-  SBCR.ByUser -> BookingCancelledOS.ByUser
-  SBCR.ByDriver -> BookingCancelledOS.ByDriver
-  SBCR.ByMerchant -> BookingCancelledOS.ByMerchant
-  SBCR.ByAllocator -> BookingCancelledOS.ByAllocator
-  SBCR.ByApplication -> BookingCancelledOS.ByApplication
-
--- FIXME use for each order
--- let tagGroups =
---       [ Tags.TagGroup
---           { display = False,
---             code = "driver_arrived_info",
---             name = "Driver Arrived Info",
---             list = [Tags.Tag (Just False) (Just "arrival_time") (Just "Chargeable Distance") (show <$> arrivalTime) | isJust arrivalTime]
---           }
---       ]
-
--- buildDistanceTagGroup :: MonadFlow m => DRide.Ride -> m [Tags.TagGroup]
--- buildDistanceTagGroup ride = do
---   chargeableDistance :: HighPrecMeters <-
---     realToFrac <$> ride.chargeableDistance
---       & fromMaybeM (InternalError "Ride chargeable distance is not present.")
---   let traveledDistance :: HighPrecMeters = ride.traveledDistance
---   pure [ Tags.TagGroup
---           { display = False,
---             code = "ride_distance_details",
---             name = "Ride Distance Details",
---             list =
---               [ Tags.Tag (Just False) (Just "chargeable_distance") (Just "Chargeable Distance") (Just $ show chargeableDistance),
---                 Tags.Tag (Just False) (Just "traveled_distance") (Just "Traveled Distance") (Just $ show traveledDistance)
---               ]
---           }
---       ]
-
-mkArrivalTimeTagGroup :: Maybe UTCTime -> [Tags.TagGroup]
-mkArrivalTimeTagGroup arrivalTime =
-  [ Tags.TagGroup
-      { display = False,
-        code = "driver_arrived_info",
-        name = "Driver Arrived Info",
-        list = [Tags.Tag (Just False) (Just "arrival_time") (Just "Chargeable Distance") (show <$> arrivalTime) | isJust arrivalTime]
-      }
-  ]

@@ -20,7 +20,7 @@ module Beckn.ACL.OnUpdate
 where
 
 import qualified Beckn.ACL.Common as Common
-import Beckn.ACL.Common.Fulfillment (mkFulfillment)
+import qualified Beckn.ACL.Common.Fulfillment as Common
 import qualified Beckn.Types.Core.Taxi.Common.Tags as Tags
 import qualified Beckn.Types.Core.Taxi.OnUpdate as OnUpdate
 import qualified Beckn.Types.Core.Taxi.OnUpdate.OnUpdateEvent.BookingCancelledEvent as BookingCancelledOU
@@ -100,7 +100,7 @@ buildOnUpdateMessage ::
   OnUpdateBuildReq ->
   m OnUpdate.OnUpdateMessage
 buildOnUpdateMessage RideAssignedBuildReq {..} = do
-  fulfillment <- mkFulfillment (Just driver) ride booking (Just vehicle) image Nothing
+  fulfillment <- Common.mkFulfillment (Just driver) ride booking (Just vehicle) image Nothing
   return $
     OnUpdate.OnUpdateMessage
       { order =
@@ -113,7 +113,7 @@ buildOnUpdateMessage RideAssignedBuildReq {..} = do
         update_target = "order.fufillment.state.code, order.fulfillment.agent, order.fulfillment.vehicle" <> ", order.fulfillment.start.authorization" -- TODO :: Remove authorization for NormalBooking once Customer side code is decoupled.
       }
 buildOnUpdateMessage RideStartedBuildReq {..} = do
-  fulfillment <- mkFulfillment (Just driver) ride booking (Just vehicle) Nothing Nothing
+  fulfillment <- Common.mkFulfillment (Just driver) ride booking (Just vehicle) Nothing Nothing
   return $
     OnUpdate.OnUpdateMessage
       { order =
@@ -125,22 +125,8 @@ buildOnUpdateMessage RideStartedBuildReq {..} = do
         update_target = "order.fufillment.state.code"
       }
 buildOnUpdateMessage req@RideCompletedBuildReq {} = do
-  chargeableDistance :: HighPrecMeters <-
-    realToFrac <$> req.ride.chargeableDistance
-      & fromMaybeM (InternalError "Ride chargeable distance is not present.")
-  let traveledDistance :: HighPrecMeters = req.ride.traveledDistance
-  let tagGroups =
-        [ Tags.TagGroup
-            { display = False,
-              code = "ride_distance_details",
-              name = "Ride Distance Details",
-              list =
-                [ Tags.Tag (Just False) (Just "chargeable_distance") (Just "Chargeable Distance") (Just $ show chargeableDistance),
-                  Tags.Tag (Just False) (Just "traveled_distance") (Just "Traveled Distance") (Just $ show traveledDistance)
-                ]
-            }
-        ]
-  fulfillment <- mkFulfillment (Just req.driver) req.ride req.booking (Just req.vehicle) Nothing (Just $ Tags.TG tagGroups)
+  distanceTagGroup <- Common.buildDistanceTagGroup req.ride
+  fulfillment <- Common.mkFulfillment (Just req.driver) req.ride req.booking (Just req.vehicle) Nothing (Just $ Tags.TG distanceTagGroup)
   fare <- realToFrac <$> req.ride.fare & fromMaybeM (InternalError "Ride fare is not present.")
   let currency = "INR"
       price =
@@ -188,20 +174,13 @@ buildOnUpdateMessage BookingCancelledBuildReq {..} = do
             BookingCancelledOU.BookingCancelledEvent
               { id = booking.id.getId,
                 state = "CANCELLED",
-                cancellation_reason = castCancellationSource cancellationSource
+                cancellation_reason = Common.castCancellationSource cancellationSource
               },
         update_target = "state,fufillment.state.code"
       }
 buildOnUpdateMessage DriverArrivedBuildReq {..} = do
-  let tagGroups =
-        [ Tags.TagGroup
-            { display = False,
-              code = "driver_arrived_info",
-              name = "Driver Arrived Info",
-              list = [Tags.Tag (Just False) (Just "arrival_time") (Just "Chargeable Distance") (show <$> arrivalTime) | isJust arrivalTime]
-            }
-        ]
-  fulfillment <- mkFulfillment (Just driver) ride booking (Just vehicle) Nothing (Just $ Tags.TG tagGroups)
+  let tagGroups = Common.mkArrivalTimeTagGroup arrivalTime
+  fulfillment <- Common.mkFulfillment (Just driver) ride booking (Just vehicle) Nothing (Just $ Tags.TG tagGroups)
   return $
     OnUpdate.OnUpdateMessage
       { order =
@@ -218,10 +197,10 @@ buildOnUpdateMessage EstimateRepetitionBuildReq {..} = do
             { display = False,
               code = "previous_cancellation_reasons",
               name = "Previous Cancellation Reasons",
-              list = [Tags.Tag (Just False) (Just "cancellation_reason") (Just "Chargeable Distance") (Just . show $ castCancellationSource cancellationSource)]
+              list = [Tags.Tag (Just False) (Just "cancellation_reason") (Just "Chargeable Distance") (Just . show $ Common.castCancellationSource cancellationSource)]
             }
         ]
-  fulfillment <- mkFulfillment Nothing ride booking Nothing Nothing (Just $ Tags.TG tagGroups)
+  fulfillment <- Common.mkFulfillment Nothing ride booking Nothing Nothing (Just $ Tags.TG tagGroups)
   let item = EstimateRepetitionOU.Item {id = estimateId.getId}
   return $
     OnUpdate.OnUpdateMessage
@@ -243,7 +222,7 @@ buildOnUpdateMessage NewMessageBuildReq {..} = do
               list = [Tags.Tag (Just False) (Just "message") (Just "New Message") (Just message)]
             }
         ]
-  fulfillment <- mkFulfillment (Just driver) ride booking (Just vehicle) Nothing (Just $ Tags.TG tagGroups)
+  fulfillment <- Common.mkFulfillment (Just driver) ride booking (Just vehicle) Nothing (Just $ Tags.TG tagGroups)
   return $
     OnUpdate.OnUpdateMessage
       { update_target = "order.fufillment.state.code, order.fulfillment.tags",
@@ -254,11 +233,3 @@ buildOnUpdateMessage NewMessageBuildReq {..} = do
                 fulfillment = fulfillment
               }
       }
-
-castCancellationSource :: SBCR.CancellationSource -> BookingCancelledOU.CancellationSource
-castCancellationSource = \case
-  SBCR.ByUser -> BookingCancelledOU.ByUser
-  SBCR.ByDriver -> BookingCancelledOU.ByDriver
-  SBCR.ByMerchant -> BookingCancelledOU.ByMerchant
-  SBCR.ByAllocator -> BookingCancelledOU.ByAllocator
-  SBCR.ByApplication -> BookingCancelledOU.ByApplication

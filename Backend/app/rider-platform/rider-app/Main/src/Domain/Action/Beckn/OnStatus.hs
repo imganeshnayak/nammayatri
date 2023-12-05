@@ -188,7 +188,7 @@ onStatus req = do
                   fare = Just rideCompletedInfo.fare,
                   totalFare = Just rideCompletedInfo.totalFare,
                   chargeableDistance = Just rideCompletedInfo.chargeableDistance,
-                  traveledDistance = Just rideCompletedInfo.traveledDistance,
+                  -- traveledDistance = Just rideCompletedInfo.traveledDistance, -- did not changed in on_update
                   rideEndTime = Just rideCompletedInfo.rideEndTime
                  }
     BookingCancelledDetails {mbNewRideInfo, cancellationSource} -> do

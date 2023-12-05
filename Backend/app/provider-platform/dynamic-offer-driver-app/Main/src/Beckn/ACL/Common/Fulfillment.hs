@@ -14,6 +14,8 @@
 
 module Beckn.ACL.Common.Fulfillment
   ( mkFulfillment,
+    buildDistanceTagGroup,
+    mkArrivalTimeTagGroup,
   )
 where
 
@@ -103,3 +105,31 @@ mkFulfillment mbDriver ride booking mbVehicle mbImage tags = do
         vehicle = veh,
         ..
       }
+
+buildDistanceTagGroup :: MonadFlow m => DRide.Ride -> m [Tags.TagGroup]
+buildDistanceTagGroup ride = do
+  chargeableDistance :: HighPrecMeters <-
+    realToFrac <$> ride.chargeableDistance
+      & fromMaybeM (InternalError "Ride chargeable distance is not present.")
+  let traveledDistance :: HighPrecMeters = ride.traveledDistance
+  pure
+    [ Tags.TagGroup
+        { display = False,
+          code = "ride_distance_details",
+          name = "Ride Distance Details",
+          list =
+            [ Tags.Tag (Just False) (Just "chargeable_distance") (Just "Chargeable Distance") (Just $ show chargeableDistance),
+              Tags.Tag (Just False) (Just "traveled_distance") (Just "Traveled Distance") (Just $ show traveledDistance)
+            ]
+        }
+    ]
+
+mkArrivalTimeTagGroup :: Maybe UTCTime -> [Tags.TagGroup]
+mkArrivalTimeTagGroup arrivalTime =
+  [ Tags.TagGroup
+      { display = False,
+        code = "driver_arrived_info",
+        name = "Driver Arrived Info",
+        list = [Tags.Tag (Just False) (Just "arrival_time") (Just "Chargeable Distance") (show <$> arrivalTime) | isJust arrivalTime]
+      }
+  ]
