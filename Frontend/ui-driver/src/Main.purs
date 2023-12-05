@@ -19,7 +19,7 @@ import Prelude (Unit, bind, pure, show, unit, ($), (<$>), (<<<), (==), void, dis
 import Data.Either (Either(..))
 import Effect (Effect)
 import Effect.Aff (killFiber, launchAff, launchAff_)
-import Engineering.Helpers.Commons (flowRunner, liftFlow, getWindowVariable)
+import Engineering.Helpers.Commons (flowRunner, liftFlow, getWindowVariable, setEventTimestamp)
 import AssetsProvider (fetchAssets)
 import Flow as Flow
 import Control.Monad.Except.Trans (runExceptT)
@@ -48,6 +48,7 @@ import Effect.Uncurried (runEffectFn1)
 main :: Event -> Effect Unit
 main event = do
   mainFiber <- launchAff $ flowRunner defaultGlobalState $ do
+    liftFlow $ setEventTimestamp "main_purs"
     _ <- runExceptT $ runBackT $ updateEventData event
     resp ← runExceptT $ runBackT $ Flow.baseAppFlow true Nothing
     case resp of

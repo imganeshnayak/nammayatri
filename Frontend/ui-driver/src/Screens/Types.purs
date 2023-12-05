@@ -1027,7 +1027,8 @@ type HomeScreenProps =  {
   showChatBlockerPopUp :: Boolean,
   showGenericAccessibilityPopUp :: Boolean,
   waitTimeStatus :: TimerStatus,
-  isMockLocation :: Boolean
+  isMockLocation :: Boolean,
+  tobeLogged :: Boolean
  }
 
 data SubscriptionBannerType = FREE_TRIAL_BANNER | SETUP_AUTOPAY_BANNER | CLEAR_DUES_BANNER | NO_SUBSCRIPTION_BANNER | DUE_LIMIT_WARNING_BANNER | LOW_DUES_BANNER
@@ -1690,7 +1691,8 @@ type GlobalProps = {
   driverInformation :: Maybe GetDriverInfoResp,
   driverRideStats :: Maybe DriverProfileStatsResp,
   callScreen :: ScreenName,
-  gotoPopupType :: GoToPopUpType
+  gotoPopupType :: GoToPopUpType,
+  addTimestamp :: Boolean
 }
 
 --------------------------------------------------------------- SubscriptionScreenState ---------------------------------------------------
