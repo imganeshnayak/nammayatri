@@ -20,7 +20,7 @@ module Beckn.ACL.OnUpdate
 where
 
 import qualified Beckn.ACL.Common as Common
-import qualified Beckn.ACL.Common.Fulfillment as Common
+import qualified Beckn.ACL.Common.Order as Common
 import qualified Beckn.Types.Core.Taxi.Common.Tags as Tags
 import qualified Beckn.Types.Core.Taxi.OnUpdate as OnUpdate
 import qualified Beckn.Types.Core.Taxi.OnUpdate.OnUpdateEvent.BookingCancelledEvent as BookingCancelledOU
@@ -34,7 +34,6 @@ import qualified Beckn.Types.Core.Taxi.OnUpdate.OnUpdateEvent.RideStartedEvent a
 import qualified Domain.Types.Booking as DRB
 import qualified Domain.Types.BookingCancellationReason as SBCR
 import qualified Domain.Types.Estimate as DEst
-import qualified Domain.Types.FareParameters as DFParams
 import qualified Domain.Types.FareParameters as Fare
 import qualified Domain.Types.Merchant.MerchantPaymentMethod as DMPM
 import qualified Domain.Types.Person as SP
@@ -43,9 +42,6 @@ import qualified Domain.Types.Vehicle as SVeh
 import Kernel.Prelude
 import Kernel.Types.Common
 import Kernel.Types.Id
-import Kernel.Utils.Common
-import SharedLogic.FareCalculator
-import Tools.Error
 
 data OnUpdateBuildReq
   = RideAssignedBuildReq
@@ -127,41 +123,15 @@ buildOnUpdateMessage RideStartedBuildReq {..} = do
 buildOnUpdateMessage req@RideCompletedBuildReq {} = do
   distanceTagGroup <- Common.buildDistanceTagGroup req.ride
   fulfillment <- Common.mkFulfillment (Just req.driver) req.ride req.booking (Just req.vehicle) Nothing (Just $ Tags.TG distanceTagGroup)
-  fare <- realToFrac <$> req.ride.fare & fromMaybeM (InternalError "Ride fare is not present.")
-  let currency = "INR"
-      price =
-        RideCompletedOU.QuotePrice
-          { currency,
-            value = fare,
-            computed_value = fare
-          }
-      breakup =
-        mkBreakupList (OnUpdate.BreakupItemPrice currency . fromIntegral) OnUpdate.BreakupItem req.fareParams
-          & filter (Common.filterRequiredBreakups $ DFParams.getFareParametersType req.fareParams) -- TODO: Remove after roll out
+  quote <- Common.buildRideCompletedQuote req.ride req.fareParams
   return $
     OnUpdate.OnUpdateMessage
       { order =
           OnUpdate.RideCompleted
             RideCompletedOU.RideCompletedEvent
               { id = req.booking.id.getId,
-                quote =
-                  RideCompletedOU.RideCompletedQuote
-                    { price,
-                      breakup
-                    },
-                payment =
-                  Just
-                    OnUpdate.Payment
-                      { _type = maybe OnUpdate.ON_FULFILLMENT (Common.castDPaymentType . (.paymentType)) req.paymentMethodInfo,
-                        params =
-                          OnUpdate.PaymentParams
-                            { collected_by = maybe OnUpdate.BPP (Common.castDPaymentCollector . (.collectedBy)) req.paymentMethodInfo,
-                              instrument = Nothing,
-                              currency = "INR",
-                              amount = Nothing
-                            },
-                        uri = req.paymentUrl
-                      },
+                quote,
+                payment = Just $ Common.mkRideCompletedPayment req.paymentMethodInfo req.paymentUrl,
                 fulfillment = fulfillment
               },
         update_target = "order.payment, order.quote, order.fulfillment.tags, order.fulfillment.state.tags"

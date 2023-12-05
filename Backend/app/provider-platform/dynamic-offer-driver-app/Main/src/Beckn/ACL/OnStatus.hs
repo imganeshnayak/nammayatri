@@ -18,7 +18,7 @@ module Beckn.ACL.OnStatus
 where
 
 import qualified Beckn.ACL.Common as Common
-import qualified Beckn.ACL.Common.Fulfillment as Common
+import qualified Beckn.ACL.Common.Order as Common
 import qualified Beckn.Types.Core.Taxi.Common.Tags as Tags
 import qualified Beckn.Types.Core.Taxi.OnStatus as OnStatus
 import qualified Beckn.Types.Core.Taxi.OnStatus.Order.BookingCancelledOrder as BookingCancelledOS
@@ -27,13 +27,9 @@ import qualified Beckn.Types.Core.Taxi.OnStatus.Order.RideAssignedOrder as RideA
 import qualified Beckn.Types.Core.Taxi.OnStatus.Order.RideCompletedOrder as RideCompletedOS
 import qualified Beckn.Types.Core.Taxi.OnStatus.Order.RideStartedOrder as RideStartedOS
 import qualified Domain.Action.Beckn.Status as DStatus
-import qualified Domain.Types.FareParameters as DFParams
 import Kernel.Prelude
 import Kernel.Types.Common
-import Kernel.Utils.Common
-import SharedLogic.FareCalculator
 import qualified SharedLogic.SyncRide as SyncRide
-import Tools.Error
 
 buildOnStatusMessage ::
   (EsqDBFlow m r, EncFlow m r) =>
@@ -84,17 +80,7 @@ buildOnStatusMessage (DStatus.RideCompletedBuildReq {newRideInfo, rideCompletedI
   let arrivalTimeTagGroup = Common.mkArrivalTimeTagGroup ride.driverArrivalTime
   distanceTagGroup <- Common.buildDistanceTagGroup ride
   fulfillment <- Common.mkFulfillment (Just driver) ride booking (Just vehicle) image (Just $ Tags.TG (distanceTagGroup <> arrivalTimeTagGroup))
-  fare <- realToFrac <$> ride.fare & fromMaybeM (InternalError "Ride fare is not present.")
-  let currency = "INR"
-      price =
-        RideCompletedOS.QuotePrice
-          { currency,
-            value = fare,
-            computed_value = fare
-          }
-      breakup =
-        mkBreakupList (RideCompletedOS.BreakupItemPrice currency . fromIntegral) RideCompletedOS.BreakupItem fareParams
-          & filter (Common.filterRequiredBreakups $ DFParams.getFareParametersType fareParams) -- TODO: Remove after roll out
+  quote <- Common.buildRideCompletedQuote ride fareParams
   return $
     OnStatus.OnStatusMessage
       { order =
@@ -102,24 +88,8 @@ buildOnStatusMessage (DStatus.RideCompletedBuildReq {newRideInfo, rideCompletedI
             RideCompletedOS.RideCompletedOrder
               { id = booking.id.getId,
                 state = RideCompletedOS.orderState,
-                quote =
-                  RideCompletedOS.RideCompletedQuote
-                    { price,
-                      breakup
-                    },
-                payment =
-                  Just
-                    RideCompletedOS.Payment
-                      { _type = maybe RideCompletedOS.ON_FULFILLMENT (Common.castDPaymentType . (.paymentType)) paymentMethodInfo,
-                        params =
-                          RideCompletedOS.PaymentParams
-                            { collected_by = maybe RideCompletedOS.BPP (Common.castDPaymentCollector . (.collectedBy)) paymentMethodInfo,
-                              instrument = Nothing,
-                              currency = "INR",
-                              amount = Nothing
-                            },
-                        uri = paymentUrl
-                      },
+                quote,
+                payment = Just $ Common.mkRideCompletedPayment paymentMethodInfo paymentUrl,
                 fulfillment = fulfillment
               }
       }

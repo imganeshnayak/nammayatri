@@ -12,22 +12,31 @@
  the GNU Affero General Public License along with this program. If not, see <https://www.gnu.org/licenses/>.
 -}
 
-module Beckn.ACL.Common.Fulfillment
+module Beckn.ACL.Common.Order
   ( mkFulfillment,
     buildDistanceTagGroup,
     mkArrivalTimeTagGroup,
+    buildRideCompletedQuote,
+    mkRideCompletedPayment,
   )
 where
 
+import qualified Beckn.ACL.Common as Common
+import qualified Beckn.Types.Core.Taxi.Common.BreakupItem as Breakup
 import qualified Beckn.Types.Core.Taxi.Common.FulfillmentInfo as RideFulfillment
+import qualified Beckn.Types.Core.Taxi.Common.Payment as Payment
+import qualified Beckn.Types.Core.Taxi.Common.RideCompletedQuote as Quote
 import qualified Beckn.Types.Core.Taxi.Common.Tags as Tags
 import qualified Domain.Types.Booking as DRB
+import qualified Domain.Types.FareParameters as DFParams
+import qualified Domain.Types.Merchant.MerchantPaymentMethod as DMPM
 import qualified Domain.Types.Person as SP
 import Domain.Types.Ride as DRide
 import qualified Domain.Types.Vehicle as SVeh
 import Kernel.Prelude
 import Kernel.Types.Common
 import Kernel.Utils.Common
+import qualified SharedLogic.FareCalculator as Fare
 import Tools.Error
 
 -- Identical for on_update and on_status
@@ -133,3 +142,39 @@ mkArrivalTimeTagGroup arrivalTime =
         list = [Tags.Tag (Just False) (Just "arrival_time") (Just "Chargeable Distance") (show <$> arrivalTime) | isJust arrivalTime]
       }
   ]
+
+currency :: Text
+currency = "INR"
+
+buildRideCompletedQuote :: MonadFlow m => DRide.Ride -> DFParams.FareParameters -> m Quote.RideCompletedQuote
+buildRideCompletedQuote ride fareParams = do
+  fare <- realToFrac <$> ride.fare & fromMaybeM (InternalError "Ride fare is not present.")
+  -- let currency = "INR"
+  let price =
+        Quote.QuotePrice
+          { currency,
+            value = fare,
+            computed_value = fare
+          }
+      breakup =
+        Fare.mkBreakupList (Breakup.BreakupItemPrice currency . fromIntegral) Breakup.BreakupItem fareParams
+          & filter (Common.filterRequiredBreakups $ DFParams.getFareParametersType fareParams) -- TODO: Remove after roll out
+  pure
+    Quote.RideCompletedQuote
+      { price,
+        breakup
+      }
+
+mkRideCompletedPayment :: Maybe DMPM.PaymentMethodInfo -> Maybe Text -> Payment.Payment
+mkRideCompletedPayment paymentMethodInfo paymentUrl = do
+  Payment.Payment
+    { _type = maybe Payment.ON_FULFILLMENT (Common.castDPaymentType . (.paymentType)) paymentMethodInfo,
+      params =
+        Payment.PaymentParams
+          { collected_by = maybe Payment.BPP (Common.castDPaymentCollector . (.collectedBy)) paymentMethodInfo,
+            instrument = Nothing,
+            currency,
+            amount = Nothing
+          },
+      uri = paymentUrl
+    }
