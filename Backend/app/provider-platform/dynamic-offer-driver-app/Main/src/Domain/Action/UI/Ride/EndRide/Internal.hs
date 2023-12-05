@@ -445,6 +445,8 @@ mkDriverFee now merchantId driverId rideFare govtCharges platformFee cgst sgst t
         feeWithoutDiscount = Nothing, -- Only for NY rn
         overlaySent = False,
         amountPaidByCoin = Nothing,
+        badDebtDeclarationDate = Nothing,
+        badDebtRecoveryDate = Nothing,
         ..
       }
   where

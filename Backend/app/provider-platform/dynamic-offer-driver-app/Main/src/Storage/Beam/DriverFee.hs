@@ -48,6 +48,8 @@ data DriverFeeT f = DriverFeeT
     schedulerTryCount :: B.C f Int,
     feeWithoutDiscount :: B.C f (Maybe HighPrecMoney),
     amountPaidByCoin :: B.C f (Maybe HighPrecMoney),
+    badDebtDeclarationDate :: B.C f (Maybe UTCTime),
+    badDebtRecoveryDate :: B.C f (Maybe UTCTime),
     createdAt :: B.C f UTCTime,
     updatedAt :: B.C f UTCTime,
     overlaySent :: B.C f Bool,

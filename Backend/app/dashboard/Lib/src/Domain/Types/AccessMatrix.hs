@@ -189,6 +189,7 @@ data UserActionType
   | SEND_DASHBOARD_MESSAGE
   | VERIFY_BOOKING_DETAILS
   | SEND_DUMMY_NOTIFICATION
+  | SCHEDULER_TRIGGER
   deriving (Show, Read, Generic, ToJSON, FromJSON, ToSchema)
 
 genSingletons [''UserActionType]

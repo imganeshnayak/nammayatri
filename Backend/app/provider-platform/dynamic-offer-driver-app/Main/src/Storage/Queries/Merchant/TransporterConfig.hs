@@ -131,6 +131,9 @@ instance FromTType' BeamTC.TransporterConfig TransporterConfig where
             cancellationTimeDiff = secondsToNominalDiffTime cancellationTimeDiff,
             coinExpireTime = secondsToNominalDiffTime coinExpireTime,
             cancellationDistDiff = cancellationDistDiff,
+            badDebtRescheduleTime = secondsToNominalDiffTime badDebtRescheduleTime,
+            badDebtSchedulerTime = secondsToNominalDiffTime badDebtSchedulerTime,
+            badDebtTimeThreshold = secondsToNominalDiffTime badDebtTimeThreshold,
             ..
           }
     where
@@ -222,10 +225,14 @@ instance ToTType' BeamTC.TransporterConfig TransporterConfig where
         BeamTC.driverSmsReceivingLimit = toJSON <$> driverSmsReceivingLimit,
         BeamTC.snapToRoadConfidenceThreshold = snapToRoadConfidenceThreshold,
         BeamTC.useWithSnapToRoadFallback = useWithSnapToRoadFallback,
-        BeamTC.createdAt = createdAt,
-        BeamTC.updatedAt = updatedAt,
+        BeamTC.badDebtRescheduleTime = nominalDiffTimeToSeconds badDebtRescheduleTime,
+        BeamTC.badDebtSchedulerTime = nominalDiffTimeToSeconds badDebtSchedulerTime,
+        BeamTC.badDebtBatchSize = badDebtBatchSize,
+        BeamTC.badDebtTimeThreshold = nominalDiffTimeToSeconds badDebtTimeThreshold,
         BeamTC.cancellationTimeDiff = nominalDiffTimeToSeconds cancellationTimeDiff,
         BeamTC.cancellationDistDiff = cancellationDistDiff,
         BeamTC.coinExpireTime = nominalDiffTimeToSeconds coinExpireTime,
-        BeamTC.considerSpecialZoneRidesForPlanCharges = considerSpecialZoneRidesForPlanCharges
+        BeamTC.considerSpecialZoneRidesForPlanCharges = considerSpecialZoneRidesForPlanCharges,
+        BeamTC.createdAt = createdAt,
+        BeamTC.updatedAt = updatedAt
       }
