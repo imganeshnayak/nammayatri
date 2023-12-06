@@ -49,7 +49,7 @@ track transporterId (SignatureAuthResult _ subscriber) req =
     dTrackReq <- ACL.buildTrackReq subscriber req
     let context = req.context
     dTrackRes <- DTrack.track transporterId dTrackReq
-    aclEndPointHashMap <- asks (.aclEndPointHashMap)
-    withCallback' withShortRetry dTrackRes.transporter Context.TRACK OnTrack.onTrackAPI context context.bap_uri aclEndPointHashMap $
+    internalEndPointMap <- asks (.internalEndPointMap)
+    withCallback' withShortRetry dTrackRes.transporter Context.TRACK OnTrack.onTrackAPI context context.bap_uri internalEndPointMap $
       -- there should be DOnTrack.onTrack, but it is empty anyway
       pure $ ACL.mkOnTrackMessage dTrackRes

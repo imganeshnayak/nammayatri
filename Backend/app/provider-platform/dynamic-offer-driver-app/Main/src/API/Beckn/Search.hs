@@ -57,9 +57,9 @@ search transporterId (SignatureAuthResult _ subscriber) (SignatureAuthResult _ g
           dSearchRes <- DSearch.handler merchant dSearchReq
           let context = req.context
           let callbackUrl = gateway.subscriber_url
-          aclEndPointHashMap <- asks (.aclEndPointHashMap)
+          internalEndPointMap <- asks (.internalEndPointMap)
           void $
-            CallBAP.withCallback dSearchRes.provider Context.SEARCH OnSearch.onSearchAPI context callbackUrl aclEndPointHashMap $ do
+            CallBAP.withCallback dSearchRes.provider Context.SEARCH OnSearch.onSearchAPI context callbackUrl internalEndPointMap $ do
               pure $ ACL.mkOnSearchMessage dSearchRes
     pure Ack
 

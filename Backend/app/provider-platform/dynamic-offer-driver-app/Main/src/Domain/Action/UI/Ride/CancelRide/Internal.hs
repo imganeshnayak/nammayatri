@@ -80,7 +80,7 @@ cancelRideImpl ::
     HasField "jobInfoMap" r (M.Map Text Bool),
     HasField "schedulerType" r SchedulerType,
     LT.HasLocationService m r,
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   Id DRide.Ride ->
   SBCR.BookingCancellationReason ->
@@ -171,7 +171,7 @@ repeatSearch ::
     HasShortDurationRetryCfg r c,
     CacheFlow m r,
     LT.HasLocationService m r,
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   DMerc.Merchant ->
   DFP.FullFarePolicy ->

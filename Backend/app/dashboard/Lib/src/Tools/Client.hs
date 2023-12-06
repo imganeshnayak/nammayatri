@@ -54,7 +54,7 @@ instance
   ( CoreMetrics m,
     HasFlowEnv m r '["dataServers" ::: [DSN.DataServer]],
     CacheFlow m r,
-    HasField "aclEndPointHashMap" r (HM.Map Text Text),
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl),
     ToJSON d,
     FromJSON d
   ) =>
@@ -62,9 +62,9 @@ instance
   where
   callServerAPI serverName mkAPIs descr f = do
     dataServer <- getDataServer serverName
-    aclEndPointHashMap <- asks (.aclEndPointHashMap)
+    internalEndPointMap <- asks (.internalEndPointMap)
     let driverOfferAPIs = mkAPIs dataServer.token
-    callApiUnwrappingApiError (identity @Error) Nothing Nothing (Just aclEndPointHashMap) dataServer.url (f driverOfferAPIs) descr (Proxy :: Proxy Raw)
+    callApiUnwrappingApiError (identity @Error) Nothing Nothing (Just internalEndPointMap) dataServer.url (f driverOfferAPIs) descr (Proxy :: Proxy Raw)
 
 instance
   ( CoreMetrics m,

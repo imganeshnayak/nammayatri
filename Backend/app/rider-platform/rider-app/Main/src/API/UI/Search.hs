@@ -134,7 +134,7 @@ oneWaySearch ::
     HasHttpClientOptions r c,
     HasShortDurationRetryCfg r c,
     HasFlowEnv m r ["searchRequestExpiry" ::: Maybe Seconds, "nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text),
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl),
     HasBAPMetrics m r,
     MonadProducer PublicTransportSearch m,
     EventStreamFlow m r
@@ -163,7 +163,7 @@ rentalSearch ::
     HasHttpClientOptions r c,
     HasShortDurationRetryCfg r c,
     HasFlowEnv m r ["searchRequestExpiry" ::: Maybe Seconds, "nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text),
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl),
     HasBAPMetrics m r
   ) =>
   Id Person.Person ->

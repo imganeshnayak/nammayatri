@@ -34,7 +34,7 @@ search ::
     CoreMetrics m,
     HasField "bapId" r Text,
     HasField "gatewayUrl" r BaseUrl,
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   BecknReq Search.SearchMessage ->
   m ()
@@ -49,7 +49,7 @@ callBecknAPIWithSignature ::
     IsBecknAPI api req res,
     SanitizedUrl api,
     HasField "bapId" r Text,
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   Text ->
   Proxy api ->
@@ -58,5 +58,5 @@ callBecknAPIWithSignature ::
   m ()
 callBecknAPIWithSignature a b c d = do
   bapId <- asks (.bapId)
-  aclEndPointHashMap <- asks (.aclEndPointHashMap)
-  void $ callBecknAPI (Just $ ET.ManagerSelector $ getHttpManagerKey bapId) Nothing a b c aclEndPointHashMap d
+  internalEndPointMap <- asks (.internalEndPointMap)
+  void $ callBecknAPI (Just $ ET.ManagerSelector $ getHttpManagerKey bapId) Nothing a b c internalEndPointMap d

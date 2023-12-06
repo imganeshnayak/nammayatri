@@ -60,12 +60,12 @@ feedback ::
   ( MonadFlow m,
     CoreMetrics m,
     CacheFlow m r,
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   Text ->
   BaseUrl ->
   FeedbackReq ->
   m APISuccess
 feedback apiKey internalUrl request = do
-  aclEndPointHashMap <- asks (.aclEndPointHashMap)
-  EC.callApiUnwrappingApiError (identity @Error) Nothing (Just "BAP_INTERNAL_API_ERROR") (Just aclEndPointHashMap) internalUrl (feedbackClient (Just apiKey) request) "FeedBack" feedbackApi
+  internalEndPointMap <- asks (.internalEndPointMap)
+  EC.callApiUnwrappingApiError (identity @Error) Nothing (Just "BAP_INTERNAL_API_ERROR") (Just internalEndPointMap) internalUrl (feedbackClient (Just apiKey) request) "FeedBack" feedbackApi

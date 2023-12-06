@@ -60,7 +60,7 @@ data AppCfg = AppCfg
     enableRedisLatencyLogging :: Bool,
     enablePrometheusMetricLogging :: Bool,
     cacheConfig :: CacheConfig,
-    aclEndPointMap :: M.Map Text Text
+    aclEndPointMap :: M.Map BaseUrl BaseUrl
   }
   deriving (Generic, FromDhall)
 
@@ -94,7 +94,7 @@ data AppEnv = AppEnv
     enableRedisLatencyLogging :: Bool,
     enablePrometheusMetricLogging :: Bool,
     cacheConfig :: CacheConfig,
-    aclEndPointHashMap :: HM.Map Text Text
+    internalEndPointMap :: HM.Map BaseUrl BaseUrl
   }
   deriving (Generic)
 
@@ -119,7 +119,8 @@ buildAppEnv authTokenCacheKeyPrefix AppCfg {..} = do
       then pure hedisNonCriticalEnv
       else connectHedisCluster hedisNonCriticalClusterCfg modifierFunc
   isShuttingDown <- mkShutdown
-  return $ AppEnv {aclEndPointHashMap = HM.fromList $ M.toList aclEndPointMap, ..}
+  let internalEndPointMap = HM.fromList $ M.toList aclEndPointMap
+  return $ AppEnv {..}
 
 releaseAppEnv :: AppEnv -> IO ()
 releaseAppEnv AppEnv {..} = do

@@ -100,7 +100,7 @@ handleRideTracking ::
     EsqDBFlow m r,
     Esq.EsqDBReplicaFlow m r,
     HasField "rideCfg" r RideConfig,
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   Id DP.Person ->
   Maybe Bool ->

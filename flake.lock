@@ -100,14 +100,17 @@
         ]
       },
       "locked": {
-        "lastModified": 1701255523,
-        "narHash": "sha256-nNy7yXcULxI9UzyP24bIaqp5vP4yBt8vm7ZKfcEgYPo=",
-        "path": "/Users/chakradhar.k/Projects/beckn-gateway",
-        "type": "path"
+        "lastModified": 1701678031,
+        "narHash": "sha256-g/CDuMZ5+blUbSFHiTJbvlhxtuXbBAHTK9fyoPrJlDc=",
+        "owner": "nammayatri",
+        "repo": "beckn-gateway",
+        "rev": "47ea193230d3e17c57cbb4cc6289b7163f0b3325",
+        "type": "github"
       },
       "original": {
-        "path": "/Users/chakradhar.k/Projects/beckn-gateway",
-        "type": "path"
+        "owner": "nammayatri",
+        "repo": "beckn-gateway",
+        "type": "github"
       }
     },
     "bytestring-lexing": {
@@ -2970,14 +2973,17 @@
         "prometheus-haskell": "prometheus-haskell_2"
       },
       "locked": {
-        "lastModified": 1701665821,
-        "narHash": "sha256-dTRBFY9PkO12kSDV1Mg91mBlxUEeeHWC/kv1XncXHXs=",
-        "path": "/Users/chakradhar.k/Projects/shared-kernel",
-        "type": "path"
+        "lastModified": 1701776242,
+        "narHash": "sha256-PSyoa4vgPGFsC1uzg9hWtWU0BulRwaaMEwz1j9Cp7HU=",
+        "owner": "nammayatri",
+        "repo": "shared-kernel",
+        "rev": "5785459408623f5624c38cbede99163e527eefaa",
+        "type": "github"
       },
       "original": {
-        "path": "/Users/chakradhar.k/Projects/shared-kernel",
-        "type": "path"
+        "owner": "nammayatri",
+        "repo": "shared-kernel",
+        "type": "github"
       }
     },
     "systems": {

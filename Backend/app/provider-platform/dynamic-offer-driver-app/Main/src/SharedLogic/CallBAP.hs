@@ -78,7 +78,7 @@ import Tools.Metrics (CoreMetrics)
 
 callOnSelect ::
   ( HasFlowEnv m r '["nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text),
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl),
     CacheFlow m r,
     CoreMetrics m,
     HasHttpClientOptions r c,
@@ -95,15 +95,15 @@ callOnSelect transporter searchRequest searchTry content = do
   let bppSubscriberId = getShortId $ transporter.subscriberId
       authKey = getHttpManagerKey bppSubscriberId
   bppUri <- buildBppUrl (transporter.id)
-  aclEndPointHashMap <- asks (.aclEndPointHashMap)
+  internalEndPointMap <- asks (.internalEndPointMap)
   let msgId = searchTry.estimateId.getId
   context <- buildTaxiContext Context.ON_SELECT msgId (Just searchRequest.transactionId) bapId bapUri (Just bppSubscriberId) (Just bppUri) (fromMaybe transporter.city searchRequest.bapCity) (fromMaybe Context.India searchRequest.bapCountry) False
   logDebug $ "on_select request bpp: " <> show content
-  void $ withShortRetry $ Beckn.callBecknAPI (Just $ ET.ManagerSelector authKey) Nothing (show Context.ON_SELECT) API.onSelectAPI bapUri aclEndPointHashMap (BecknCallbackReq context $ Right content)
+  void $ withShortRetry $ Beckn.callBecknAPI (Just $ ET.ManagerSelector authKey) Nothing (show Context.ON_SELECT) API.onSelectAPI bapUri internalEndPointMap (BecknCallbackReq context $ Right content)
 
 callOnUpdate ::
   ( HasFlowEnv m r '["nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text),
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl),
     CacheFlow m r,
     CoreMetrics m,
     HasHttpClientOptions r c
@@ -121,14 +121,14 @@ callOnUpdate transporter bapId bapUri bapCity bapCountry transactionId content r
   let bppSubscriberId = getShortId $ transporter.subscriberId
       authKey = getHttpManagerKey bppSubscriberId
   bppUri <- buildBppUrl (transporter.id)
-  aclEndPointHashMap <- asks (.aclEndPointHashMap)
+  internalEndPointMap <- asks (.internalEndPointMap)
   msgId <- generateGUID
   context <- buildTaxiContext Context.ON_UPDATE msgId (Just transactionId) bapId bapUri (Just bppSubscriberId) (Just bppUri) (fromMaybe transporter.city bapCity) (fromMaybe Context.India bapCountry) False
-  void $ withRetryConfig retryConfig $ Beckn.callBecknAPI (Just $ ET.ManagerSelector authKey) Nothing (show Context.ON_UPDATE) API.onUpdateAPI bapUri aclEndPointHashMap (BecknCallbackReq context $ Right content)
+  void $ withRetryConfig retryConfig $ Beckn.callBecknAPI (Just $ ET.ManagerSelector authKey) Nothing (show Context.ON_UPDATE) API.onUpdateAPI bapUri internalEndPointMap (BecknCallbackReq context $ Right content)
 
 callOnConfirm ::
   ( HasFlowEnv m r '["nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text),
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl),
     CacheFlow m r,
     HasHttpClientOptions r c,
     HasShortDurationRetryCfg r c,
@@ -147,9 +147,9 @@ callOnConfirm transporter contextFromConfirm content = do
       bppSubscriberId = getShortId $ transporter.subscriberId
       authKey = getHttpManagerKey bppSubscriberId
   bppUri <- buildBppUrl transporter.id
-  aclEndPointHashMap <- asks (.aclEndPointHashMap)
+  internalEndPointMap <- asks (.internalEndPointMap)
   context_ <- buildTaxiContext Context.ON_CONFIRM msgId contextFromConfirm.transaction_id bapId bapUri (Just bppSubscriberId) (Just bppUri) city country False
-  void $ withShortRetry $ Beckn.callBecknAPI (Just $ ET.ManagerSelector authKey) Nothing (show Context.ON_CONFIRM) API.onConfirmAPI bapUri aclEndPointHashMap (BecknCallbackReq context_ $ Right content)
+  void $ withShortRetry $ Beckn.callBecknAPI (Just $ ET.ManagerSelector authKey) Nothing (show Context.ON_CONFIRM) API.onConfirmAPI bapUri internalEndPointMap (BecknCallbackReq context_ $ Right content)
 
 buildBppUrl ::
   ( HasFlowEnv m r '["nwAddress" ::: BaseUrl]
@@ -169,7 +169,7 @@ sendRideAssignedUpdateToBAP ::
     HasField "modelNamesHashMap" r (HM.Map Text Text),
     HasFlowEnv m r '["nwAddress" ::: BaseUrl],
     HasField "s3Env" r (S3.S3Env m),
-    HasField "aclEndPointHashMap" r (HM.Map Text Text),
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl),
     MonadReader r m,
     MonadFlow m,
     MonadTime m,
@@ -242,7 +242,7 @@ sendRideStartedUpdateToBAP ::
     HasHttpClientOptions r c,
     HasLongDurationRetryCfg r c,
     HasFlowEnv m r '["nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   DRB.Booking ->
   SRide.Ride ->
@@ -267,7 +267,7 @@ sendRideCompletedUpdateToBAP ::
     HasHttpClientOptions r c,
     HasLongDurationRetryCfg r c,
     HasFlowEnv m r '["nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   DRB.Booking ->
   SRide.Ride ->
@@ -292,7 +292,7 @@ sendBookingCancelledUpdateToBAP ::
   ( EsqDBFlow m r,
     EncFlow m r,
     HasFlowEnv m r '["nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text),
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl),
     CacheFlow m r,
     HasHttpClientOptions r c,
     HasLongDurationRetryCfg r c,
@@ -312,7 +312,7 @@ sendBookingCancelledUpdateToBAP booking transporter cancellationSource = do
 
 sendDriverOffer ::
   ( HasFlowEnv m r '["nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text),
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl),
     CacheFlow m r,
     HasHttpClientOptions r c,
     HasShortDurationRetryCfg r c,
@@ -362,7 +362,7 @@ sendDriverArrivalUpdateToBAP ::
     HasHttpClientOptions r c,
     HasShortDurationRetryCfg r c,
     HasFlowEnv m r '["nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   DRB.Booking ->
   SRide.Ride ->
@@ -388,7 +388,7 @@ sendNewMessageToBAP ::
     HasHttpClientOptions r c,
     HasShortDurationRetryCfg r c,
     HasFlowEnv m r '["nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   DRB.Booking ->
   SRide.Ride ->
@@ -412,7 +412,7 @@ sendEstimateRepetitionUpdateToBAP ::
     HasHttpClientOptions r c,
     HasShortDurationRetryCfg r c,
     HasFlowEnv m r '["nwAddress" ::: BaseUrl],
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   DRB.Booking ->
   SRide.Ride ->

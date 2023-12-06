@@ -36,7 +36,7 @@ linkReferee ::
   ( MonadFlow m,
     CoreMetrics m,
     CacheFlow m r,
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   Text ->
   BaseUrl ->
@@ -46,8 +46,8 @@ linkReferee ::
   Text ->
   m APISuccess
 linkReferee apiKey internalUrl merchantId referralCode phoneNumber countryCode = do
-  aclEndPointHashMap <- asks (.aclEndPointHashMap)
-  EC.callApiUnwrappingApiError (identity @Error) Nothing (Just "BPP_INTERNAL_API_ERROR") (Just aclEndPointHashMap) internalUrl (linkRefereeClient merchantId (Just apiKey) (RefereeLinkInfoReq referralCode phoneNumber countryCode)) "LinkReferee" likeRefereeApi
+  internalEndPointMap <- asks (.internalEndPointMap)
+  EC.callApiUnwrappingApiError (identity @Error) Nothing (Just "BPP_INTERNAL_API_ERROR") (Just internalEndPointMap) internalUrl (linkRefereeClient merchantId (Just apiKey) (RefereeLinkInfoReq referralCode phoneNumber countryCode)) "LinkReferee" likeRefereeApi
 
 type FeedbackFormAPI =
   "internal"
@@ -68,11 +68,11 @@ feedbackForm ::
   ( MonadFlow m,
     CoreMetrics m,
     CacheFlow m r,
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   BaseUrl ->
   FeedbackFormReq ->
   m APISuccess
 feedbackForm internalUrl request = do
-  aclEndPointHashMap <- asks (.aclEndPointHashMap)
-  EC.callApiUnwrappingApiError (identity @Error) Nothing (Just "BPP_INTERNAL_API_ERROR") (Just aclEndPointHashMap) internalUrl (feedbackFormClient request) "FeedbackForm" feedbackFormApi
+  internalEndPointMap <- asks (.internalEndPointMap)
+  EC.callApiUnwrappingApiError (identity @Error) Nothing (Just "BPP_INTERNAL_API_ERROR") (Just internalEndPointMap) internalUrl (feedbackFormClient request) "FeedbackForm" feedbackFormApi

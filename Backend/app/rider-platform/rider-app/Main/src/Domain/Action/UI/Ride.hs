@@ -67,7 +67,7 @@ getDriverLoc ::
     EsqDBFlow m r,
     EsqDBReplicaFlow m r,
     HasField "rideCfg" r RideConfig,
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   Id SRide.Ride ->
   Id SPerson.Person ->
@@ -113,7 +113,7 @@ getRideStatus ::
     EsqDBFlow m r,
     EsqDBReplicaFlow m r,
     HasField "rideCfg" r RideConfig,
-    HasField "aclEndPointHashMap" r (HM.Map Text Text)
+    HasField "internalEndPointMap" r (HM.Map BaseUrl BaseUrl)
   ) =>
   Id SRide.Ride ->
   Id SPerson.Person ->
