@@ -70,5 +70,6 @@ dummyCityConfig = {
                     cityLat : 0.0,
                     cityLong : 0.0,
                     supportNumber : "",
-                    languageKey : ""
+                    languageKey : "",
+                    uploadRCandDL : true
                   }
