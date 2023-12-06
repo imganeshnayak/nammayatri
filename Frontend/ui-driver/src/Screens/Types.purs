@@ -1819,7 +1819,7 @@ type DueItem = {
   autoPayStage :: Maybe AutopayPaymentStage,
   isSplit :: Boolean,
   specialZoneRideCount :: Maybe Int,
-  specialZoneAmount :: Maybe Number
+  totalSpecialZoneCharges :: Maybe Number
 }
 
 type KioskLocation = {
