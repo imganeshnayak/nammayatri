@@ -29,7 +29,7 @@ import Control.Monad.Except (runExceptT)
 import Control.Monad.Except.Trans (lift)
 import Control.Transformers.Back.Trans (runBackT)
 import Data.Array (any, concat, cons, elem, elemIndex, filter, find, foldl, head, last, length, mapWithIndex, null, snoc, sortBy, (!!))
-import Data.Either (Either(..))
+import Data.Either (Either(..), either)
 import Data.Function.Uncurried (runFn1)
 import Data.Functor (map)
 import Data.Int (ceil, fromString, round, toNumber)
@@ -70,7 +70,7 @@ import Language.Strings (getString)
 import Language.Types (STR(..))
 import MerchantConfig.DefaultConfig as DC
 import MerchantConfig.Utils (getMerchant, Merchant(..), getValueFromConfig)
-import Prelude (Unit, bind, discard, pure, unit, unless, negate, void, when, map, otherwise, ($), (==), (/=), (&&), (||), (/), when, (+), show, (>), not, (<), (*), (-), (<=), (<$>), (>=), ($>), (<<<))
+import Prelude (Unit, bind, discard, pure, unit, unless, negate, void, when, map, otherwise, ($), (==), (/=), (&&), (||), (/), when, (+), show, (>), not, (<), (*), (-), (<=), (<$>), (>=), ($>), (<<<), const)
 import Presto.Core.Types.Language.Flow (delay, setLogField, getLogFields, doAff, fork)
 import PrestoDOM (initUI)
 import Resource.Constants (decodeAddress)
@@ -877,7 +877,7 @@ driverProfileFlow = do
   logField_ <- lift $ lift $ getLogFields
   _ <- pure $ delay $ Milliseconds 1.0
   _ <- pure $ printLog "Registration token" (getValueToLocalStore REGISTERATION_TOKEN)
-  modifyScreenState $ DriverProfileScreenStateType (\driverProfileScreen -> driverProfileScreen{ data{config = config},props{ showBookingOptionForTaxi = config.profile.bookingOptionMenuForTaxi } })
+  modifyScreenState $ DriverProfileScreenStateType (\driverProfileScreen -> driverProfileScreen{ data{config = config},props{ showBookingOptionForTaxi = config.profile.bookingOptionMenuForTaxi, isRideActive = getValueToLocalStore IS_RIDE_ACTIVE == "true"} })
   action <- UI.driverProfileScreen
   case action of
     GO_TO_HOME_FROM_PROFILE -> homeScreenFlow
@@ -1851,17 +1851,17 @@ homeScreenFlow = do
       void $ lift $ lift $ loaderText (getString PLEASE_WAIT) if status == Online then (getString SETTING_YOU_ONLINE) else if status == Silent then (getString SETTING_YOU_SILENT) else (getString SETTING_YOU_OFFLINE)
       void $ lift $ lift $ toggleLoader true
       let label = if status == Online then "ny_driver_online_mode" else if status == Silent then "ny_driver_silent_mode" else "ny_driver_offline_mode"
-      let currentTime = (convertUTCtoISC (getCurrentUTC "") "HH:mm:ss")
+          currentTime = (convertUTCtoISC (getCurrentUTC "") "HH:mm:ss")
+          isGotoEnabled = state.data.driverGotoState.gotoEnabledForMerchant && state.data.config.gotoConfig.enableGoto
       liftFlowBT $ logEventWithParams logField_ label "Timestamp" currentTime
       changeDriverStatus status
       gs <- getState
+      when (isGotoEnabled && (status == Online || status == Silent)) $ do
+        getDriverInfoApiResp <- lift $ lift $ Remote.getDriverInfoApi (GetDriverInfoReq{})
+        either (const (pure unit)) (\resp -> modifyScreenState $ GlobalPropsType $ \globalProps -> globalProps{driverInformation = Just resp}) getDriverInfoApiResp
+        updateDriverDataToStates
       (GetDriverInfoResp getDriverInfoRes) <- getDriverInfoDataFromCache gs
-      let (API.DriverGoHomeInfo driverGoHomeInfo) = getDriverInfoRes.driverGoHomeInfo
-      modifyScreenState $ HomeScreenStateType (\homeScreen -> homeScreen {props {showOffer = status == Online && state.props.driverStatusSet == Offline && getDriverInfoRes.autoPayStatus == Nothing }, data {
-        driverGotoState {
-          isGotoEnabled = driverGoHomeInfo.status == Just "ACTIVE"
-        }
-      }})
+      modifyScreenState $ HomeScreenStateType (\homeScreen -> homeScreen {props {showOffer = status == Online && state.props.driverStatusSet == Offline && getDriverInfoRes.autoPayStatus == Nothing }})
       homeScreenFlow
     GO_TO_HELP_AND_SUPPORT_SCREEN -> do
       let language = ( case getValueToLocalStore LANGUAGE_KEY of
@@ -2194,15 +2194,17 @@ homeScreenFlow = do
           updateDriverDataToStates
         Left errorPayload -> pure $ toast $ Remote.getCorrespondingErrorMessage errorPayload
       homeScreenFlow
-    GOTO_LOCATION_FLOW state -> do
+    GOTO_LOCATION_FLOW state addLocation -> do
       let (GlobalState defaultEpassState') = defaultGlobalState
-      modifyScreenState $ DriverSavedLocationScreenStateType (\_ -> defaultEpassState'.driverSavedLocationScreen { props { viewType = ST.SearchLocation, gotBackToHomeScreen = true}, data {savedLocationsArray = []}} )
+      if addLocation then
+        modifyScreenState $ DriverSavedLocationScreenStateType (\_ -> defaultEpassState'.driverSavedLocationScreen { props { viewType = ST.SearchLocation, gotBackToHomeScreen = true}, data {savedLocationsArray = state.data.driverGotoState.savedLocationsArray}} )
+      else modifyScreenState $ DriverSavedLocationScreenStateType (\_ -> defaultEpassState'.driverSavedLocationScreen)
       goToLocationFlow
     REFRESH_GOTO state -> do
       let defState = HomeScreenData.initData
       modifyScreenState $ HomeScreenStateType (\_ -> state { data { driverGotoState = defState.data.driverGotoState}})
       driverInfoResp <- Remote.getDriverInfoBT (GetDriverInfoReq { })
-      modifyScreenState $ GlobalPropsType (\globalProps -> globalProps {driverInformation = Just driverInfoResp})
+      modifyScreenState $ GlobalPropsType (\globalProps -> globalProps {driverInformation = Just driverInfoResp, gotoPopupType = ST.NO_POPUP_VIEW})
       updateDriverDataToStates
       homeScreenFlow
   homeScreenFlow

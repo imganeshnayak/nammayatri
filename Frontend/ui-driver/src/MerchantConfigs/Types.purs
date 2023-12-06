@@ -28,7 +28,8 @@ type AppConfig =
     enableMockLocation :: Boolean,
     flowConfig :: FlowConfig,
     permissions :: PermissionsConfig,
-    homeScreen :: HomeScreenConfig
+    homeScreen :: HomeScreenConfig,
+    liveStatsDashboard :: LiveStatsDashboard
   } 
 
 type PurpleRideConfig = {
@@ -108,7 +109,8 @@ type RideCompletedCardConfig = {
 }
 
 type ProfileConfig = {
-  bookingOptionMenuForTaxi :: Boolean
+  bookingOptionMenuForTaxi :: Boolean,
+  showBookingOption :: Boolean
 }
 
 type GotoConfig = {
@@ -156,4 +158,9 @@ type PermissionsConfig = {
 type HomeScreenConfig = {
   specialRideOtpView :: Boolean,
   showGenderBanner :: Boolean
+}
+
+type LiveStatsDashboard = {
+  show :: Boolean,
+  url :: String
 }

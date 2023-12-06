@@ -58,6 +58,7 @@ initData = {
     isRCActive : false,
     rcDataArray : [],
     inactiveRCArray : [],
+    goHomeActive : false,
     activeRCData : { rcStatus  : true
                   , rcDetails : { certificateNumber   : ""
                                 , vehicleColor : Nothing
@@ -120,7 +121,8 @@ initData = {
     showBookingOptionForTaxi : false,
     upiQrView : false,
     paymentInfoView : false,
-    enableGoto : false
+    enableGoto : false,
+    isRideActive : false
    }
 }
 

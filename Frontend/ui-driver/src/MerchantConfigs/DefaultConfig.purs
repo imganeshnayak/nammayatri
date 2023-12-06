@@ -77,7 +77,8 @@ config =
       genericAccessibilityVideo : ""
   }
   , profile : { 
-    bookingOptionMenuForTaxi : false
+    bookingOptionMenuForTaxi : false,
+    showBookingOption : true
   }
   , waitTimeConfig : {
     enableWaitTime : true,
@@ -207,4 +208,8 @@ config =
     specialRideOtpView : false,
     showGenderBanner : true
   }
+  , liveStatsDashboard : {
+      show : false,
+      url : ""
+    }
 }

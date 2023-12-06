@@ -41,7 +41,6 @@ import JBridge (firebaseLogEvent, goBackPrevWebPage, toast, showDialer, hideKeyb
 import Language.Strings (getString)
 import Language.Types as STR
 import Log (trackAppActionClick, trackAppEndScreen, trackAppScreenRender, trackAppBackPress, trackAppTextInput, trackAppScreenEvent)
-import MerchantConfig.Utils (getMerchant, Merchant(..))
 import Prelude (class Show, pure, unit, ($), discard, bind, (==), map, not, (/=), (<>), void, (>=), (>), (-), (+), (<=), (||), (&&))
 import PrestoDOM (Eval, continue, continueWithCmd, exit)
 import PrestoDOM.Types.Core (class Loggable, toPropValue)
@@ -303,7 +302,7 @@ eval (OptionClick optionIndex) state = do
     DRIVER_PRESONAL_DETAILS -> exit $ GoToDriverDetailsScreen state
     DRIVER_VEHICLE_DETAILS -> exit $ GoToVehicleDetailsScreen state
     DRIVER_BANK_DETAILS -> continue state
-    GO_TO_LOCATIONS -> exit $ GoToDriverSavedLocationScreen state  
+    GO_TO_LOCATIONS -> handleGotoClick state
     DRIVER_BOOKING_OPTIONS -> exit $ GoToBookingOptions state
     MULTI_LANGUAGE -> exit $ GoToSelectLanguageScreen state
     HELP_AND_FAQS -> exit $ GoToHelpAndSupportScreen state
@@ -356,9 +355,10 @@ eval (GetDriverInfoResponse (SA.GetDriverInfoResp driverProfileResp)) state = do
                                       driverAlternateNumber = driverProfileResp.alternateNumber ,
                                       driverGender = driverProfileResp.gender,
                                       payerVpa = fromMaybe "" driverProfileResp.payerVpa,
-                                      autoPayStatus = getAutopayStatus driverProfileResp.autoPayStatus
+                                      autoPayStatus = getAutopayStatus driverProfileResp.autoPayStatus,
+                                      goHomeActive = driverGoHomeInfo.status == Just "ACTIVE"
                                       },
-                    props { enableGoto = driverProfileResp.isGoHomeEnabled && driverGoHomeInfo.status /= Just "ACTIVE" && state.data.config.gotoConfig.enableGoto }}
+                    props { enableGoto = driverProfileResp.isGoHomeEnabled && state.data.config.gotoConfig.enableGoto}}
 
 eval (GetRcsDataResponse  (SA.GetAllRcDataResp rcDataArray)) state = do
   let rctransformedData = makeRcsTransformData rcDataArray
@@ -625,15 +625,13 @@ makeRcsTransformData (listRes) = map (\ (SA.GetAllRcDataRecords rc)-> {
 
 optionList :: DriverProfileScreenState -> Array Listtype
 optionList state =
-    (if state.props.enableGoto && (all ( _ == false )[isLocalStageOn ST.RideAccepted, isLocalStageOn ST.RideStarted, isLocalStageOn ST.ChatWithCustomer]) then [{menuOptions: GO_TO_LOCATIONS , icon:"ny_ic_loc_grey,https://assets.juspay.in/nammayatri/images/driver/ny_ic_loc_grey.png"}] else []) <>
-    (if (getMerchant FunctionCall /= NAMMAYATRI)  then [{menuOptions: DRIVER_BOOKING_OPTIONS , icon:"ic_booking_options,https://assets.juspay.in/nammayatri/images/driver/ic_booking_options.png"}] else []) <>
     [
+      {menuOptions: GO_TO_LOCATIONS , icon:"ny_ic_loc_grey,https://assets.juspay.in/nammayatri/images/driver/ny_ic_loc_grey.png"},
+      {menuOptions: DRIVER_BOOKING_OPTIONS , icon:"ic_booking_options,https://assets.juspay.in/nammayatri/images/driver/ic_booking_options.png"},
       {menuOptions: APP_INFO_SETTINGS , icon:"ny_ic_app_info,https://assets.juspay.in/nammayatri/images/driver/ny_ic_app_info.png"},
       {menuOptions: MULTI_LANGUAGE , icon:"ny_ic_language,https://assets.juspay.in/nammayatri/images/driver/ny_ic_language.png"},
-      {menuOptions: HELP_AND_FAQS , icon:"ny_ic_head_phones,https://assets.juspay.in/nammayatri/images/driver/ny_ic_head_phones.png"}
-    ] 
-    <> (if (getMerchant FunctionCall == NAMMAYATRI) then [{menuOptions: LIVE_STATS_DASHBOARD , icon:"ic_graph_black,https://assets.juspay.in/nammayatri/images/common/ic_graph_black.png"}] else []) <>
-    [
+      {menuOptions: HELP_AND_FAQS , icon:"ny_ic_head_phones,https://assets.juspay.in/nammayatri/images/driver/ny_ic_head_phones.png"},
+      {menuOptions: LIVE_STATS_DASHBOARD , icon:"ic_graph_black,https://assets.juspay.in/nammayatri/images/common/ic_graph_black.png"},
       {menuOptions: ABOUT_APP , icon:"ny_ic_about,https://assets.juspay.in/nammayatri/images/driver/ny_ic_about.png"},
       {menuOptions: DRIVER_LOGOUT , icon:"ny_ic_logout_grey,https://assets.juspay.in/nammayatri/images/driver/ny_ic_logout_grey.png"}
     ]
@@ -652,3 +650,11 @@ shareImageMessageConfig _ = {
   logoId : "",
   isReferral : false
   }
+
+handleGotoClick :: DriverProfileScreenState -> Eval Action ScreenOutput DriverProfileScreenState
+handleGotoClick state =
+  if (state.data.goHomeActive || state.props.isRideActive) then do
+    void $ pure $ toast $ getString if state.data.goHomeActive then STR.LOCATION_CANNOT_BE_ADDED_WHILE_GOTO_ACTIVE else STR.LOCATION_CANNOT_BE_ADDED_WHILE_ON_RIDE
+    continue state
+  else
+    exit $ GoToDriverSavedLocationScreen state
