@@ -4,6 +4,8 @@ const { JBridge, Android } = window;
 
 const countDownTimers = {};
 
+const idMap = {};
+
 export const getOs = function () {
   if (window.__OS) {
     return window.__OS;
@@ -458,4 +460,22 @@ export const getImageUrl = function (url) {
   }catch (e) {
     console.log("error in getImageUrl " + e);
   }
+};
+
+function getRandom(max) {
+  return Math.floor(Math.random() * max) + 1; 
+}
+
+export const updateIdMap = function (key) {
+  idMap[key] = getRandom(10000);
+  return idMap[key];
+};
+
+export const getValueFromIdMap = function (key) {
+  let val = idMap[key]; 
+  if (!val) {
+    idMap[key] = getRandom(10000);
+    val = idMap[key];
+  }
+  return val;
 };
