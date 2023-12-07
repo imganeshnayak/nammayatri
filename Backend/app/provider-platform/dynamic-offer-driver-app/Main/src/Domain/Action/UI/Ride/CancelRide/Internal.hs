@@ -206,7 +206,7 @@ repeatSearch merchant farePolicy searchReq searchTry booking ride cancellationSo
           }
     _ -> return ()
 
-  BP.sendEstimateRepetitionUpdateToBAP booking ride searchTry.estimateId cancellationSource
+  BP.sendEstimateRepetitionToBAP booking ride searchTry.estimateId cancellationSource
   where
     buildSearchTry ::
       ( MonadTime m,
