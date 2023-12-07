@@ -43,7 +43,9 @@ import qualified Kernel.Storage.Hedis as Hedis
 import qualified Kernel.Storage.Hedis as Redis
 import Kernel.Tools.Metrics.CoreMetrics as Metrics
 import Kernel.Types.Common
+import Kernel.Types.Error (GenericError (InternalError))
 import Kernel.Types.Id (Id)
+import Kernel.Utils.CalculateDistance (everySnippetIs)
 import Kernel.Utils.Common
 
 data RideInterpolationHandler person m = RideInterpolationHandler
@@ -169,7 +171,8 @@ mkRideInterpolationHandler ::
     HasCallStack,
     Metrics.CoreMetrics m,
     EncFlow m r,
-    HasFlowEnv m r '["snapToRoadSnippetThreshold" ::: HighPrecMeters]
+    HasFlowEnv m r '["snapToRoadSnippetThreshold" ::: HighPrecMeters],
+    HasFlowEnv m r '["droppedPointsThreshold" ::: HighPrecMeters]
   ) =>
   Bool ->
   (Id person -> HighPrecMeters -> Int -> Int -> m ()) ->
@@ -253,13 +256,16 @@ interpolatePointsAndCalculateDistanceImplementation ::
   ( HasCallStack,
     EncFlow m r,
     Metrics.CoreMetrics m,
-    HasFlowEnv m r '["snapToRoadSnippetThreshold" ::: HighPrecMeters]
+    HasFlowEnv m r '["snapToRoadSnippetThreshold" ::: HighPrecMeters],
+    HasFlowEnv m r '["droppedPointsThreshold" ::: HighPrecMeters]
   ) =>
   Bool ->
   (Maps.SnapToRoadReq -> m (Maps.MapsService, Maps.SnapToRoadResp)) ->
   [LatLong] ->
   m (HighPrecMeters, [LatLong], Maybe Maps.MapsService)
 interpolatePointsAndCalculateDistanceImplementation isEndRide snapToRoadCall wps = do
+  droppedPointsThreshold <- asks (.droppedPointsThreshold)
+  unless (everySnippetIs (< droppedPointsThreshold) wps) $ throwError (InternalError "dropped points threshold exceeded")
   if isEndRide && isAllPointsEqual wps
     then pure (0, take 1 wps, Nothing)
     else do

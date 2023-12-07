@@ -264,6 +264,7 @@ in  { esqDBCfg
     , broadcastMessageTopic = "broadcast-messages"
     , kafkaProducerCfg
     , snapToRoadSnippetThreshold = +300
+    , droppedPointsThreshold = +1000
     , minTripDistanceForReferralCfg = Some +1000
     , maxShards = +5
     , enableRedisLatencyLogging = False
