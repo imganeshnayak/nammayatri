@@ -82,6 +82,7 @@ import Font.Style (Style(..))
 import Services.API as API
 import Data.Lens ((^.))
 import Accessor (_fareBreakup, _description)
+import Engineering.Helpers.Utils as EHU
 
 shareAppConfig :: ST.HomeScreenState -> PopUpModal.Config
 shareAppConfig state = let
@@ -860,7 +861,7 @@ driverInfoTransformer state =
   let cardState = state.data.driverInfoCardState
   in
     { otp : cardState.otp
-    , driverName : cardState.driverName
+    , driverName : EHU.capitalizeFirstChar cardState.driverName
     , eta : cardState.eta
     , vehicleDetails : cardState.vehicleDetails
     , registrationNumber : cardState.registrationNumber
