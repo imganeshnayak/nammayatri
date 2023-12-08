@@ -49,6 +49,9 @@ window.getMerchantConfig = function () {
     "showCorporateAddress" : false,
     "imageUploadOptional" : true,
     "clientName" : "Yatri Sathi",
+    "features" : {
+      "enableSuggestions" : false,
+     },
     "languageList": [{
       "name": "English",
       "value": "EN_US",
