@@ -887,7 +887,7 @@ placeClosedToday mbPlaceInfo dateOfVisit = do
         case pInfo.closeTimings of
           Nothing -> false
           Just closeTime -> do
-            if currentTime <= closeTime then false else true
+            if currentTime <= (convertUTCTimeToISTTimeinHHMMSS closeTime) then false else true
       else false
 
 individualTicketBHView :: forall w. (Action -> Effect Unit) -> ST.TicketBookingScreenState -> Maybe ST.TicketBusinessHoursOptionData -> ST.Ticket -> PrestoDOM (Effect Unit) w
