@@ -472,4 +472,3 @@ export const getPixels = function (){
     return window.JBridge.getPixels();
   }
 }
-

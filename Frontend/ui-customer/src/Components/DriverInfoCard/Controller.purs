@@ -18,8 +18,8 @@ module Components.DriverInfoCard.Controller where
 import Components.MessagingView as MessagingView
 import Components.PrimaryButton as PrimaryButtonController
 import Components.SourceToDestination as SourceToDestinationController
-import Screens.Types(Stage, ZoneType(..), SheetState(..), SearchResultType)
-import Data.Maybe(Maybe)
+import Screens.Types(Stage, ZoneType(..), SearchResultType, DriverInfoCardState, RideDetails)
+import Data.Maybe(Maybe(..))
 import MerchantConfig.Types
 
 data Action = NoAction
@@ -88,3 +88,15 @@ type DriverInfoCardData =
   , defaultPeekHeight :: Int
   , bottomSheetState :: SheetState
   }
+dummyRideDetails :: RideDetails
+dummyRideDetails = {
+    bppRideId : ""
+  , vehicleDetails : ""
+  , registrationNumber : ""
+  , rating : 0.0
+  , rideId : ""
+  , driverName : ""
+  , otp : ""
+  , driverNumber : Nothing
+  , vehicleVariant : ""
+}

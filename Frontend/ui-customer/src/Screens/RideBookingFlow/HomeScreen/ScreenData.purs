@@ -20,7 +20,7 @@ import Components.LocationListItem.Controller (locationListStateObj)
 import Components.SettingSideBar.Controller (SettingSideBarState, Status(..))
 import Components.ChooseVehicle.Controller (SearchType(..)) as CV
 import Data.Maybe (Maybe(..))
-import Screens.Types (Contact, DriverInfoCard, HomeScreenState, LocationListItemState, PopupType(..), RatingCard(..), SearchLocationModelType(..), Stage(..), Address, EmergencyHelpModelState,Location, ZoneType(..), SpecialTags, TipViewStage(..), SearchResultType(..), SheetState(..), Trip(..))
+import Screens.Types (Contact, DriverInfoCardData, HomeScreenState, LocationListItemState, PopupType(..), RatingCard(..), SearchLocationModelType(..), Stage(..), Address, EmergencyHelpModelState,Location, ZoneType(..), SpecialTags, TipViewStage(..), SearchResultType(..), SheetState(..), Trip(..))
 import Services.API (DriverOfferAPIEntity(..), QuoteAPIDetails(..), QuoteAPIEntity(..), PlaceName(..), LatLong(..), SpecialLocation(..), QuoteAPIContents(..), RideBookingRes(..), RideBookingAPIDetails(..), RideBookingDetails(..), FareRange(..), FareBreakupAPIEntity(..))
 import Prelude (($) ,negate)
 import Data.Array (head)
@@ -139,6 +139,11 @@ initData = {
     , infoCardPeekHeight : 0
     , peekHeight : 0
     , rideHistoryTrip : Nothing
+    , initDistance : Nothing
+    , expoCounters : {
+      rideListCounter : 0
+    , exponentialCounter : 0
+    }
     },
     props: {
       rideRequestFlow : false
@@ -174,7 +179,6 @@ initData = {
     , isPopUp : NoPopUp
     , forFirst : true
     , callbackInitiated : false
-    , isLocationTracking : false
     , isInApp : true
     , locateOnMap : false
     , sourceSelectedOnMap : false
@@ -333,21 +337,11 @@ dummyPreviousRiderating = {
 }
 
 
-dummyDriverInfo :: DriverInfoCard
+dummyDriverInfo :: DriverInfoCardData
 dummyDriverInfo =
-  { otp : ""
-  , driverName : ""
-  , eta : Nothing
-  , vehicleDetails : ""
-  , currentSearchResultType : ESTIMATES
-  , registrationNumber : ""
-  , rating : 0.0
-  , startedAt : ""
-  , endedAt : ""
-  , source : ""
-  , destination : ""
-  , rideId : ""
-  , price : 0
+  { eta : 0
+  , bookingDetails : {
+    price : 0
   , sourceLat : 0.0
   , sourceLng : 0.0
   , destinationLat : 0.0
@@ -355,19 +349,25 @@ dummyDriverInfo =
   , driverLat : 0.0
   , driverLng : 0.0
   , distance : 0
-  , waitingTime : "--"
-  , driverArrived : false
   , estimatedDistance : ""
-  , driverArrivalTime : 0
-  , bppRideId : ""
-  , driverNumber : Nothing
+  , bookingCreatedAt : ""
+  , source : ""
+  , destination : ""
+  , startedAt : ""
+  , endedAt : ""
+  , isSpecialZone : false
+  , specialZoneOTP : Nothing
   , merchantExoPhone : ""
-  , createdAt : ""
-  , initDistance : Nothing
-  , config : DC.config
-  , vehicleVariant : ""
   , sourceAddress : dummyAddress
   , destinationAddress : dummyAddress
+  }
+  , rideDetails : Nothing
+  , waitingTime : "--"
+  , driverArrived : false
+  , config : DC.config
+  , isLocationTracking : false
+  , estimatedDropTime : ""
+  , driverArrivalTime : 0
   }
 
 dummySettingBar :: SettingSideBarState

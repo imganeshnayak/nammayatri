@@ -231,4 +231,8 @@ config =
         }
       }
     }
+  , driverLocationPollingConfig : {
+    rideListExponentialFactor : 2.0
+  , exponentialFactor : 3.0
+  }
   }

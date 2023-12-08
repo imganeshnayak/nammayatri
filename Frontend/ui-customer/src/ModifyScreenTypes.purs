@@ -66,6 +66,11 @@ updateRideDetails state = do
         gender = globalState.homeScreen.data.settingSideBar.gender 
       , email = globalState.homeScreen.data.settingSideBar.email
     }
+    , driverInfoCardState {
+      bookingDetails {
+        isSpecialZone = state.data.selectedItem.isSpecialZone
+      }
+    }
     }
     , props{
       sourceSelectedOnMap = true
@@ -75,7 +80,6 @@ updateRideDetails state = do
     , destinationLong = state.data.selectedItem.destinationLocation^._lon
     , currentStage = FindingEstimate
     , rideRequestFlow = true
-    , isSpecialZone = state.data.selectedItem.isSpecialZone
     , isBanner = globalState.homeScreen.props.isBanner
     }
     })

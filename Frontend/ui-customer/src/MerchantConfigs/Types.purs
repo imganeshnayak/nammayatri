@@ -68,6 +68,7 @@ type AppConfig =
   , geoCoder :: GeoCoderConfig
   , appLink :: String
   , homeScreen :: HomeScreen
+  , driverLocationPollingConfig :: DriverLocationPollingConfig
   }
 
 type GeoCoderConfig = {
@@ -281,4 +282,9 @@ type ShadowConfig = {
   y :: Number,
   spread :: Number,
   opacity :: Number
+}
+
+type DriverLocationPollingConfig = {
+  rideListExponentialFactor :: Number
+, exponentialFactor :: Number
 }
